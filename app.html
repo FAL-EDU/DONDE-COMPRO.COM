@@ -306,6 +306,14 @@ nav { width: 100%; justify-content: center; }
 </section>
 
 <!-- COMERCIANTE -->
+  <div id="register-form" style="display:none;">
+    <h3>Registro de Comerciante</h3>
+    <input type="email" id="reg-email" placeholder="Email institucional" class="input-style">
+    <input type="password" id="reg-password" placeholder="Contraseña segura" class="input-style">
+    <p class="text-muted" style="font-size: 0.8rem;">Mínimo 8 caracteres, una mayúscula y un número.</p>
+    <button onclick="ejecutarRegistro()" class="btn btn-primary">Crear Cuenta</button>
+    <button onclick="toggleAuthMode()" class="btn btn-link">Ya tengo cuenta</button>
+</div>
 <section id="merchant-panel" class="panel">
 <div class="merchant-dashboard">
 <aside class="sidebar">
