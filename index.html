@@ -3,288 +3,322 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DÓNDE COMPRO.COM</title>
+    <title>DÓNDE COMPRO.COM - Expert Edition</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
-        :root { --primary: #2563eb; --secondary: #059669; --bg: #f8fafc; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; background: var(--bg); color: #1e293b; }
-        header { background: var(--primary); color: white; padding: 1rem; display: flex; justify-content: space-between; align-items: center; sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        :root { --primary: #2563eb; --secondary: #059669; --admin: #7c3aed; --bg: #f8fafc; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--bg); }
+        header { background: var(--primary); color: white; padding: 1rem; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; }
         .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .btn { padding: 10px 15px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-secondary { background: var(--secondary); color: white; }
+        .btn-admin { background: var(--admin); color: white; }
+        .btn-danger { background: #ef4444; color: white; }
         
-        /* Buscador y Filtros */
-        .search-box { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
-        input, select, button { padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; }
-        .btn-primary { background: var(--primary); color: white; border: none; cursor: pointer; font-weight: bold; }
-        .btn-secondary { background: var(--secondary); color: white; border: none; cursor: pointer; }
-
-        #map { height: 350px; width: 100%; border-radius: 12px; margin-bottom: 20px; border: 2px solid white; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
-        .card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); transition: 0.3s; }
-        .card:hover { transform: translateY(-5px); }
+        #map { height: 300px; width: 100%; border-radius: 12px; margin: 15px 0; border: 2px solid white; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; }
+        .card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .card img { width: 100%; height: 150px; object-fit: cover; border-radius: 8px; margin-bottom: 10px; }
         
         .hidden { display: none; }
-        .modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index: 2000; justify-content:center; align-items:center; backdrop-filter: blur(4px); }
-        .modal.active { display: flex; }
-        .modal-content { background: white; padding: 30px; border-radius: 16px; width: 90%; max-width: 400px; position: relative; }
-        
         .panel { display: none; }
         .panel.active { display: block; }
+        .modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index: 2000; justify-content:center; align-items:center; backdrop-filter: blur(4px); }
+        .modal.active { display: flex; }
+        .modal-content { background: white; padding: 25px; border-radius: 16px; width: 90%; max-width: 450px; max-height: 85vh; overflow-y: auto; }
         
-        .toast { position: fixed; bottom: 20px; right: 20px; padding: 15px 25px; border-radius: 8px; color: white; z-index: 10000; font-weight: bold; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+        table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+        .status-active { color: var(--secondary); font-weight: bold; }
+        .status-suspended { color: #f59e0b; font-weight: bold; }
     </style>
 </head>
 <body>
 
     <header>
-        <h2 style="margin:0;">🛒 DÓNDE COMPRO.COM</h2>
-        <nav>
-            <button onclick="openLoginModal('merchant')" id="login-btn" class="btn-secondary">🏪 Soy Comercio</button>
+        <div style="display:flex; align-items:center; gap:10px;">
+            <img id="main-logo" src="" style="height:40px; display:none;">
+            <h2 id="platform-name" style="margin:0;">🛒 DÓNDE COMPRO.COM</h2>
+        </div>
+        <nav style="display:flex; gap:10px;">
+            <button onclick="openLoginModal('admin')" class="btn-admin">🛡️ Admin</button>
+            <button onclick="openLoginModal('merchant')" id="login-btn" class="btn-secondary">🏪 Comercio</button>
             <div id="user-badge" class="hidden">
-                <span id="user-display" style="margin-right:10px; font-weight:bold;"></span>
-                <button onclick="logout()" style="background:#ef4444; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">Salir</button>
+                <span id="user-display" style="font-weight:bold; margin-right:10px;"></span>
+                <button onclick="logout()" class="btn-danger" style="padding:5px 10px;">Salir</button>
             </div>
         </nav>
     </header>
 
     <div class="container">
         <div id="client-panel" class="panel active">
-            <div class="search-box">
-                <input type="text" id="search-keyword" placeholder="¿Qué buscas? (ej: Pan)">
-                <select id="search-category">
-                    <option value="">Todas las categorías</option>
-                </select>
-                <select id="search-distance">
-                    <option value="">Cualquier distancia</option>
-                    <option value="1">A menos de 1km</option>
-                    <option value="5">A menos de 5km</option>
-                </select>
-                <button onclick="searchProducts()" class="btn-primary">🔍 Buscar</button>
+            <div style="background:white; padding:15px; border-radius:12px; margin-bottom:20px; display:flex; gap:10px;">
+                <input type="text" id="search-keyword" placeholder="¿Qué buscas?" style="flex:1; padding:10px;">
+                <button onclick="searchProducts()" class="btn-primary">Buscar</button>
             </div>
-
-            <div id="user-location" style="margin-bottom:10px; font-weight:bold; color:var(--primary);">📍 Detectando tu ubicación...</div>
+            <div id="user-location">📍 Detectando ubicación...</div>
             <div id="map"></div>
-            
-            <div id="products-container" class="grid">
-                </div>
+            <div id="products-container" class="grid"></div>
         </div>
 
         <div id="merchant-panel" class="panel">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-                <h2 style="margin:0;">📦 Mi Inventario</h2>
-                <button onclick="openProductModal()" class="btn-primary">➕ Nuevo Producto</button>
+            <div id="merchant-setup-notice" class="hidden" style="background:#fef3c7; pading:15px; border-radius:8px; margin-bottom:20px; border:1px solid #f59e0b;">
+                ⚠️ <strong>¡Atención!</strong> Debes completar tu perfil y esperar autorización del Admin para publicar productos.
             </div>
             
-            <div style="background:white; border-radius:12px; overflow:hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
-                <table style="width:100%; border-collapse: collapse; text-align:left;">
-                    <thead style="background:#f1f5f9;">
-                        <tr>
-                            <th style="padding:15px;">Producto</th>
-                            <th style="padding:15px;">Precio</th>
-                            <th style="padding:15px;">Stock</th>
-                            <th style="padding:15px;">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody id="inventory-body"></tbody>
-                </table>
+            <h2>⚙️ Configuración de Mi Comercio</h2>
+            <div class="card" style="margin-bottom:20px; display:grid; grid-template-columns:1fr 1fr; gap:15px;">
+                <input type="text" id="m-name" placeholder="Nombre Fantasía">
+                <select id="m-rubro"></select>
+                <input type="text" id="m-address" placeholder="Dirección Exacta">
+                <input type="text" id="m-phone" placeholder="WhatsApp / Teléfono">
+                <button onclick="saveMerchantProfile()" class="btn-secondary">Guardar Perfil</button>
+                <button onclick="getUserLocationForMerchant()" class="btn-primary">📍 Registrar Mi GPS Actual</button>
             </div>
-            <br>
-            <button onclick="switchPanel('client-panel')" style="background:none; border:1px solid #cbd5e1; cursor:pointer; padding:10px;">⬅ Volver al inicio</button>
+
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h3>📦 Mis Productos</h3>
+                <button onclick="openProductModal()" id="btn-new-product" class="btn-primary hidden">➕ Nuevo Producto</button>
+            </div>
+            <table style="margin-top:10px;">
+                <thead><tr><th>Imagen</th><th>Producto</th><th>Precio</th><th>Acciones</th></tr></thead>
+                <tbody id="inventory-body"></tbody>
+            </table>
+            <br><button onclick="switchPanel('client-panel')" class="btn">⬅ Volver</button>
+        </div>
+
+        <div id="admin-panel" class="panel">
+            <h2>🛡️ Panel de Control Master</h2>
+            <div class="card" style="margin-bottom:20px;">
+                <h4>Personalizar Plataforma</h4>
+                <label>Subir Logo (PNG/JPG):</label>
+                <input type="file" id="admin-logo-upload" onchange="updatePlatformLogo(event)">
+            </div>
+            <h3>Comercios Registrados</h3>
+            <table>
+                <thead><tr><th>Comercio</th><th>Estado</th><th>Acciones</th></tr></thead>
+                <tbody id="admin-merchants-body"></tbody>
+            </table>
+            <br><button onclick="switchPanel('client-panel')" class="btn">⬅ Volver</button>
         </div>
     </div>
 
-    <div id="login-modal" class="modal">
-        <div class="modal-content">
-            <h3 id="login-title">Ingreso Comercio</h3>
-            <input type="email" id="login-email" placeholder="Email del comercio" style="width:100%; margin-bottom:15px; box-sizing: border-box;">
-            <input type="password" id="login-password" placeholder="Contraseña" style="width:100%; margin-bottom:15px; box-sizing: border-box;">
-            <button onclick="login()" class="btn-primary" style="width:100%; padding:12px;">Entrar</button>
-            <button onclick="closeLoginModal()" style="width:100%; margin-top:10px; background:none; border:none; color:#64748b; cursor:pointer;">Cancelar</button>
-        </div>
-    </div>
+    <div id="login-modal" class="modal"><div class="modal-content">
+        <h3 id="login-title">Acceso</h3>
+        <input type="email" id="login-email" placeholder="Email" style="width:100%; margin-bottom:10px;">
+        <input type="password" id="login-password" placeholder="Contraseña" style="width:100%; margin-bottom:10px;">
+        <button onclick="login()" class="btn-primary" style="width:100%;">Entrar / Registrarse</button>
+        <button onclick="closeModal('login-modal')" style="width:100%; margin-top:10px; background:none; border:none;">Cerrar</button>
+    </div></div>
 
-    <div id="product-modal" class="modal">
-        <div class="modal-content">
-            <h3>Datos del Producto</h3>
-            <label style="font-size:12px;">Nombre del Producto</label>
-            <input type="text" id="product-name" style="width:100%; margin-bottom:10px; box-sizing: border-box;">
-            <label style="font-size:12px;">Precio ($)</label>
-            <input type="number" id="product-price" style="width:100%; margin-bottom:10px; box-sizing: border-box;">
-            <label style="font-size:12px;">Stock disponible</label>
-            <input type="number" id="product-stock" style="width:100%; margin-bottom:10px; box-sizing: border-box;">
-            <label style="font-size:12px;">Categoría</label>
-            <select id="product-category" style="width:100%; margin-bottom:15px; box-sizing: border-box;"></select>
-            <button onclick="saveProduct()" class="btn-primary" style="width:100%; padding:12px;">Guardar Producto</button>
-            <button onclick="closeProductModal()" style="width:100%; margin-top:10px; background:none; border:none; color:#64748b; cursor:pointer;">Cerrar</button>
-        </div>
-    </div>
+    <div id="product-modal" class="modal"><div class="modal-content">
+        <h3>Nuevo Producto</h3>
+        <input type="text" id="p-name" placeholder="Nombre del producto" style="width:100%; margin-bottom:10px;">
+        <input type="number" id="p-price" placeholder="Precio ($)" style="width:100%; margin-bottom:10px;">
+        <label>Foto del producto:</label>
+        <input type="file" id="p-image" accept="image/*" style="width:100%; margin-bottom:15px;">
+        <button onclick="saveProduct()" class="btn-secondary" style="width:100%;">Publicar</button>
+        <button onclick="closeModal('product-modal')" style="width:100%; margin-top:10px; background:none; border:none;">Cancelar</button>
+    </div></div>
 
     <script>
+        // ESTADO GLOBAL
         const state = {
             currentUser: null,
+            currentRole: null,
+            merchants: JSON.parse(localStorage.getItem('dc_merchants')) || {},
             products: JSON.parse(localStorage.getItem('dc_products')) || [],
-            categories: [
-                {id: 'food', name: 'Alimentos', icon: '🍕'},
-                {id: 'pharmacy', name: 'Farmacia', icon: '💊'},
-                {id: 'electronics', name: 'Electrónica', icon: '🔌'}
-            ],
-            userLocation: null,
+            logo: localStorage.getItem('dc_logo') || '',
+            categories: ['Alimentos', 'Farmacia', 'Electrónica', 'Ropa', 'Ferretería'],
+            userLoc: null,
             map: null
         };
 
         document.addEventListener('DOMContentLoaded', () => {
+            if(state.logo) { document.getElementById('main-logo').src = state.logo; document.getElementById('main-logo').style.display = 'block'; }
+            const rubroSel = document.getElementById('m-rubro');
+            state.categories.forEach(c => rubroSel.innerHTML += `<option value="${c}">${c}</option>`);
             initMap();
-            getUserLocation();
-            populateCategoryDropdowns();
-            renderProducts(state.products);
+            renderProducts();
             checkSession();
         });
 
         function initMap() {
             state.map = L.map('map').setView([-34.6037, -58.3816], 13);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(state.map);
-        }
-
-        function getUserLocation() {
             if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(pos => {
-                    state.userLocation = {lat: pos.coords.latitude, lng: pos.coords.longitude};
-                    document.getElementById('user-location').innerHTML = `📍 Tu ubicación: ${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`;
-                    state.map.setView([pos.coords.latitude, pos.coords.longitude], 14);
-                    L.marker([pos.coords.latitude, pos.coords.longitude]).addTo(state.map).bindPopup("Estás aquí").openPopup();
+                navigator.geolocation.getCurrentPosition(p => {
+                    state.userLoc = {lat: p.coords.latitude, lng: p.coords.longitude};
+                    document.getElementById('user-location').innerText = `📍 Tu zona: ${p.coords.latitude.toFixed(3)}, ${p.coords.longitude.toFixed(3)}`;
+                    state.map.setView([p.coords.latitude, p.coords.longitude], 14);
+                    L.marker([p.coords.latitude, p.coords.longitude]).addTo(state.map).bindPopup("Estás aquí");
                 });
             }
         }
 
         function login() {
-            const email = document.getElementById('login-email').value;
-            const pass = document.getElementById('login-password').value;
-            if(email && pass) {
-                state.currentUser = email;
-                sessionStorage.setItem('dc_user', email);
-                updateUserUI();
-                closeLoginModal();
-                switchPanel('merchant-panel');
-                renderInventory();
-                showToast("✅ Bienvenido al panel", "success");
+            const email = document.getElementById('login-email').value.toLowerCase();
+            const role = state.currentRole;
+            if(!email) return;
+
+            state.currentUser = email;
+            sessionStorage.setItem('dc_user', email);
+            sessionStorage.setItem('dc_role', role);
+
+            if(role === 'merchant' && !state.merchants[email]) {
+                state.merchants[email] = { name: '', status: 'pending', lat: null, lng: null };
+                saveMerchants();
             }
+
+            closeModal('login-modal');
+            updateUI();
+            if(role === 'admin') switchPanel('admin-panel');
+            else switchPanel('merchant-panel');
         }
 
         function logout() {
-            state.currentUser = null;
             sessionStorage.clear();
-            updateUserUI();
-            switchPanel('client-panel');
+            state.currentUser = null;
+            location.reload();
         }
 
-        function checkSession() {
-            const saved = sessionStorage.getItem('dc_user');
-            if(saved) {
-                state.currentUser = saved;
-                updateUserUI();
-            }
-        }
-
-        function updateUserUI() {
-            const badge = document.getElementById('user-badge');
-            const btn = document.getElementById('login-btn');
+        function updateUI() {
             if(state.currentUser) {
-                badge.classList.remove('hidden');
-                btn.classList.add('hidden');
-                document.getElementById('user-display').textContent = state.currentUser;
-            } else {
-                badge.classList.add('hidden');
-                btn.classList.remove('hidden');
+                document.getElementById('login-btn').classList.add('hidden');
+                document.getElementById('user-badge').classList.remove('hidden');
+                document.getElementById('user-display').innerText = state.currentUser;
+                
+                if(sessionStorage.getItem('dc_role') === 'merchant') {
+                    const m = state.merchants[state.currentUser];
+                    if(m.status === 'active') document.getElementById('btn-new-product').classList.remove('hidden');
+                    else document.getElementById('merchant-setup-notice').classList.remove('hidden');
+                    
+                    document.getElementById('m-name').value = m.name || '';
+                    document.getElementById('m-address').value = m.address || '';
+                    document.getElementById('m-phone').value = m.phone || '';
+                    renderInventory();
+                }
+                if(sessionStorage.getItem('dc_role') === 'admin') renderAdmin();
             }
         }
 
-        function switchPanel(id) {
-            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
+        function saveMerchantProfile() {
+            const m = state.merchants[state.currentUser];
+            m.name = document.getElementById('m-name').value;
+            m.rubro = document.getElementById('m-rubro').value;
+            m.address = document.getElementById('m-address').value;
+            m.phone = document.getElementById('m-phone').value;
+            saveMerchants();
+            alert("Perfil actualizado. El administrador revisará tus datos.");
         }
 
-        function openLoginModal() { document.getElementById('login-modal').classList.add('active'); }
-        function closeLoginModal() { document.getElementById('login-modal').classList.remove('active'); }
-        function openProductModal() { document.getElementById('product-modal').classList.add('active'); }
-        function closeProductModal() { document.getElementById('product-modal').classList.remove('active'); }
-
-        function populateCategoryDropdowns() {
-            const html = state.categories.map(c => `<option value="${c.id}">${c.icon} ${c.name}</option>`).join('');
-            document.getElementById('search-category').innerHTML += html;
-            document.getElementById('product-category').innerHTML = html;
+        function getUserLocationForMerchant() {
+            navigator.geolocation.getCurrentPosition(p => {
+                state.merchants[state.currentUser].lat = p.coords.latitude;
+                state.merchants[state.currentUser].lng = p.coords.longitude;
+                saveMerchants();
+                alert("GPS Guardado con éxito.");
+            });
         }
 
-        function saveProduct() {
+        async function saveProduct() {
+            const file = document.getElementById('p-image').files[0];
+            let imgBase64 = "";
+            if(file) {
+                imgBase64 = await toBase64(file);
+            }
             const p = {
                 id: Date.now(),
-                name: document.getElementById('product-name').value,
-                price: document.getElementById('product-price').value,
-                stock: document.getElementById('product-stock').value,
-                category: document.getElementById('product-category').value,
+                name: document.getElementById('p-name').value,
+                price: document.getElementById('p-price').value,
+                img: imgBase64,
                 owner: state.currentUser,
-                store: "Comercio Local"
+                store: state.merchants[state.currentUser].name
             };
             state.products.push(p);
             localStorage.setItem('dc_products', JSON.stringify(state.products));
+            closeModal('product-modal');
             renderInventory();
-            renderProducts(state.products);
-            closeProductModal();
-            showToast("✅ Producto guardado", "success");
+            renderProducts();
         }
 
         function renderInventory() {
-            const list = state.products.filter(p => p.owner === state.currentUser);
-            document.getElementById('inventory-body').innerHTML = list.map(p => `
-                <tr style="border-bottom:1px solid #f1f5f9;">
-                    <td style="padding:15px;">${p.name}</td>
-                    <td style="padding:15px;">$${p.price}</td>
-                    <td style="padding:15px;">${p.stock}</td>
-                    <td style="padding:15px;"><button onclick="deleteProduct(${p.id})" style="background:none; border:none; cursor:pointer;">🗑️</button></td>
+            const body = document.getElementById('inventory-body');
+            body.innerHTML = state.products.filter(p => p.owner === state.currentUser).map(p => `
+                <tr>
+                    <td><img src="${p.img}" style="width:40px; height:40px; border-radius:4px;"></td>
+                    <td>${p.name}</td>
+                    <td>$${p.price}</td>
+                    <td><button onclick="deleteProduct(${p.id})" class="btn-danger">🗑️</button></td>
                 </tr>
             `).join('');
         }
 
-        function deleteProduct(id) {
-            state.products = state.products.filter(p => p.id !== id);
-            localStorage.setItem('dc_products', JSON.stringify(state.products));
-            renderInventory();
-            renderProducts(state.products);
+        function renderAdmin() {
+            const body = document.getElementById('admin-merchants-body');
+            body.innerHTML = Object.keys(state.merchants).map(email => {
+                const m = state.merchants[email];
+                return `
+                <tr>
+                    <td>${m.name || email}</td>
+                    <td class="status-${m.status}">${m.status.toUpperCase()}</td>
+                    <td>
+                        <button onclick="updateMerchantStatus('${email}', 'active')" class="btn-secondary">Activar</button>
+                        <button onclick="updateMerchantStatus('${email}', 'suspended')" class="btn-danger">Suspender</button>
+                    </td>
+                </tr>`;
+            }).join('');
         }
 
-        function renderProducts(list) {
+        function updateMerchantStatus(email, status) {
+            state.merchants[email].status = status;
+            saveMerchants();
+            renderAdmin();
+        }
+
+        function renderProducts(list = state.products) {
             const container = document.getElementById('products-container');
-            if(list.length === 0) {
-                container.innerHTML = "<p>No hay productos que coincidan.</p>";
-                return;
-            }
             container.innerHTML = list.map(p => `
                 <div class="card">
-                    <div style="font-size:40px; background:#f1f5f9; text-align:center; padding:20px; border-radius:8px;">📦</div>
-                    <h3>${p.name}</h3>
-                    <p style="color:var(--secondary); font-size:20px; font-weight:bold; margin:5px 0;">$${p.price}</p>
+                    <img src="${p.img || 'https://via.placeholder.com/150'}">
+                    <h3 style="margin:5px 0;">${p.name}</h3>
+                    <p style="color:var(--secondary); font-weight:bold; font-size:1.2rem;">$${p.price}</p>
                     <small>🏪 ${p.store}</small><br>
-                    <button class="btn-primary" style="width:100%; margin-top:10px;">Comprar</button>
+                    <button class="btn-primary" style="width:100%; margin-top:10px;">Ver en Mapa</button>
                 </div>
             `).join('');
         }
 
         function searchProducts() {
             const key = document.getElementById('search-keyword').value.toLowerCase();
-            const cat = document.getElementById('search-category').value;
-            const filtered = state.products.filter(p => {
-                return (!key || p.name.toLowerCase().includes(key)) && (!cat || p.category === cat);
-            });
-            renderProducts(filtered);
+            renderProducts(state.products.filter(p => p.name.toLowerCase().includes(key)));
         }
 
-        function showToast(msg, type) {
-            const t = document.createElement('div');
-            t.className = `toast ${type}`;
-            t.textContent = msg;
-            document.body.appendChild(t);
-            setTimeout(() => t.remove(), 3000);
+        function updatePlatformLogo(e) {
+            const reader = new FileReader();
+            reader.onload = function() {
+                state.logo = reader.result;
+                localStorage.setItem('dc_logo', state.logo);
+                document.getElementById('main-logo').src = state.logo;
+                document.getElementById('main-logo').style.display = 'block';
+            };
+            reader.readAsDataURL(e.target.files[0]);
         }
+
+        // UTILS
+        const toBase64 = file => new Promise((res, rej) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => res(reader.result);
+        });
+        function saveMerchants() { localStorage.setItem('dc_merchants', JSON.stringify(state.merchants)); }
+        function switchPanel(id) { document.querySelectorAll('.panel').forEach(p => p.classList.remove('active')); document.getElementById(id).classList.add('active'); }
+        function openLoginModal(role) { state.currentRole = role; document.getElementById('login-modal').classList.add('active'); }
+        function openProductModal() { document.getElementById('product-modal').classList.add('active'); }
+        function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+        function checkSession() { if(sessionStorage.getItem('dc_user')) { state.currentUser = sessionStorage.getItem('dc_user'); updateUI(); } }
     </script>
 </body>
 </html>
