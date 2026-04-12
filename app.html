@@ -502,10 +502,17 @@ nav { width: 100%; justify-content: center; }
 </div>
 </div>
 </div>
-
+<script type="module>
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+  const firebaseConfig = {
+  apiKey: "AIzaSyB3kBkd3pj-o8RPZxXJfOo7GTl64d7un7c",
+  authDomain: "donde-compro-12345.firebaseapp.com",
+  projectId: "donde-compro-12345",
+  storageBucket: "donde-compro-12345.firebasestorage.app",
+  messagingSenderId: "769310157775",
 <!-- Leaflet JS -->
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 // ===== ESTADO =====
 const state = {
 currentUser: null,
