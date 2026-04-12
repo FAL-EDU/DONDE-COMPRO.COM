@@ -66,10 +66,10 @@
     <div class="container">
         <div id="client-panel" class="panel active">
             <div style="text-align:center; padding: 30px 0;">
-                <h1 style="margin-bottom:10px;">Encuentra lo que necesitas hoy</h1>
+                <h1>Encuentra lo que necesitas hoy</h1>
                 <p style="color: #64748b; margin-bottom: 25px;">Busca productos en comercios de tu zona</p>
                 <div style="background:white; padding:8px; border-radius:50px; display:flex; box-shadow: 0 4px 12px rgba(0,0,0,0.08); max-width:550px; margin:0 auto; border: 1px solid #e2e8f0;">
-                    <input type="text" id="search-keyword" placeholder="¿Qué buscas? (ej. Pizza, Farmacia, Tornillos...)" style="border:none; flex:1; padding:10px 20px; outline:none; border-radius:50px; font-size:16px;" onkeyup="if(event.key==='Enter') searchProducts()">
+                    <input type="text" id="search-keyword" placeholder="¿Qué buscas? (ej. Pizza, Farmacia...)" style="border:none; flex:1; padding:10px 20px; outline:none; border-radius:50px; font-size:16px;" onkeyup="if(event.key==='Enter') searchProducts()">
                     <button onclick="searchProducts()" class="btn btn-primary" style="border-radius:50px; padding: 10px 25px;">Buscar</button>
                 </div>
             </div>
@@ -93,19 +93,15 @@
                     <input type="text" id="m-name" placeholder="Nombre del Local">
                     <select id="m-rubro"></select>
                     <input type="text" id="m-address" placeholder="Dirección completa">
-                    <input type="text" id="m-phone" placeholder="WhatsApp (ej: 12345678)">
+                    <input type="text" id="m-phone" placeholder="WhatsApp">
                 </div>
                 <button onclick="autoGeocode()" class="btn btn-primary" style="margin-top:15px; width:100%;">1. Ubicar dirección en el mapa</button>
-                
                 <div id="merchant-map-adjust" style="display:block;">
-                    <p style="font-size:0.8rem; color:#ef4444; margin:15px 0 5px 0; font-weight: bold;">
-                        ⚠️ Toca el mapa para corregir la ubicación exacta de tu local si es necesario.
-                    </p>
+                    <p style="font-size:0.8rem; color:#ef4444; margin:15px 0 5px 0; font-weight: bold;">📍 Toca el mapa para corregir la ubicación exacta.</p>
                     <div id="m-map-small"></div>
                     <input type="hidden" id="m-lat"><input type="hidden" id="m-lng">
                 </div>
-                
-                <button onclick="saveMerchantProfile()" class="btn btn-secondary" style="margin-top:15px; width:100%; font-size:1.1rem; padding: 12px;">2. Guardar Datos de Comercio</button>
+                <button onclick="saveMerchantProfile()" class="btn btn-secondary" style="margin-top:15px; width:100%; font-size:1.1rem;">2. Guardar Datos de Comercio</button>
             </div>
 
             <div style="display:flex; justify-content:space-between; align-items:center; margin-top: 30px;">
@@ -122,44 +118,44 @@
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
                 <div class="card" style="padding:15px;">
                     <h4>🎨 Personalización Visual</h4>
-                    <label style="font-size:0.8rem;">Subir Logo (se mostrará junto al nombre):</label>
+                    <label style="font-size:0.8rem;">Logo de la Web:</label>
                     <input type="file" onchange="updatePlatformLogo(event)" style="display:block; margin:10px 0;">
                     <button onclick="removePlatformLogo()" class="btn btn-outline btn-small">Usar solo texto</button>
                 </div>
                 <div class="card" style="padding:15px;">
-                    <h4>📦 Categorías de Rubros</h4>
+                    <h4>📦 Categorías</h4>
                     <div style="display:flex; gap:5px;">
-                        <input type="text" id="new-category" placeholder="Ej: Mascotas" style="flex:1; padding:5px;">
+                        <input type="text" id="new-category" placeholder="Nuevo rubro..." style="flex:1; padding:5px;">
                         <button onclick="addCategory()" class="btn btn-secondary btn-small">Añadir</button>
                     </div>
                     <div id="categories-list" style="margin-top:10px; display:flex; flex-wrap:wrap; gap:5px;"></div>
                 </div>
             </div>
-            <h4 style="margin-top:30px;">Comercios en la Plataforma</h4>
+            <h4 style="margin-top:30px;">Comercios Registrados</h4>
             <table>
                 <thead><tr><th>Comercio</th><th>Estado</th><th>Acciones</th></tr></thead>
                 <tbody id="admin-merchants-body"></tbody>
             </table>
-            <br><button onclick="switchPanel('client-panel')" class="btn btn-outline">⬅ Salir del Panel</button>
+            <br><button onclick="switchPanel('client-panel')" class="btn btn-outline">⬅ Salir</button>
         </div>
     </div>
 
-    <div id="login-modal" class="modal"><div class="modal-content">
-        <h3 id="login-title">Acceso al Sistema</h3>
-        <input type="email" id="login-email" placeholder="Correo electrónico" style="width:100%; margin-bottom:10px; padding:12px; box-sizing:border-box; border: 1px solid #ddd; border-radius: 8px;">
-        <input type="password" id="login-password" placeholder="Contraseña" style="width:100%; margin-bottom:15px; padding:12px; box-sizing:border-box; border: 1px solid #ddd; border-radius: 8px;">
-        <button onclick="login()" class="btn btn-primary" style="width:100%; padding: 12px;">Ingresar</button>
-        <button onclick="closeModal('login-modal')" style="width:100%; margin-top:10px; background:none; border:none; cursor:pointer; color: #666;">Cancelar</button>
+    <div id="product-modal" class="modal"><div class="modal-content">
+        <h3 id="p-modal-title">Datos del Producto</h3>
+        <input type="hidden" id="p-id-edit"> <input type="text" id="p-name" placeholder="Nombre del producto" style="width:100%; margin-bottom:10px; padding:12px; box-sizing:border-box; border: 1px solid #ddd; border-radius: 8px;">
+        <input type="number" id="p-price" placeholder="Precio $" style="width:100%; margin-bottom:10px; padding:12px; box-sizing:border-box; border: 1px solid #ddd; border-radius: 8px;">
+        <label style="font-size: 0.8rem; color: #666;">Foto (opcional):</label>
+        <input type="file" id="p-image" accept="image/*" style="width:100%; margin-bottom:15px; margin-top: 5px;">
+        <button onclick="saveProduct()" class="btn btn-secondary" style="width:100%; padding: 12px;">Guardar Cambios</button>
+        <button onclick="closeModal('product-modal')" style="width:100%; margin-top:10px; border:none; background:none; cursor:pointer;">Cancelar</button>
     </div></div>
 
-    <div id="product-modal" class="modal"><div class="modal-content">
-        <h3>Datos del Producto</h3>
-        <input type="text" id="p-name" placeholder="Nombre del producto" style="width:100%; margin-bottom:10px; padding:12px; box-sizing:border-box; border: 1px solid #ddd; border-radius: 8px;">
-        <input type="number" id="p-price" placeholder="Precio $" style="width:100%; margin-bottom:10px; padding:12px; box-sizing:border-box; border: 1px solid #ddd; border-radius: 8px;">
-        <label style="font-size: 0.8rem; color: #666;">Foto del producto:</label>
-        <input type="file" id="p-image" accept="image/*" style="width:100%; margin-bottom:15px; margin-top: 5px;">
-        <button onclick="saveProduct()" class="btn btn-secondary" style="width:100%; padding: 12px;">Guardar y Publicar</button>
-        <button onclick="closeModal('product-modal')" style="width:100%; margin-top:10px; border:none; background:none; cursor:pointer;">Cerrar</button>
+    <div id="login-modal" class="modal"><div class="modal-content">
+        <h3>Acceso al Sistema</h3>
+        <input type="email" id="login-email" placeholder="Correo" style="width:100%; margin-bottom:10px; padding:12px; box-sizing:border-box; border: 1px solid #ddd; border-radius: 8px;">
+        <input type="password" id="login-password" placeholder="Contraseña" style="width:100%; margin-bottom:15px; padding:12px; box-sizing:border-box; border: 1px solid #ddd; border-radius: 8px;">
+        <button onclick="login()" class="btn btn-primary" style="width:100%; padding: 12px;">Ingresar</button>
+        <button onclick="closeModal('login-modal')" style="width:100%; margin-top:10px; border:none; background:none; cursor:pointer;">Cerrar</button>
     </div></div>
 
     <script>
@@ -168,74 +164,101 @@
             currentRole: null,
             merchants: JSON.parse(localStorage.getItem('dc_merchants')) || {},
             products: JSON.parse(localStorage.getItem('dc_products')) || [],
-            categories: JSON.parse(localStorage.getItem('dc_categories')) || ['Alimentos', 'Farmacia', 'Ferretería', 'Indumentaria'],
+            categories: JSON.parse(localStorage.getItem('dc_categories')) || ['Alimentos', 'Farmacia', 'Ferretería'],
             logo: localStorage.getItem('dc_logo') || '',
             map: null, mAdjustMap: null, mMarker: null, routing: null
         };
 
-        document.addEventListener('DOMContentLoaded', () => {
-            applyLogo();
-            updateCategorySelectors();
-            checkSession();
-        });
+        document.addEventListener('DOMContentLoaded', () => { applyLogo(); updateCategorySelectors(); checkSession(); });
 
-        // --- PERSONALIZACIÓN ---
+        // --- 1. PERSONALIZACIÓN ---
         function applyLogo() {
             const img = document.getElementById('platform-logo');
-            if(state.logo) {
-                img.src = state.logo; 
-                img.style.display = 'block';
-            } else {
-                img.style.display = 'none';
-            }
+            if(state.logo) { img.src = state.logo; img.style.display = 'block'; }
+            else { img.style.display = 'none'; }
         }
         async function updatePlatformLogo(e) {
             const file = e.target.files[0];
-            if(file) {
-                state.logo = await toBase64(file);
-                localStorage.setItem('dc_logo', state.logo);
-                applyLogo();
-            }
+            if(file) { state.logo = await toBase64(file); localStorage.setItem('dc_logo', state.logo); applyLogo(); }
         }
-        function removePlatformLogo() {
-            state.logo = ''; localStorage.removeItem('dc_logo'); applyLogo();
+        function removePlatformLogo() { state.logo = ''; localStorage.removeItem('dc_logo'); applyLogo(); }
+
+        // --- 2. GESTIÓN DE PRODUCTOS (EDICIÓN) ---
+        function openProductModal(prodId = null) {
+            const title = document.getElementById('p-modal-title');
+            const idInput = document.getElementById('p-id-edit');
+            const nameInput = document.getElementById('p-name');
+            const priceInput = document.getElementById('p-price');
+            
+            if(prodId) { // MODO EDICIÓN
+                const p = state.products.find(x => x.id == prodId);
+                title.innerText = "Editar Producto";
+                idInput.value = p.id;
+                nameInput.value = p.name;
+                priceInput.value = p.price;
+            } else { // MODO NUEVO
+                title.innerText = "Nuevo Producto";
+                idInput.value = "";
+                nameInput.value = "";
+                priceInput.value = "";
+            }
+            document.getElementById('product-modal').classList.add('active');
         }
 
-        // --- MAPA COMERCIANTE ---
-        function initAdjustMap(lat = -34.6037, lng = -58.3816) {
-            if(state.mAdjustMap) return;
-            state.mAdjustMap = L.map('m-map-small').setView([lat, lng], 13);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(state.mAdjustMap);
-            state.mMarker = L.marker([lat, lng], {draggable: true}).addTo(state.mAdjustMap);
-            state.mAdjustMap.on('click', (e) => {
-                state.mMarker.setLatLng(e.latlng);
-                updateCoords(e.latlng.lat, e.latlng.lng);
-            });
-            state.mMarker.on('dragend', () => {
-                const pos = state.mMarker.getLatLng();
-                updateCoords(pos.lat, pos.lng);
-            });
+        async function saveProduct() {
+            const idEdit = document.getElementById('p-id-edit').value;
+            const name = document.getElementById('p-name').value;
+            const price = document.getElementById('p-price').value;
+            const file = document.getElementById('p-image').files[0];
+            if(!name || !price) return alert("Nombre y precio son obligatorios");
+
+            if(idEdit) { // Actualizar existente
+                const p = state.products.find(x => x.id == idEdit);
+                p.name = name; p.price = price;
+                if(file) p.img = await toBase64(file);
+            } else { // Crear nuevo
+                state.products.push({
+                    id: Date.now(), name, price,
+                    img: file ? await toBase64(file) : '',
+                    owner: state.currentUser,
+                    store: state.merchants[state.currentUser].name
+                });
+            }
+            localStorage.setItem('dc_products', JSON.stringify(state.products));
+            closeModal('product-modal');
+            renderInventory();
         }
-        function updateCoords(lat, lng) {
-            document.getElementById('m-lat').value = lat;
-            document.getElementById('m-lng').value = lng;
+
+        function renderInventory() {
+            const body = document.getElementById('inventory-body');
+            body.innerHTML = state.products.filter(p => p.owner === state.currentUser).map(p => `
+                <tr>
+                    <td><img src="${p.img || 'https://via.placeholder.com/40'}" style="width:40px;height:40px;object-fit:cover; border-radius:5px;"></td>
+                    <td>${p.name}</td>
+                    <td>$${p.price}</td>
+                    <td>
+                        <button onclick="openProductModal(${p.id})" class="btn btn-outline btn-small">✏️ Editar</button>
+                        <button onclick="deleteProduct(${p.id})" class="btn btn-danger btn-small">🗑️</button>
+                    </td>
+                </tr>`).join('');
         }
+
+        // --- 3. FUNCIONALIDADES MAPA Y BÚSQUEDA ---
         async function autoGeocode() {
-            const address = document.getElementById('m-address').value;
-            if(!address) return alert("Escribe tu dirección");
+            const addr = document.getElementById('m-address').value;
+            if(!addr) return alert("Escribe tu dirección");
             try {
-                const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`);
+                const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(addr)}&limit=1`);
                 const data = await res.json();
                 if(data.length > 0) {
-                    const lat = parseFloat(data[0].lat); const lng = parseFloat(data[0].lon);
+                    const lat = parseFloat(data[0].lat), lng = parseFloat(data[0].lon);
                     state.mAdjustMap.setView([lat, lng], 17);
                     state.mMarker.setLatLng([lat, lng]);
                     updateCoords(lat, lng);
-                } else { alert("No se ubicó automáticamente. Por favor marca el punto en el mapa manualmente."); }
-            } catch(e) { alert("Error de conexión con el mapa."); }
+                } else { alert("No se ubicó. Márcalo manualmente."); }
+            } catch(e) { alert("Error de mapa."); }
         }
 
-        // --- BÚSQUEDA ---
         function searchProducts() {
             const key = document.getElementById('search-keyword').value.toLowerCase();
             if(!key) return;
@@ -249,24 +272,12 @@
                 return `<div class="card">
                     <img src="${p.img || 'https://via.placeholder.com/300x200?text=Sin+Imagen'}">
                     <div class="card-body">
-                        <h3 style="margin:0; font-size: 1.2rem;">${p.name}</h3>
-                        <p style="color:var(--secondary); font-weight:bold; font-size: 1.4rem; margin: 8px 0;">$${p.price}</p>
-                        
-                        <div class="store-tag">
-                            <strong style="font-size: 1rem;">🏪 ${m.name}</strong><br>
-                            📍 ${m.address}<br>
-                            📱 WhatsApp: ${m.phone || 'No disponible'}
-                        </div>
-                        
-                        <button onclick="showRoute(${m.lat}, ${m.lng})" class="btn btn-primary" style="width:100%; margin-top: auto;">
-                            📍 Cómo llegar
-                        </button>
-                    </div>
-                </div>`;
+                        <h3 style="margin:0;">${p.name}</h3>
+                        <p style="color:var(--secondary); font-weight:bold; font-size:1.4rem; margin:8px 0;">$${p.price}</p>
+                        <div class="store-tag"><strong>🏪 ${m.name}</strong><br>📍 ${m.address}<br>📱 WhatsApp: ${m.phone || '-'}</div>
+                        <button onclick="showRoute(${m.lat}, ${m.lng})" class="btn btn-primary" style="width:100%; margin-top:auto;">📍 Cómo llegar</button>
+                    </div></div>`;
             }).join('');
-            if(filtered.length === 0) {
-                document.getElementById('products-container').innerHTML = "<p style='text-align:center; grid-column: 1/-1; padding: 40px;'>No se encontraron productos coincidentes o los comercios están temporalmente inactivos.</p>";
-            }
         }
 
         function showRoute(destLat, destLng) {
@@ -280,14 +291,13 @@
                 if(state.routing) state.map.removeControl(state.routing);
                 state.routing = L.Routing.control({
                     waypoints: [ L.latLng(userLoc), L.latLng(destLat, destLng) ],
-                    show: false,
-                    addWaypoints: false
+                    show: false, addWaypoints: false
                 }).addTo(state.map);
                 state.map.flyTo([destLat, destLng], 15);
-            }, () => alert("Para mostrar la ruta necesitamos acceso a tu ubicación GPS."));
+            });
         }
 
-        // --- GESTIÓN ---
+        // --- 4. BASE DEL SISTEMA ---
         function saveMerchantProfile() {
             const m = state.merchants[state.currentUser];
             m.lat = document.getElementById('m-lat').value;
@@ -296,31 +306,20 @@
             m.rubro = document.getElementById('m-rubro').value;
             m.address = document.getElementById('m-address').value;
             m.phone = document.getElementById('m-phone').value;
-            if(!m.lat || !m.name || !m.address) return alert("Por favor completa el nombre, la dirección y marca la ubicación en el mapa.");
-            saveMerchants();
-            alert("Perfil actualizado. Si es un comercio nuevo, el administrador deberá activarlo.");
-            renderInventory();
+            if(!m.lat || !m.name) return alert("Completa nombre y ubicación en mapa.");
+            saveMerchants(); alert("Guardado."); renderInventory();
         }
-
-        function renderAdmin() {
-            document.getElementById('admin-merchants-body').innerHTML = Object.keys(state.merchants).map(email => {
-                const m = state.merchants[email];
-                const badge = m.status === 'active' ? 'badge-active' : 'badge-suspended';
-                return `<tr>
-                    <td><strong>${m.name || 'Pendiente'}</strong><br><small>${email}</small></td>
-                    <td><span class="badge ${badge}">${m.status}</span></td>
-                    <td style="display:flex; gap:5px;">
-                        <button onclick="updateStatus('${email}','active')" class="btn btn-secondary btn-small">Alta</button>
-                        <button onclick="updateStatus('${email}','suspended')" class="btn btn-outline btn-small">Suspender</button>
-                        <button onclick="deleteMerchant('${email}')" class="btn btn-danger btn-small">Eliminar</button>
-                    </td></tr>`;
-            }).join('');
-            updateCategorySelectors();
+        function login() {
+            const email = document.getElementById('login-email').value.toLowerCase();
+            sessionStorage.setItem('dc_user', email); sessionStorage.setItem('dc_role', state.currentRole);
+            if(state.currentRole === 'merchant' && !state.merchants[email]) {
+                state.merchants[email] = { status: 'pending', lat: -34.6037, lng: -58.3816, name: '', address: '', phone: '' };
+                saveMerchants();
+            }
+            location.reload();
         }
-
         function checkSession() {
-            const user = sessionStorage.getItem('dc_user');
-            const role = sessionStorage.getItem('dc_role');
+            const user = sessionStorage.getItem('dc_user'), role = sessionStorage.getItem('dc_role');
             if(user) {
                 state.currentUser = user; state.currentRole = role;
                 document.getElementById('login-btn').style.display = 'none';
@@ -328,67 +327,53 @@
                 document.getElementById('user-badge').style.display = 'flex';
                 document.getElementById('user-display').innerText = user;
                 if(role === 'merchant') {
-                    switchPanel('merchant-panel');
-                    const m = state.merchants[user];
+                    switchPanel('merchant-panel'); const m = state.merchants[user];
                     document.getElementById('m-name').value = m.name || '';
                     document.getElementById('m-address').value = m.address || '';
                     document.getElementById('m-phone').value = m.phone || '';
                     initAdjustMap(m.lat || -34.6037, m.lng || -58.3816);
                     if(m.status === 'active') document.getElementById('btn-new-product').style.display = 'inline-flex';
                     renderInventory();
-                } else if(role === 'admin') {
-                    switchPanel('admin-panel');
-                    renderAdmin();
-                }
+                } else if(role === 'admin') { switchPanel('admin-panel'); renderAdmin(); }
             }
         }
-
-        function login() {
-            const email = document.getElementById('login-email').value.toLowerCase();
-            const pass = document.getElementById('login-password').value;
-            if(!email || !pass) return alert("Completa todos los campos");
-            sessionStorage.setItem('dc_user', email);
-            sessionStorage.setItem('dc_role', state.currentRole);
-            if(state.currentRole === 'merchant' && !state.merchants[email]) {
-                state.merchants[email] = { status: 'pending', lat: -34.6037, lng: -58.3816, name: '', address: '', phone: '', rubro: '' };
-                saveMerchants();
-            }
-            location.reload();
+        function renderAdmin() {
+            document.getElementById('admin-merchants-body').innerHTML = Object.keys(state.merchants).map(email => {
+                const m = state.merchants[email];
+                return `<tr><td><strong>${m.name || 'Pendiente'}</strong><br><small>${email}</small></td>
+                <td><span class="badge ${m.status === 'active' ? 'badge-active' : 'badge-suspended'}">${m.status}</span></td>
+                <td><button onclick="updateStatus('${email}','active')" class="btn btn-secondary btn-small">Alta</button>
+                <button onclick="deleteMerchant('${email}')" class="btn btn-danger btn-small">Eliminar</button></td></tr>`;
+            }).join('');
+            updateCategorySelectors();
         }
-
+        function initAdjustMap(lat, lng) {
+            if(state.mAdjustMap) return;
+            state.mAdjustMap = L.map('m-map-small').setView([lat, lng], 13);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(state.mAdjustMap);
+            state.mMarker = L.marker([lat, lng], {draggable: true}).addTo(state.mAdjustMap);
+            state.mAdjustMap.on('click', (e) => { state.mMarker.setLatLng(e.latlng); updateCoords(e.latlng.lat, e.latlng.lng); });
+            state.mMarker.on('dragend', () => { const p = state.mMarker.getLatLng(); updateCoords(p.lat, p.lng); });
+        }
+        function updateCoords(lat, lng) { document.getElementById('m-lat').value = lat; document.getElementById('m-lng').value = lng; }
         function logout() { sessionStorage.clear(); location.reload(); }
         function saveMerchants() { localStorage.setItem('dc_merchants', JSON.stringify(state.merchants)); }
         function switchPanel(id) { document.querySelectorAll('.panel').forEach(p => p.classList.remove('active')); document.getElementById(id).classList.add('active'); }
-        function openLoginModal(role) { 
-            state.currentRole = role; 
-            document.getElementById('login-title').innerText = role === 'admin' ? 'Acceso Administrador' : 'Acceso Comerciantes';
-            document.getElementById('login-modal').classList.add('active'); 
-        }
-        function openProductModal() { document.getElementById('product-modal').classList.add('active'); }
+        function openLoginModal(role) { state.currentRole = role; document.getElementById('login-modal').classList.add('active'); }
         function closeModal(id) { document.getElementById(id).classList.remove('active'); }
         function toBase64(file) { return new Promise(r => { const f = new FileReader(); f.readAsDataURL(file); f.onload = () => r(f.result); }); }
         function updateCategorySelectors() {
             const sel = document.getElementById('m-rubro');
             if(sel) sel.innerHTML = state.categories.map(c => `<option value="${c}">${c}</option>`).join('');
             const list = document.getElementById('categories-list');
-            if(list) list.innerHTML = state.categories.map(c => `<span class="badge badge-active">${c} <b onclick="deleteCategory('${c}')" style="cursor:pointer;margin-left:5px; color:#ef4444;">×</b></span>`).join('');
+            if(list) list.innerHTML = state.categories.map(c => `<span class="badge badge-active">${c} <b onclick="deleteCategory('${c}')" style="cursor:pointer;margin-left:5px;">×</b></span>`).join('');
             localStorage.setItem('dc_categories', JSON.stringify(state.categories));
         }
         function addCategory() { const v = document.getElementById('new-category').value; if(v) { state.categories.push(v); document.getElementById('new-category').value = ''; updateCategorySelectors(); } }
         function deleteCategory(c) { state.categories = state.categories.filter(x => x !== c); updateCategorySelectors(); }
-        function renderInventory() { document.getElementById('inventory-body').innerHTML = state.products.filter(p => p.owner === state.currentUser).map(p => `<tr><td><img src="${p.img}" style="width:40px;height:40px;object-fit:cover; border-radius:5px;"></td><td>${p.name}</td><td>$${p.price}</td><td><button onclick="deleteProduct(${p.id})" class="btn btn-danger btn-small">Eliminar</button></td></tr>`).join(''); }
-        async function saveProduct() { 
-            const name = document.getElementById('p-name').value;
-            const price = document.getElementById('p-price').value;
-            const file = document.getElementById('p-image').files[0];
-            if(!name || !price) return alert("Nombre y precio obligatorios");
-            state.products.push({ id: Date.now(), name, price, img: file ? await toBase64(file) : '', owner: state.currentUser, store: state.merchants[state.currentUser].name }); 
-            localStorage.setItem('dc_products', JSON.stringify(state.products)); 
-            closeModal('product-modal'); renderInventory(); 
-        }
-        function deleteProduct(id) { if(confirm("¿Eliminar producto?")) { state.products = state.products.filter(p => p.id !== id); localStorage.setItem('dc_products', JSON.stringify(state.products)); renderInventory(); } }
+        function deleteProduct(id) { if(confirm("¿Eliminar?")) { state.products = state.products.filter(p => p.id !== id); localStorage.setItem('dc_products', JSON.stringify(state.products)); renderInventory(); } }
         function updateStatus(email, s) { state.merchants[email].status = s; saveMerchants(); renderAdmin(); }
-        function deleteMerchant(email) { if(confirm("¿Eliminar definitivamente al comercio y sus productos?")) { delete state.merchants[email]; state.products = state.products.filter(p => p.owner !== email); saveMerchants(); localStorage.setItem('dc_products', JSON.stringify(state.products)); renderAdmin(); } }
+        function deleteMerchant(email) { if(confirm("¿Eliminar comercio?")) { delete state.merchants[email]; state.products = state.products.filter(p => p.owner !== email); saveMerchants(); localStorage.setItem('dc_products', JSON.stringify(state.products)); renderAdmin(); } }
         function closeMap() { document.getElementById('map-container').style.display = 'none'; }
     </script>
 </body>
