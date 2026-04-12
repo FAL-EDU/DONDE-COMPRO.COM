@@ -510,34 +510,121 @@ nav { width: 100%; justify-content: center; }
 </div>
 </div>
 </div>
-const firebaseConfig = {
-apiKey: "AIzaSyB3kBkd3pj-o8RPZxXJfOo7GTl64d7un7c",
-authDomain: "donde-compro-12345.firebaseapp.com",
-projectId: "donde-compro-12345",
-storageBucket: "donde-compro-12345.firebasestorage.app",
-messagingSenderId: "769310157775",
-appId: "1:769310157775:web:ab9db00bc911fb3abdc0ba",
-measurementId: "G-NQZXDP6TS6"
-};
-<script type="module>
- import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-import { getAuth } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-const firebaseConfig = {
-  apiKey: "AIzaSyB3kBkd3pj-o8RPZxXJfOo7GTl64d7un7c",
-  authDomain: "donde-compro-12345.firebaseapp.com",
-  projectId: "donde-compro-12345",
-  storageBucket: "donde-compro-12345.firebasestorage.app",
-  messagingSenderId: "769310157775",
-  appId: "1:769310157775:web:ab9db00bc911fb3abdc0ba",
-  measurementId: "G-NQZXDP6TS6"
-}; 
-// Inicializar servicios
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const auth = getAuth(app);  
-<!-- Leaflet JS -->
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getFirestore, doc, setDoc, getDoc, collection, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+  import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+  // Importamos Storage para las imágenes
+  import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyB3kBkd3pj-o8RPZxXJfOo7GTl64d7un7c",
+    authDomain: "donde-compro-12345.firebaseapp.com",
+    projectId: "donde-compro-12345",
+    storageBucket: "donde-compro-12345.firebasestorage.app",
+    messagingSenderId: "769310157775",
+    appId: "1:769310157775:web:ab9db00bc911fb3abdc0ba",
+    measurementId: "G-NQZXDP6TS6"
+  }; 
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const auth = getAuth(app);
+  const storage = getStorage(app);
+
+  window.state = {
+    products: [],
+    currentUser: null,
+    currentRole: 'client',
+    categories: ['Almacén', 'Carnicería', 'Verdulería', 'Limpieza', 'Otros']
+  };
+
+  // --- LÓGICA DE IMÁGENES Y PRODUCTOS ---
+  window.saveProduct = async () => {
+    const name = document.getElementById('prod-name').value;
+    const price = document.getElementById('prod-price').value;
+    const file = document.getElementById('prod-img').files[0];
+    
+    if (!name || !price || !file) {
+      showToast("Por favor completa nombre, precio y foto", "warning");
+      return;
+    }
+
+    try {
+      showToast("Subiendo producto...", "info");
+      
+      // 1. Subir imagen a Firebase Storage
+      const storageRef = ref(storage, `products/${Date.now()}_${file.name}`);
+      const snapshot = await uploadBytes(storageRef, file);
+      const imgUrl = await getDownloadURL(snapshot.ref);
+
+      // 2. Guardar datos en Firestore con la URL de la imagen
+      await addDoc(collection(db, "products"), {
+        name,
+        price: parseFloat(price),
+        image: imgUrl,
+        merchantId: auth.currentUser.uid,
+        createdAt: new Date()
+      });
+
+      showToast("¡Producto publicado!", "success");
+      closeModal('product-modal');
+    } catch (error) {
+      console.error(error);
+      showToast("Error al publicar", "danger");
+    }
+  };
+
+  // --- AUTENTICACIÓN Y SESIÓN ---
+  onAuthStateChanged(auth, async (user) => {
+    state.currentUser = user;
+    if (user) {
+      const userSnap = await getDoc(doc(db, "users", user.uid));
+      if (userSnap.exists()) state.currentRole = userSnap.data().role;
+    } else {
+      state.currentRole = 'client';
+    }
+    syncProducts();
+    renderAll();
+  });
+
+  function syncProducts() {
+    onSnapshot(collection(db, "products"), (snapshot) => {
+      state.products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      renderProducts(state.products);
+    });
+  }
+
+  // --- EXPOSICIÓN DE FUNCIONES AL HTML ---
+  window.ejecutarRegistro = async () => {
+    const email = document.getElementById('reg-email').value;
+    const password = document.getElementById('reg-password').value;
+    const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+    
+    if (!regex.test(password)) {
+      showToast("Contraseña débil: usa 8+ caracteres, mayúscula y número.", "danger");
+      return;
+    }
+
+    try {
+      const res = await createUserWithEmailAndPassword(auth, email, password);
+      await setDoc(doc(db, "users", res.user.uid), { email, role: 'merchant' });
+      showToast("Comercio registrado", "success");
+    } catch (e) { showToast(e.message, "danger"); }
+  };
+
+  window.login = async () => {
+    const email = document.getElementById('login-email').value;
+    const pass = document.getElementById('login-pass').value;
+    try {
+      await signInWithEmailAndPassword(auth, email, pass);
+      showToast("Sesión iniciada", "success");
+      closeModal('login-modal');
+    } catch (e) { showToast("Error de acceso", "danger"); }
+  };
+
+  window.logout = () => signOut(auth).then(() => renderAll());
+</script>
 // ===== ESTADO =====
 const state = {
 currentUser: null,
@@ -553,10 +640,8 @@ map: null,
 mapMarkers: [],
 categories: []
 };
-
 // ✅ SIN CONTRASEÑAS HARDCODEADAS
 // 🔒 PARA PRODUCCIÓN: Usar Firebase Authentication
-
 // ===== INICIALIZACIÓN =====
 document.addEventListener('DOMContentLoaded', () => {
 checkSession();
