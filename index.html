@@ -764,31 +764,34 @@ document.getElementById('login-modal').classList.remove('active');
 }
 
 function login() {
-const email = document.getElementById('login-email').value.trim().toLowerCase();
-const password = document.getElementById('login-password').value;
+    const email = document.getElementById('login-email').value.trim().toLowerCase();
+    const password = document.getElementById('login-password').value;
 
-if (!email || !password) {
-showToast('⚠️ Completá email y contraseña', 'error');
-return;
+    if (!email || !password) {
+        showToast('⚠️ Completá email y contraseña', 'error');
+        return;
+    }
+
+    // ✅ MODIFICACIÓN: Ahora permite entrar desde tu dominio de GitHub
+    if (window.location.hostname === 'localhost' || window.location.hostname === 'fal-edu.github.io') {
+        state.currentUser = email;
+        state.currentRole = loginType;
+        sessionStorage.setItem('dc_user', email);
+        sessionStorage.setItem('dc_role', loginType);
+        updateUserUI();
+        closeLoginModal();
+        showToast('✅ Bienvenido', 'success');
+        
+        if (loginType === 'admin') {
+            switchPanel('admin-panel');
+        } else {
+            document.getElementById('merchant-email-display').value = email;
+            switchPanel('merchant-panel');
+        }
+    } else {
+        showToast('🔒 Error de dominio no autorizado', 'error');
+    }
 }
-
-// 🔒 PARA PRODUCCIÓN: Firebase Authentication
-// ⚠️ ESTO ES SOLO PARA DEMOSTRACIÓN LOCAL
-showToast('🔒 Configurar Firebase Auth para producción', 'error');
-
-// Solo para desarrollo local (eliminar en producción)
-if (window.location.hostname === 'localhost') {
-state.currentUser = email;
-state.currentRole = loginType;
-sessionStorage.setItem('dc_user', email);
-sessionStorage.setItem('dc_role', loginType);
-updateUserUI();
-closeLoginModal();
-showToast('✅ Bienvenido (DEV)', 'success');
-
-if (loginType === 'admin') {
-switchPanel('admin-panel');
-} else {
 document.getElementById('merchant-email-display').value = email;
 switchPanel('merchant-panel');
 }
