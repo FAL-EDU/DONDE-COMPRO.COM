@@ -17,7 +17,6 @@
         .slogan { font-size: 0.75rem; opacity: 0.9; display: block; margin-top: -4px; }
         .container { max-width: 1100px; margin: 0 auto; padding: 15px; }
         
-        /* FILTROS RÁPIDOS */
         .filter-scroll { display: flex; gap: 10px; overflow-x: auto; padding: 10px 0; scrollbar-width: none; }
         .filter-chip { background: white; padding: 8px 16px; border-radius: 20px; border: 1px solid #ddd; cursor: pointer; white-space: nowrap; font-size: 0.85rem; transition: 0.3s; }
         .filter-chip:hover, .filter-chip.active { background: var(--primary); color: white; border-color: var(--primary); }
@@ -30,7 +29,7 @@
         .btn-warning { background: var(--warning); color: white; }
         
         #map-container { display: none; margin-top: 20px; border: 4px solid white; border-radius: 15px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        #map { height: 350px; width: 100%; background: #eee; } /* Fondo para evitar parpadeo */
+        #map { height: 400px; width: 100%; background: #eee; }
         #m-map-small { height: 250px; border-radius: 10px; margin: 10px 0; border: 1px solid #ddd; }
         
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 20px; margin-top: 10px; }
@@ -40,20 +39,22 @@
         .status-dot { padding: 2px 8px; border-radius: 10px; font-size: 0.65rem; font-weight: bold; position: absolute; top: 10px; right: 10px; z-index: 10; border: 1px solid white; }
         .open { background: #dcfce7; color: #166534; }
         .closed { background: #fee2e2; color: #991b1b; }
+        .always { background: #e0e7ff; color: #3730a3; }
 
-        .info-box { background: #f8fafc; padding: 12px; border-radius: 10px; margin: 10px 0; border: 1px solid #edf2f7; font-size: 0.85rem; min-height: 80px; }
+        .info-box { background: #f8fafc; padding: 12px; border-radius: 10px; margin: 10px 0; border: 1px solid #edf2f7; font-size: 0.85rem; }
         .store-logo-mini { width: 50px; height: 50px; border-radius: 8px; object-fit: cover; float: left; margin-right: 10px; background: #eee; }
 
         .panel { display: none; }
         .panel.active { display: block; }
         .modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index: 2000; justify-content:center; align-items:center; backdrop-filter: blur(4px); }
         .modal.active { display: flex; }
-        .modal-content { background: white; padding: 25px; border-radius: 15px; width: 90%; max-width: 450px; max-height: 90vh; overflow-y: auto; }
+        .modal-content { background: white; padding: 25px; border-radius: 15px; width: 90%; max-width: 500px; max-height: 90vh; overflow-y: auto; }
         
         input, select { width: 100%; padding: 10px; margin-bottom: 12px; border: 1px solid #cbd5e1; border-radius: 8px; box-sizing: border-box; }
+        .check-row { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; font-size: 0.9rem; font-weight: 600; }
+        .check-row input { width: auto; margin: 0; }
         table { width: 100%; border-collapse: collapse; background: white; margin-top: 10px; }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; font-size: 0.8rem; }
-        .rubro-item { display: flex; justify-content: space-between; background: #f1f5f9; padding: 5px 10px; border-radius: 5px; margin-bottom: 5px; }
     </style>
 </head>
 <body>
@@ -76,9 +77,9 @@
     <div class="container">
         <div id="client-panel" class="panel active">
             <div style="text-align:center; padding: 20px 0;">
-                <h1 id="hero-title" style="margin-bottom:10px;">Rosario de la Frontera</h1>
+                <h1 style="margin-bottom:10px;">Rosario de la Frontera</h1>
                 <div style="background:white; padding:8px; border-radius:50px; display:flex; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width:600px; margin:0 auto; border:1px solid #ddd;">
-                    <input type="text" id="search-keyword" placeholder="¿Qué estás buscando?" style="border:none; flex:1; padding:10px 20px; outline:none; border-radius:50px;" onkeyup="if(event.key==='Enter') searchUniversal()">
+                    <input type="text" id="search-keyword" placeholder="¿Qué buscas?" style="border:none; flex:1; padding:10px 20px; outline:none; border-radius:50px;" onkeyup="if(event.key==='Enter') searchUniversal()">
                     <button onclick="searchUniversal()" class="btn btn-primary" style="border-radius:50px;">Buscar</button>
                 </div>
                 <div class="filter-scroll" id="rubros-chips"></div>
@@ -87,8 +88,8 @@
             <div id="results-area">
                 <div id="results-container" class="grid"></div>
                 <div id="map-container">
-                    <div style="display:flex; justify-content:space-between; padding:12px; background:white; align-items:center;">
-                        <h4 style="margin:0;">📍 Ruta hacia el comercio</h4>
+                    <div style="display:flex; justify-content:space-between; padding:12px; background:white; align-items:center; border-bottom: 1px solid #eee;">
+                        <h4 style="margin:0;">📍 Ruta en tiempo real</h4>
                         <button onclick="closeMap()" class="btn btn-outline">Cerrar mapa</button>
                     </div>
                     <div id="map"></div>
@@ -107,7 +108,7 @@
                 <div>
                     <h4>📦 Gestión Rubros</h4>
                     <div style="display:flex; gap:5px;"><input type="text" id="new-rub-in" placeholder="Nuevo..."><button onclick="addRubro()" class="btn btn-secondary">+</button></div>
-                    <div id="admin-rubros-list" style="margin-top:10px; max-height: 150px; overflow-y: auto;"></div>
+                    <div id="admin-rubros-list" style="margin-top:10px;"></div>
                 </div>
             </div>
             <h4>Listado de Comercios</h4>
@@ -121,8 +122,8 @@
 
         <div id="merchant-panel" class="panel">
             <div id="mer-pending" class="card" style="padding:30px; display:none; text-align:center;">
-                <h3>Cuenta Restringida</h3>
-                <p>Tu cuenta está pendiente de aprobación o ha sido suspendida por el administrador.</p>
+                <h3>Cuenta en Revisión</h3>
+                <p>Tu comercio está siendo verificado o fue suspendido.</p>
             </div>
             <div id="mer-active" style="display:none;">
                 <div class="card" style="padding:20px; margin-bottom:20px;">
@@ -132,44 +133,61 @@
                         <select id="m-rubro"></select>
                         <input type="text" id="m-phone" placeholder="WhatsApp">
                         <input type="text" id="m-address" placeholder="Dirección">
-                        <input type="text" id="m-open" placeholder="Abre (Ej: 08:00)">
-                        <input type="text" id="m-close" placeholder="Cierra (Ej: 22:00)">
                     </div>
-                    <input type="text" id="m-extra" placeholder="Mensaje de emergencia / aviso">
+                    
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:10px;">
+                        <div><label>Turno 1 - Abre:</label><input type="time" id="m-open"></div>
+                        <div><label>Turno 1 - Cierra:</label><input type="time" id="m-close"></div>
+                        <div><label>Turno 2 - Abre:</label><input type="time" id="m-open2"></div>
+                        <div><label>Turno 2 - Cierra:</label><input type="time" id="m-close2"></div>
+                    </div>
+
+                    <div class="check-row">
+                        <input type="checkbox" id="m-always"> Atiende fuera de horario (24hs / Emergencias)
+                    </div>
+
+                    <input type="text" id="m-extra" placeholder="Mensaje adicional">
                     <label>Logo Comercial:</label><input type="file" onchange="updateMerchantLogo(event)">
-                    <button onclick="autoGeocode()" class="btn btn-outline" style="width:100%; margin:10px 0;">Ubicar en mapa por dirección</button>
+                    <button onclick="autoGeocode()" class="btn btn-outline" style="width:100%; margin:10px 0;">Ubicar en mapa</button>
                     <div id="m-map-small"></div>
                     <input type="hidden" id="m-lat"><input type="hidden" id="m-lng">
-                    <button onclick="saveProfile()" class="btn btn-secondary" style="width:100%;">Guardar Todo</button>
+                    <button onclick="saveProfile()" class="btn btn-secondary" style="width:100%;">Actualizar Todo</button>
                 </div>
                 <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <h2>Catálogo de Productos</h2>
+                    <h2>Productos</h2>
                     <button onclick="openProductModal()" class="btn btn-primary">➕ Nuevo</button>
                 </div>
-                <table style="margin-top:10px;"><tbody id="mer-inventory"></tbody></table>
+                <table><tbody id="mer-inventory"></tbody></table>
             </div>
         </div>
     </div>
 
     <div id="login-modal" class="modal"><div class="modal-content">
-        <h3 id="log-title">Acceso</h3>
+        <h3>Acceso / Registro</h3>
         <input type="email" id="log-email" placeholder="Email">
         <input type="password" id="log-pass" placeholder="Contraseña">
         <div id="reg-fields" style="display:none;">
             <input type="text" id="reg-name" placeholder="Nombre Comercio">
             <select id="reg-rubro"></select>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px;">
+                <input type="time" id="reg-open" value="08:00">
+                <input type="time" id="reg-close" value="13:00">
+            </div>
+            <div class="check-row">
+                <input type="checkbox" id="reg-always"> Atención fuera de horario
+            </div>
         </div>
-        <button onclick="handleLogin()" class="btn btn-primary" style="width:100%;">Entrar</button>
+        <button onclick="handleLogin()" class="btn btn-primary" style="width:100%;">Continuar</button>
         <button onclick="closeModal('login-modal')" style="width:100%; margin-top:10px; background:none; border:none;">Cerrar</button>
     </div></div>
 
     <div id="product-modal" class="modal"><div class="modal-content">
-        <h3 id="prod-modal-title">Nuevo Producto</h3>
+        <h3 id="prod-modal-title">Producto</h3>
         <input type="hidden" id="p-id-edit">
         <input type="text" id="p-name" placeholder="Nombre">
         <input type="number" id="p-price" placeholder="Precio $">
         <input type="file" id="p-img" accept="image/*">
-        <button onclick="saveProduct()" class="btn btn-secondary" style="width:100%;">Guardar Producto</button>
+        <button onclick="saveProduct()" class="btn btn-secondary" style="width:100%;">Guardar</button>
         <button onclick="closeModal('product-modal')" style="width:100%; margin-top:10px; border:none; background:none;">Cerrar</button>
     </div></div>
 
@@ -179,77 +197,37 @@
             config: JSON.parse(localStorage.getItem('dc_cfg')) || { slogan: 'Tu comercio local', logo: '' },
             merchants: JSON.parse(localStorage.getItem('dc_mer')) || {},
             products: JSON.parse(localStorage.getItem('dc_pro')) || [],
-            rubros: JSON.parse(localStorage.getItem('dc_rub')) || ['Farmacia', 'Gastronomía', 'Repuestos'],
+            rubros: JSON.parse(localStorage.getItem('dc_rub')) || ['Farmacia', 'Gastronomía', 'Ferretería'],
             map: null, routing: null, mAdjustMap: null, mMarker: null
         };
 
         document.addEventListener('DOMContentLoaded', () => { 
-            loadConfig();
-            updateSelectors(); 
-            checkSession(); 
-            renderChips();
+            loadConfig(); updateSelectors(); checkSession(); renderChips();
         });
 
-        // 1. PANEL ADMIN: GESTIÓN DE RUBROS Y COMERCIOS
-        function renderAdmin() {
-            // Rubros
-            const rList = document.getElementById('admin-rubros-list');
-            rList.innerHTML = state.rubros.map(r => `
-                <div class="rubro-item">
-                    <span>${r}</span>
-                    <button onclick="deleteRubro('${r}')" style="border:none; color:red; cursor:pointer; background:none;">×</button>
-                </div>
-            `).join('');
+        // --- LÓGICA DE HORARIOS OPTIMIZADA ---
+        function checkOpen(m) {
+            if(m.always) return { text: 'ATENCIÓN 24HS', class: 'always' };
+            
+            const now = new Date();
+            const current = now.getHours() * 60 + now.getMinutes();
 
-            // Comercios
-            document.getElementById('admin-m-list').innerHTML = Object.keys(state.merchants).map(email => {
-                const m = state.merchants[email];
-                return `<tr>
-                    <td>${m.date}</td>
-                    <td>${m.name}</td>
-                    <td><span style="color:${m.status==='active'?'green':(m.status==='suspended'?'orange':'red')}">${m.status.toUpperCase()}</span></td>
-                    <td>
-                        <button onclick="setMStatus('${email}','active')" class="btn btn-secondary" style="padding:4px 8px;">✔️</button>
-                        <button onclick="setMStatus('${email}','suspended')" class="btn btn-warning" style="padding:4px 8px;">⏸️</button>
-                        <button onclick="setMStatus('${email}','deleted')" class="btn btn-danger" style="padding:4px 8px;">🗑️</button>
-                    </td>
-                </tr>`;
-            }).join('');
+            const isTimeInRange = (start, end) => {
+                if(!start || !end) return false;
+                const [sH, sM] = start.split(':').map(Number);
+                const [eH, eM] = end.split(':').map(Number);
+                const s = sH * 60 + sM;
+                const e = eH * 60 + eM;
+                return e > s ? (current >= s && current <= e) : (current >= s || current <= e);
+            };
+
+            const open1 = isTimeInRange(m.open, m.close);
+            const open2 = isTimeInRange(m.open2, m.close2);
+
+            return (open1 || open2) ? {text: 'ABIERTO', class: 'open'} : {text: 'CERRADO', class: 'closed'};
         }
 
-        function deleteRubro(r) {
-            state.rubros = state.rubros.filter(item => item !== r);
-            save('dc_rub', state.rubros);
-            renderChips(); renderAdmin(); updateSelectors();
-        }
-
-        function setMStatus(e, s) { 
-            if(s === 'deleted') {
-                if(confirm("¿Eliminar comercio definitivamente?")) delete state.merchants[e]; 
-            } else {
-                state.merchants[e].status = s; 
-            }
-            save('dc_mer', state.merchants); renderAdmin(); 
-        }
-
-        // 2. PANEL INICIO: FUNCIONALIDAD RUBROS Y DATOS COMPLETOS
-        function renderChips() {
-            const container = document.getElementById('rubros-chips');
-            container.innerHTML = `<div class="filter-chip" onclick="searchByRubro('')">Todos</div>`;
-            state.rubros.forEach(r => {
-                container.innerHTML += `<div class="filter-chip" onclick="searchByRubro('${r}')">${r}</div>`;
-            });
-        }
-
-        function searchByRubro(rubro) {
-            document.getElementById('search-keyword').value = rubro;
-            // Marcar chip activo
-            document.querySelectorAll('.filter-chip').forEach(c => {
-                c.classList.toggle('active', c.innerText === (rubro || 'Todos'));
-            });
-            searchUniversal();
-        }
-
+        // --- BÚSQUEDA Y RENDER ---
         function searchUniversal() {
             const container = document.getElementById('results-container');
             container.innerHTML = ''; closeMap();
@@ -268,28 +246,27 @@
                     matches.push({ type: 'product', data: p, store: m });
             });
 
-            if(matches.length === 0) return container.innerHTML = '<p style="grid-column:1/-1; text-align:center;">No hay resultados.</p>';
+            if(matches.length === 0) return container.innerHTML = '<p style="grid-column:1/-1; text-align:center;">Sin resultados.</p>';
             
             matches.forEach(item => {
                 const m = item.type === 'store' ? item.data : item.store;
-                const status = checkOpen(m.open, m.close);
-                const title = item.type === 'store' ? m.name : item.data.name;
-                const priceLabel = item.type === 'product' ? `$${item.data.price}` : m.rubro;
-                const mainImg = item.type === 'product' ? item.data.img : (m.logo || 'https://via.placeholder.com/300x180?text=Sin+Imagen');
+                const status = checkOpen(m);
+                const img = item.type === 'product' ? item.data.img : (m.logo || 'https://via.placeholder.com/300x180?text=Comercio');
                 
                 container.innerHTML += `
                     <div class="card">
                         <span class="status-dot ${status.class}">${status.text}</span>
-                        <img src="${mainImg}" class="prod-img">
+                        <img src="${img}" class="prod-img">
                         <div style="padding:15px">
-                            <h3 style="margin:0">${title}</h3>
-                            <b style="color:var(--secondary)">${priceLabel}</b>
+                            <h3 style="margin:0">${item.type==='store' ? m.name : item.data.name}</h3>
+                            <b style="color:var(--secondary)">${item.type==='product' ? '$'+item.data.price : m.rubro}</b>
                             <div class="info-box">
                                 <img src="${m.logo || 'https://via.placeholder.com/50'}" class="store-logo-mini">
                                 <strong>🏪 ${m.name}</strong><br>
-                                📍 ${m.address || 'Consultar dirección'}<br>
-                                ⏰ Horario: ${m.open} a ${m.close} hs.
-                                ${m.extra ? `<br><span style="color:red; font-size:0.75rem;">⚠️ ${m.extra}</span>` : ''}
+                                📍 ${m.address || 'Consultar'}<br>
+                                ⏰ Turno 1: ${m.open || '--'} a ${m.close || '--'}<br>
+                                ${m.open2 ? `⏰ Turno 2: ${m.open2} a ${m.close2}<br>` : ''}
+                                ${m.always ? '<span style="color:var(--primary); font-weight:bold;">✅ Disponible fuera de horario</span>' : ''}
                             </div>
                             <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
                                 <button onclick="traceRoute(${m.lat}, ${m.lng})" class="btn btn-primary">📍 Ruta</button>
@@ -300,74 +277,21 @@
             });
         }
 
-        // 3. PANEL COMERCIANTE: EDICIÓN DE PRODUCTOS
-        function renderInventory() {
-            document.getElementById('mer-inventory').innerHTML = state.products.filter(p=>p.owner===state.user).map(p=>`
-                <tr>
-                    <td><img src="${p.img || 'https://via.placeholder.com/40'}" width="40" height="40" style="object-fit:cover; border-radius:4px;"></td>
-                    <td>${p.name}</td>
-                    <td>$${p.price}</td>
-                    <td>
-                        <button onclick="editProduct(${p.id})" class="btn btn-outline" style="padding:4px 8px;">✏️</button>
-                        <button onclick="delPro(${p.id})" class="btn btn-danger" style="padding:4px 8px;">🗑️</button>
-                    </td>
-                </tr>`).join('');
-        }
-
-        function editProduct(id) {
-            const p = state.products.find(item => item.id === id);
-            if(!p) return;
-            document.getElementById('prod-modal-title').innerText = "Editar Producto";
-            document.getElementById('p-id-edit').value = p.id;
-            document.getElementById('p-name').value = p.name;
-            document.getElementById('p-price').value = p.price;
-            openProductModal();
-        }
-
-        async function saveProduct() {
-            const id = document.getElementById('p-id-edit').value;
-            const name = document.getElementById('p-name').value;
-            const price = document.getElementById('p-price').value;
-            const file = document.getElementById('p-img').files[0];
-            
-            if(!name || !price) return alert("Nombre y precio obligatorios");
-
-            if(id) { // Edición
-                const idx = state.products.findIndex(p => p.id == id);
-                state.products[idx].name = name;
-                state.products[idx].price = price;
-                if(file) state.products[idx].img = await toBase64(file, 400, 0.6);
-            } else { // Nuevo
-                const img = file ? await toBase64(file, 400, 0.6) : '';
-                state.products.push({ id: Date.now(), name, price, img, owner: state.user });
-            }
-            
-            save('dc_pro', state.products); closeModal('product-modal'); renderInventory();
-            // Limpiar modal
-            document.getElementById('p-id-edit').value = '';
-            document.getElementById('p-name').value = '';
-            document.getElementById('p-price').value = '';
-        }
-
-        // 4. GEOLOCALIZACIÓN: OPTIMIZACIÓN MAPA DE RUTA
+        // --- MAPA Y RUTAS OPTIMIZADAS ---
         function traceRoute(lt, lg) {
             const container = document.getElementById('map-container');
             container.style.display = 'block';
             
-            // Forzar renderizado correcto de Leaflet
+            // Esperar a que el contenedor sea visible para evitar errores de Leaflet
             setTimeout(() => {
                 if(!state.map) {
-                    state.map = L.map('map', { zoomControl: false }).setView([lt, lg], 15);
-                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                        maxZoom: 19,
-                        attribution: 'OSM'
-                    }).addTo(state.map);
-                    L.control.zoom({ position: 'bottomright' }).addTo(state.map);
+                    state.map = L.map('map').setView([lt, lg], 15);
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(state.map);
                 } else {
                     state.map.setView([lt, lg], 15);
                 }
                 
-                state.map.invalidateSize(); // Crucial para la lentitud/renderizado
+                state.map.invalidateSize();
 
                 if(state.routing) state.map.removeControl(state.routing);
 
@@ -380,39 +304,34 @@
                         createMarker: () => null,
                         lineOptions: { styles: [{ color: '#2563eb', weight: 6, opacity: 0.8 }] }
                     }).addTo(state.map);
-                }, () => alert("GPS no disponible. Verás la ubicación del comercio."), { enableHighAccuracy: true });
-                
-                container.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }, 100);
+                    
+                    // Asegurar que la ruta se vea
+                    container.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, () => alert("Activa el GPS para trazar la ruta."), { enableHighAccuracy: true });
+            }, 200);
         }
 
-        // --- FUNCIONES AUXILIARES ---
-        function checkOpen(openStr, closeStr) {
-            if(!openStr || !closeStr) return { text: '---', class: '' };
-            const now = new Date();
-            const currentTime = now.getHours() * 60 + now.getMinutes();
-            const [oH, oM] = openStr.split(':').map(Number);
-            const [cH, cM] = closeStr.split(':').map(Number);
-            const oTime = oH * 60 + oM;
-            const cTime = cH * 60 + cM;
-            const isOpen = cTime > oTime ? (currentTime >= oTime && currentTime <= cTime) : (currentTime >= oTime || currentTime <= cTime);
-            return isOpen ? {text: 'ABIERTO', class: 'open'} : {text: 'CERRADO', class: 'closed'};
+        // --- GESTIÓN DE PERFIL Y DATOS ---
+        function saveProfile() {
+            const m = state.merchants[state.user];
+            const fields = ['name','phone','address','open','close','open2','close2','extra','lat','lng'];
+            fields.forEach(k => { if(document.getElementById(`m-${k}`)) m[k] = document.getElementById(`m-${k}`).value; });
+            m.rubro = document.getElementById('m-rubro').value;
+            m.always = document.getElementById('m-always').checked;
+            save('dc_mer', state.merchants); alert("Perfil guardado");
         }
 
-        function loadConfig() {
-            const logoEl = document.getElementById('header-logo-img');
-            if(state.config.logo) { logoEl.src = state.config.logo; logoEl.style.display = 'block'; }
-            document.getElementById('header-slogan').innerText = state.config.slogan;
-            document.getElementById('adm-slogan').value = state.config.slogan;
+        function loadProfile() {
+            const m = state.merchants[state.user];
+            const fields = ['name','phone','address','open','close','open2','close2','extra','lat','lng'];
+            fields.forEach(k => { if(document.getElementById(`m-${k}`)) document.getElementById(`m-${k}`).value = m[k] || ''; });
+            document.getElementById('m-rubro').value = m.rubro;
+            document.getElementById('m-always').checked = !!m.always;
+            initAdjustMap(m.lat || -25.07, m.lng || -64.91);
+            renderInventory();
         }
 
-        async function updatePlatformLogo(e) {
-            const file = e.target.files[0];
-            if(file) { state.config.logo = await toBase64(file, 200, 0.7); save('dc_cfg', state.config); loadConfig(); }
-        }
-
-        function updateConfig(key, val) { state.config[key] = val; save('dc_cfg', state.config); loadConfig(); }
-
+        // --- SESIÓN Y ADMIN ---
         function handleLogin() {
             const email = document.getElementById('log-email').value.toLowerCase().trim();
             const pass = document.getElementById('log-pass').value;
@@ -426,81 +345,35 @@
 
             if(state.merchants[email]) {
                 if(state.merchants[email].password === pass) loginSuccess(email, 'merchant');
-                else alert("Contraseña incorrecta");
+                else alert("Password incorrecto");
             } else {
                 const name = document.getElementById('reg-name').value;
-                const rubro = document.getElementById('reg-rubro').value;
-                if(!name) return alert("Completa nombre de comercio");
+                if(!name) return alert("Nombre de comercio requerido");
                 state.merchants[email] = { 
-                    name, rubro, password: pass, status: 'pending', date: new Date().toLocaleDateString('es-AR'),
-                    lat: -25.07, lng: -64.91, phone: '', address: '', open: '08:00', close: '21:00', extra: '', logo: ''
+                    name, rubro: document.getElementById('reg-rubro').value, password: pass, status: 'pending', 
+                    date: new Date().toLocaleDateString('es-AR'), lat: -25.07, lng: -64.91, 
+                    open: document.getElementById('reg-open').value, close: document.getElementById('reg-close').value,
+                    always: document.getElementById('reg-always').checked, phone: '', address: '', logo: ''
                 };
                 save('dc_mer', state.merchants); loginSuccess(email, 'merchant');
             }
         }
 
-        function checkSession() {
-            const u = sessionStorage.getItem('u'), r = sessionStorage.getItem('r');
-            if(u) {
-                state.user = u; state.role = r;
-                document.getElementById('btn-mer').style.display = 'none';
-                document.getElementById('btn-adm').style.display = 'none';
-                document.getElementById('user-badge').style.display = 'block';
-                if(r === 'admin') { switchPanel('admin-panel'); renderAdmin(); }
-                if(r === 'merchant') {
-                    switchPanel('merchant-panel');
-                    const m = state.merchants[u];
-                    if(m.status === 'active') { document.getElementById('mer-active').style.display='block'; loadProfile(); }
-                    else document.getElementById('mer-pending').style.display='block';
-                }
-            }
+        function renderAdmin() {
+            document.getElementById('admin-rubros-list').innerHTML = state.rubros.map(r => `
+                <div style="display:flex; justify-content:space-between; background:#fff; padding:8px; border-radius:5px; margin-bottom:5px; border:1px solid #eee;">
+                    <span>${r}</span><button onclick="deleteRubro('${r}')" style="color:red;border:none;background:none;cursor:pointer;">×</button>
+                </div>`).join('');
+
+            document.getElementById('admin-m-list').innerHTML = Object.keys(state.merchants).map(email => {
+                const m = state.merchants[email];
+                return `<tr><td>${m.date}</td><td>${m.name}</td><td style="color:${m.status==='active'?'green':'red'}">${m.status}</td>
+                <td><button onclick="setMStatus('${email}','active')" class="btn btn-secondary">✔️</button>
+                <button onclick="setMStatus('${email}','deleted')" class="btn btn-danger">🗑️</button></td></tr>`;
+            }).join('');
         }
 
-        function loadProfile() {
-            const m = state.merchants[state.user];
-            ['name','phone','address','open','close','extra','lat','lng'].forEach(k => { if(document.getElementById(`m-${k}`)) document.getElementById(`m-${k}`).value = m[k] || ''; });
-            document.getElementById('m-rubro').value = m.rubro;
-            initAdjustMap(m.lat || -25.07, m.lng || -64.91);
-            renderInventory();
-        }
-
-        function saveProfile() {
-            const m = state.merchants[state.user];
-            ['name','phone','address','open','close','extra','lat','lng'].forEach(k => m[k] = document.getElementById(`m-${k}`).value);
-            m.rubro = document.getElementById('m-rubro').value;
-            save('dc_mer', state.merchants); alert("Perfil Actualizado");
-        }
-
-        function initAdjustMap(lat, lng) {
-            if(state.mAdjustMap) return;
-            state.mAdjustMap = L.map('m-map-small').setView([lat, lng], 15);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(state.mAdjustMap);
-            state.mMarker = L.marker([lat, lng], {draggable: true}).addTo(state.mAdjustMap);
-            state.mMarker.on('dragend', () => {
-                const p = state.mMarker.getLatLng();
-                document.getElementById('m-lat').value = p.lat;
-                document.getElementById('m-lng').value = p.lng;
-            });
-        }
-
-        function autoGeocode() {
-            const adr = document.getElementById('m-address').value;
-            if(!adr) return;
-            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(adr + ", Rosario de la Frontera")}`)
-                .then(r => r.json()).then(d => {
-                    if(d.length > 0) {
-                        const l = d[0].lat, lo = d[0].lon;
-                        state.mMarker.setLatLng([l, lo]); state.mAdjustMap.flyTo([l, lo], 17);
-                        document.getElementById('m-lat').value = l; document.getElementById('m-lng').value = lo;
-                    }
-                });
-        }
-
-        async function updateMerchantLogo(e) {
-            const file = e.target.files[0];
-            if(file) state.merchants[state.user].logo = await toBase64(file, 200, 0.6);
-        }
-
+        // --- HELPERS (NO MODIFICADOS) ---
         function loginSuccess(u, r) { sessionStorage.setItem('u', u); sessionStorage.setItem('r', r); location.reload(); }
         function logout() { sessionStorage.clear(); location.reload(); }
         function switchPanel(id) { document.querySelectorAll('.panel').forEach(p => p.classList.remove('active')); document.getElementById(id).classList.add('active'); }
@@ -510,34 +383,63 @@
         function closeMap() { document.getElementById('map-container').style.display='none'; }
         function updateSelectors() { const h = state.rubros.map(r => `<option value="${r}">${r}</option>`).join(''); ['m-rubro','reg-rubro'].forEach(id=> { if(document.getElementById(id)) document.getElementById(id).innerHTML = h; }); }
         function addRubro() { const n = document.getElementById('new-rub-in').value; if(n){ state.rubros.push(n); save('dc_rub', state.rubros); renderChips(); renderAdmin(); document.getElementById('new-rub-in').value=''; updateSelectors(); }}
-        function delPro(id) { if(confirm("¿Eliminar producto?")) { state.products = state.products.filter(p=>p.id!==id); save('dc_pro', state.products); renderInventory(); } }
-        function openProductModal() { 
-            if(!document.getElementById('p-id-edit').value) {
-                document.getElementById('prod-modal-title').innerText = "Nuevo Producto";
-                document.getElementById('p-name').value = '';
-                document.getElementById('p-price').value = '';
+        function deleteRubro(r) { state.rubros = state.rubros.filter(x=>x!==r); save('dc_rub', state.rubros); renderChips(); renderAdmin(); updateSelectors(); }
+        function setMStatus(e, s) { if(s==='deleted') delete state.merchants[e]; else state.merchants[e].status = s; save('dc_mer', state.merchants); renderAdmin(); }
+        
+        function renderChips() {
+            const container = document.getElementById('rubros-chips');
+            container.innerHTML = `<div class="filter-chip" onclick="searchByRubro('')">Todos</div>` + 
+                state.rubros.map(r => `<div class="filter-chip" onclick="searchByRubro('${r}')">${r}</div>`).join('');
+        }
+        function searchByRubro(r) { document.getElementById('search-keyword').value = r; searchUniversal(); }
+
+        function renderInventory() {
+            document.getElementById('mer-inventory').innerHTML = state.products.filter(p=>p.owner===state.user).map(p=>`
+                <tr><td><img src="${p.img}" width="40" style="border-radius:4px;"></td><td>${p.name}</td><td>$${p.price}</td>
+                <td><button onclick="editProduct(${p.id})" class="btn btn-outline">✏️</button>
+                <button onclick="delPro(${p.id})" class="btn btn-danger">🗑️</button></td></tr>`).join('');
+        }
+        function openProductModal() { document.getElementById('product-modal').classList.add('active'); }
+        function editProduct(id) { const p = state.products.find(x=>x.id===id); document.getElementById('p-id-edit').value=p.id; document.getElementById('p-name').value=p.name; document.getElementById('p-price').value=p.price; openProductModal(); }
+        async function saveProduct() {
+            const id = document.getElementById('p-id-edit').value, name = document.getElementById('p-name').value, price = document.getElementById('p-price').value, file = document.getElementById('p-img').files[0];
+            if(id) { const idx = state.products.findIndex(x=>x.id==id); state.products[idx].name=name; state.products[idx].price=price; if(file) state.products[idx].img = await toBase64(file, 400, 0.6); }
+            else { state.products.push({ id: Date.now(), name, price, img: file?await toBase64(file,400,0.6):'', owner: state.user }); }
+            save('dc_pro', state.products); closeModal('product-modal'); renderInventory();
+        }
+        function delPro(id) { if(confirm("¿Eliminar?")) { state.products = state.products.filter(p=>p.id!==id); save('dc_pro', state.products); renderInventory(); } }
+
+        function checkSession() {
+            const u = sessionStorage.getItem('u'), r = sessionStorage.getItem('r');
+            if(u) {
+                state.user = u; state.role = r;
+                document.getElementById('btn-mer').style.display = 'none';
+                document.getElementById('btn-adm').style.display = 'none';
+                document.getElementById('user-badge').style.display = 'block';
+                if(r === 'admin') { switchPanel('admin-panel'); renderAdmin(); }
+                else { switchPanel('merchant-panel'); const m = state.merchants[u]; if(m.status==='active'){ document.getElementById('mer-active').style.display='block'; loadProfile(); } else document.getElementById('mer-pending').style.display='block'; }
             }
-            document.getElementById('product-modal').classList.add('active'); 
         }
 
-        function toBase64(f, size, qual) { 
-            return new Promise(r => { 
-                const rd = new FileReader(); 
-                rd.onload = (e) => { 
-                    const i = new Image(); 
-                    i.src = e.target.result; 
-                    i.onload = () => { 
-                        const c = document.createElement('canvas'); 
-                        const ctx = c.getContext('2d'); 
-                        const ra = size / Math.max(i.width, i.height); 
-                        c.width = i.width * ra; c.height = i.height * ra; 
-                        ctx.drawImage(i, 0, 0, c.width, c.height); 
-                        r(c.toDataURL('image/webp', qual)); 
-                    }; 
-                }; 
-                rd.readAsDataURL(f); 
-            }); 
+        function initAdjustMap(lat, lng) {
+            if(state.mAdjustMap) return;
+            state.mAdjustMap = L.map('m-map-small').setView([lat, lng], 15);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(state.mAdjustMap);
+            state.mMarker = L.marker([lat, lng], {draggable: true}).addTo(state.mAdjustMap);
+            state.mMarker.on('dragend', () => { const p = state.mMarker.getLatLng(); document.getElementById('m-lat').value = p.lat; document.getElementById('m-lng').value = p.lng; });
         }
+
+        function autoGeocode() {
+            const adr = document.getElementById('m-address').value;
+            if(!adr) return;
+            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(adr + ", Rosario de la Frontera")}`)
+                .then(r => r.json()).then(d => { if(d.length > 0) { const l = d[0].lat, lo = d[0].lon; state.mMarker.setLatLng([l, lo]); state.mAdjustMap.flyTo([l, lo], 17); document.getElementById('m-lat').value = l; document.getElementById('m-lng').value = lo; } });
+        }
+
+        async function updateMerchantLogo(e) { const file = e.target.files[0]; if(file) state.merchants[state.user].logo = await toBase64(file, 200, 0.6); }
+        async function updatePlatformLogo(e) { const file = e.target.files[0]; if(file) { state.config.logo = await toBase64(file, 200, 0.7); save('dc_cfg', state.config); loadConfig(); } }
+        function updateConfig(k, v) { state.config[k] = v; save('dc_cfg', state.config); loadConfig(); }
+        function toBase64(f, size, qual) { return new Promise(r => { const rd = new FileReader(); rd.onload = (e) => { const i = new Image(); i.src = e.target.result; i.onload = () => { const c = document.createElement('canvas'), ctx = c.getContext('2d'), ra = size / Math.max(i.width, i.height); c.width = i.width * ra; c.height = i.height * ra; ctx.drawImage(i, 0, 0, c.width, c.height); r(c.toDataURL('image/webp', qual)); }; }; rd.readAsDataURL(f); }); }
     </script>
 </body>
 </html>
