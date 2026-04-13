@@ -34,7 +34,7 @@
         .card-body { padding: 15px; flex-grow: 1; display: flex; flex-direction: column; }
         
         .store-tag { background: #fff; padding: 10px; border-radius: 8px; font-size: 0.85rem; border: 1px solid #e2e8f0; margin: 10px 0; color: #1e40af; display: flex; align-items: center; gap: 10px; }
-        .store-logo-mini { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary); background: white; flex-shrink: 0; }
+        .store-logo-mini { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary); background: #f8fafc; flex-shrink: 0; }
 
         .panel { display: none; }
         .panel.active { display: block; }
@@ -47,6 +47,8 @@
         .badge { padding: 3px 8px; border-radius: 12px; font-size: 0.65rem; font-weight: bold; text-transform: uppercase; }
         .badge-active { background: #dcfce7; color: #166534; }
         .badge-suspended { background: #fee2e2; color: #991b1b; }
+        
+        .category-item { background: #f8fafc; border: 1px solid #e2e8f0; padding: 10px; border-radius: 8px; margin-bottom: 5px; display: flex; align-items: center; gap: 10px; }
     </style>
 </head>
 <body>
@@ -97,11 +99,6 @@
                     <select id="m-rubro"></select>
                     <input type="text" id="m-address" placeholder="Dirección completa">
                     <input type="text" id="m-phone" placeholder="WhatsApp">
-                    <div style="grid-column: span 2;">
-                        <label style="font-size: 0.8rem; display:block; margin-bottom:5px;">Logo de tu Comercio:</label>
-                        <input type="file" id="m-logo-input" accept="image/*" onchange="previewMerchantLogo(event)">
-                        <div id="m-logo-preview" style="margin-top:10px;"></div>
-                    </div>
                 </div>
                 <button onclick="autoGeocode()" class="btn btn-primary" style="margin-top:15px; width:100%;">1. Ubicar dirección en el mapa</button>
                 <div id="merchant-map-adjust" style="display:block;">
@@ -113,8 +110,8 @@
             </div>
 
             <div style="display:flex; justify-content:space-between; align-items:center; margin-top: 30px;">
-                <h2>Gestión de Productos</h2>
-                <button onclick="openProductModal()" id="btn-new-product" class="btn btn-primary" style="display:none;">➕ Cargar Nuevo Producto</button>
+                <h2>Mis Productos</h2>
+                <button onclick="openProductModal()" id="btn-new-product" class="btn btn-primary" style="display:none;">➕ Nuevo Producto</button>
             </div>
             <table>
                 <thead><tr><th>Foto</th><th>Producto</th><th>Precio</th><th>Acciones</th></tr></thead>
@@ -125,23 +122,25 @@
         <div id="admin-panel" class="panel">
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
                 <div class="card" style="padding:15px;">
-                    <h4>🎨 Personalización Web</h4>
-                    <label style="font-size:0.8rem;">Logo de la Web:</label>
+                    <h4>🎨 Estética General</h4>
+                    <label style="font-size:0.8rem;">Logo de la Plataforma:</label>
                     <input type="file" onchange="updatePlatformLogo(event)" style="display:block; margin:10px 0;">
                     <button onclick="removePlatformLogo()" class="btn btn-outline btn-small">Usar solo texto</button>
                 </div>
                 <div class="card" style="padding:15px;">
-                    <h4>📦 Categorías</h4>
-                    <div style="display:flex; gap:5px;">
-                        <input type="text" id="new-category" placeholder="Nuevo rubro..." style="flex:1; padding:5px;">
-                        <button onclick="addCategory()" class="btn btn-secondary btn-small">Añadir</button>
+                    <h4>📦 Rubros y Logos</h4>
+                    <div style="display:flex; flex-direction:column; gap:8px;">
+                        <input type="text" id="new-category" placeholder="Nombre del rubro (ej. Pizza)">
+                        <label style="font-size:0.7rem;">Logo del rubro:</label>
+                        <input type="file" id="new-category-logo" accept="image/*">
+                        <button onclick="addCategory()" class="btn btn-secondary">Añadir Rubro</button>
                     </div>
-                    <div id="categories-list" style="margin-top:10px; display:flex; flex-wrap:wrap; gap:5px;"></div>
+                    <div id="categories-list" style="margin-top:15px;"></div>
                 </div>
             </div>
             <h4 style="margin-top:30px;">Comercios Registrados</h4>
             <table>
-                <thead><tr><th>Comercio</th><th>Estado</th><th>Acciones</th></tr></thead>
+                <thead><tr><th>Comercio</th><th>Rubro</th><th>Estado</th><th>Acciones</th></tr></thead>
                 <tbody id="admin-merchants-body"></tbody>
             </table>
             <br><button onclick="switchPanel('client-panel')" class="btn btn-outline">⬅ Salir</button>
@@ -150,19 +149,20 @@
 
     <div id="product-modal" class="modal"><div class="modal-content">
         <h3 id="p-modal-title">Datos del Producto</h3>
-        <input type="hidden" id="p-id-edit"> <input type="text" id="p-name" placeholder="Nombre del producto" style="width:100%; margin-bottom:10px; padding:12px; box-sizing:border-box; border: 1px solid #ddd; border-radius: 8px;">
-        <input type="number" id="p-price" placeholder="Precio $" style="width:100%; margin-bottom:10px; padding:12px; box-sizing:border-box; border: 1px solid #ddd; border-radius: 8px;">
-        <label style="font-size: 0.8rem; color: #666;">Foto (opcional):</label>
-        <input type="file" id="p-image" accept="image/*" style="width:100%; margin-bottom:15px; margin-top: 5px;">
-        <button onclick="saveProduct()" class="btn btn-secondary" style="width:100%; padding: 12px;">Guardar Cambios</button>
+        <input type="hidden" id="p-id-edit"> 
+        <input type="text" id="p-name" placeholder="Nombre" style="width:100%; margin-bottom:10px; padding:12px; box-sizing:border-box; border:1px solid #ddd; border-radius:8px;">
+        <input type="number" id="p-price" placeholder="Precio $" style="width:100%; margin-bottom:10px; padding:12px; box-sizing:border-box; border:1px solid #ddd; border-radius:8px;">
+        <label style="font-size: 0.8rem;">Foto:</label>
+        <input type="file" id="p-image" accept="image/*" style="width:100%; margin-bottom:15px;">
+        <button onclick="saveProduct()" class="btn btn-secondary" style="width:100%; padding: 12px;">Guardar</button>
         <button onclick="closeModal('product-modal')" style="width:100%; margin-top:10px; border:none; background:none; cursor:pointer;">Cancelar</button>
     </div></div>
 
     <div id="login-modal" class="modal"><div class="modal-content">
-        <h3>Acceso al Sistema</h3>
-        <input type="email" id="login-email" placeholder="Correo" style="width:100%; margin-bottom:10px; padding:12px; box-sizing:border-box; border: 1px solid #ddd; border-radius: 8px;">
+        <h3>Acceso</h3>
+        <input type="email" id="login-email" placeholder="Email" style="width:100%; margin-bottom:10px; padding:12px; box-sizing:border-box; border: 1px solid #ddd; border-radius: 8px;">
         <input type="password" id="login-password" placeholder="Contraseña" style="width:100%; margin-bottom:15px; padding:12px; box-sizing:border-box; border: 1px solid #ddd; border-radius: 8px;">
-        <button onclick="login()" class="btn btn-primary" style="width:100%; padding: 12px;">Ingresar</button>
+        <button onclick="login()" class="btn btn-primary" style="width:100%; padding: 12px;">Entrar</button>
         <button onclick="closeModal('login-modal')" style="width:100%; margin-top:10px; border:none; background:none; cursor:pointer;">Cerrar</button>
     </div></div>
 
@@ -172,7 +172,7 @@
             currentRole: null,
             merchants: JSON.parse(localStorage.getItem('dc_merchants')) || {},
             products: JSON.parse(localStorage.getItem('dc_products')) || [],
-            categories: JSON.parse(localStorage.getItem('dc_categories')) || ['Alimentos', 'Farmacia', 'Ferretería'],
+            categories: JSON.parse(localStorage.getItem('dc_categories_v2')) || [], // Guardado como objeto {name, logo}
             logo: localStorage.getItem('dc_logo') || '',
             map: null, mAdjustMap: null, mMarker: null, routing: null
         };
@@ -181,10 +181,10 @@
             applyLogo(); 
             updateCategorySelectors(); 
             checkSession(); 
-            searchProducts(); // Carga inicial de productos
+            searchProducts(); 
         });
 
-        // --- FUNCIONES DE BÚSQUEDA Y RENDERIZADO ---
+        // --- BÚSQUEDA Y RENDER CLIENTE ---
         function searchProducts() {
             const key = document.getElementById('search-keyword').value.toLowerCase().trim();
             const container = document.getElementById('products-container');
@@ -193,55 +193,79 @@
                 const m = state.merchants[p.owner] || {};
                 if (m.status !== 'active') return false;
                 if (!key) return true;
-                
-                const matchProducto = p.name.toLowerCase().includes(key);
-                const matchComercio = (m.name || '').toLowerCase().includes(key);
-                return matchProducto || matchComercio;
+                return p.name.toLowerCase().includes(key) || (m.name || '').toLowerCase().includes(key);
             });
 
             if (filtered.length === 0) {
-                container.innerHTML = `<p style="text-align:center; grid-column: 1/-1; padding: 20px; color:#64748b;">No se encontraron resultados.</p>`;
+                container.innerHTML = `<p style="text-align:center; grid-column:1/-1; padding:20px;">Sin resultados.</p>`;
                 return;
             }
 
             container.innerHTML = filtered.map(p => {
                 const m = state.merchants[p.owner];
+                // Buscamos el logo del rubro asignado al comercio
+                const catObj = state.categories.find(c => c.name === m.rubro);
+                const rubroLogo = catObj ? catObj.logo : 'https://via.placeholder.com/45?text=🏪';
+
                 return `
                     <div class="card">
                         <img class="prod-img" src="${p.img || 'https://via.placeholder.com/300x200?text=Sin+Imagen'}" alt="${p.name}">
                         <div class="card-body">
-                            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                            <div style="display:flex; justify-content:space-between;">
                                 <h3 style="margin:0; font-size:1.1rem;">${p.name}</h3>
-                                <span style="color:var(--secondary); font-weight:bold; font-size:1.1rem;">$${p.price}</span>
+                                <span style="color:var(--secondary); font-weight:bold;">$${p.price}</span>
                             </div>
-                            
                             <div class="store-tag">
-                                <img src="${m.logo || 'https://via.placeholder.com/40?text=🏪'}" class="store-logo-mini">
+                                <img src="${rubroLogo}" class="store-logo-mini">
                                 <div style="flex:1;">
-                                    <strong style="color:var(--primary);">${m.name || 'Comercio'}</strong><br>
-                                    <small style="color:#64748b;">📍 ${m.address || 'Ver mapa'}</small><br>
-                                    <small style="color:#059669; font-weight:600;">📱 ${m.phone || 'Sin WhatsApp'}</small>
+                                    <strong>${m.name || 'Comercio'}</strong><br>
+                                    <small>📍 ${m.address || 'Ver mapa'}</small><br>
+                                    <small style="color:var(--secondary);">📱 ${m.phone || 'WhatsApp'}</small>
                                 </div>
                             </div>
-                            
-                            <button onclick="showRoute(${m.lat}, ${m.lng})" class="btn btn-primary" style="width:100%; margin-top:auto; border-radius:10px;">
-                                📍 Cómo llegar
-                            </button>
+                            <button onclick="showRoute(${m.lat}, ${m.lng})" class="btn btn-primary" style="width:100%; margin-top:auto;">Cómo llegar</button>
                         </div>
                     </div>`;
             }).join('');
         }
 
-        // --- PERFIL COMERCIO Y LOGO ---
-        async function previewMerchantLogo(e) {
-            const file = e.target.files[0];
-            if(file) {
-                const base64 = await toBase64(file, 200); 
-                document.getElementById('m-logo-preview').innerHTML = `<img src="${base64}" width="80" style="border-radius:10px;">`;
-                state.merchants[state.currentUser].logo = base64;
-            }
+        // --- GESTIÓN DE RUBROS (ADMIN) ---
+        async function addCategory() {
+            const name = document.getElementById('new-category').value.trim();
+            const file = document.getElementById('new-category-logo').files[0];
+            if(!name) return alert("Escribe un nombre de rubro");
+            
+            let logoBase64 = '';
+            if(file) logoBase64 = await toBase64(file, 100);
+
+            state.categories.push({ name, logo: logoBase64 });
+            document.getElementById('new-category').value = '';
+            document.getElementById('new-category-logo').value = '';
+            updateCategorySelectors();
         }
 
+        function deleteCategory(name) {
+            state.categories = state.categories.filter(c => c.name !== name);
+            updateCategorySelectors();
+        }
+
+        function updateCategorySelectors() {
+            const sel = document.getElementById('m-rubro');
+            if(sel) sel.innerHTML = state.categories.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
+            
+            const list = document.getElementById('categories-list');
+            if(list) {
+                list.innerHTML = state.categories.map(c => `
+                    <div class="category-item">
+                        <img src="${c.logo || 'https://via.placeholder.com/30'}" width="30" height="30" style="object-fit:cover; border-radius:50%">
+                        <span style="flex:1;">${c.name}</span>
+                        <button onclick="deleteCategory('${c.name}')" class="btn btn-danger btn-small">×</button>
+                    </div>`).join('');
+            }
+            localStorage.setItem('dc_categories_v2', JSON.stringify(state.categories));
+        }
+
+        // --- PERFIL COMERCIO ---
         function saveMerchantProfile() {
             const m = state.merchants[state.currentUser];
             m.lat = document.getElementById('m-lat').value;
@@ -250,60 +274,14 @@
             m.rubro = document.getElementById('m-rubro').value;
             m.address = document.getElementById('m-address').value;
             m.phone = document.getElementById('m-phone').value;
-            if(!m.lat || !m.name) return alert("Completa nombre y ubicación en mapa.");
+            if(!m.lat || !m.name) return alert("Completa nombre y ubicación");
             saveMerchants(); 
-            // Actualizar nombre de tienda en sus productos existentes
-            state.products.forEach(p => { if(p.owner === state.currentUser) p.store = m.name; });
-            localStorage.setItem('dc_products', JSON.stringify(state.products));
-            alert("Perfil actualizado."); 
+            alert("Perfil guardado."); 
             renderInventory();
         }
 
-        // --- GESTIÓN DE PRODUCTOS ---
-        function openProductModal(prodId = null) {
-            const idInput = document.getElementById('p-id-edit');
-            const nameInput = document.getElementById('p-name');
-            const priceInput = document.getElementById('p-price');
-            document.getElementById('p-image').value = ""; // Reset file input
-            
-            if(prodId) { 
-                const p = state.products.find(x => x.id == prodId);
-                document.getElementById('p-modal-title').innerText = "Editar Producto";
-                idInput.value = p.id; nameInput.value = p.name; priceInput.value = p.price;
-            } else { 
-                document.getElementById('p-modal-title').innerText = "Nuevo Producto";
-                idInput.value = ""; nameInput.value = ""; priceInput.value = "";
-            }
-            document.getElementById('product-modal').classList.add('active');
-        }
-
-        async function saveProduct() {
-            const idEdit = document.getElementById('p-id-edit').value;
-            const name = document.getElementById('p-name').value;
-            const price = document.getElementById('p-price').value;
-            const file = document.getElementById('p-image').files[0];
-            if(!name || !price) return alert("Nombre y precio obligatorios");
-
-            if(idEdit) { 
-                const p = state.products.find(x => x.id == idEdit);
-                p.name = name; p.price = price;
-                if(file) p.img = await toBase64(file, 400);
-            } else { 
-                state.products.push({
-                    id: Date.now(), name, price,
-                    img: file ? await toBase64(file, 400) : '',
-                    owner: state.currentUser,
-                    store: state.merchants[state.currentUser].name
-                });
-            }
-            localStorage.setItem('dc_products', JSON.stringify(state.products));
-            closeModal('product-modal');
-            renderInventory();
-            searchProducts(); // Actualiza vista cliente
-        }
-
-        // --- UTILIDADES ---
-        function toBase64(file, size) {
+        // --- SISTEMA ---
+        async function toBase64(file, size) {
             return new Promise(resolve => {
                 const reader = new FileReader();
                 reader.onload = (e) => {
@@ -315,50 +293,35 @@
                         const ratio = size / Math.max(img.width, img.height);
                         canvas.width = img.width * ratio; canvas.height = img.height * ratio;
                         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                        resolve(canvas.toDataURL('image/webp', 0.7));
+                        resolve(canvas.toDataURL('image/webp', 0.8));
                     };
                 };
                 reader.readAsDataURL(file);
             });
         }
 
-        function renderInventory() {
-            const body = document.getElementById('inventory-body');
-            body.innerHTML = state.products.filter(p => p.owner === state.currentUser).map(p => `
-                <tr>
-                    <td><img src="${p.img || 'https://via.placeholder.com/40'}" style="width:40px;height:40px;object-fit:cover; border-radius:5px;"></td>
-                    <td>${p.name}</td>
-                    <td>$${p.price}</td>
-                    <td>
-                        <button onclick="openProductModal(${p.id})" class="btn btn-outline btn-small">✏️</button>
-                        <button onclick="deleteProduct(${p.id})" class="btn btn-danger btn-small">🗑️</button>
-                    </td>
-                </tr>`).join('');
+        function saveProduct() {
+            const idEdit = document.getElementById('p-id-edit').value;
+            const name = document.getElementById('p-name').value;
+            const price = document.getElementById('p-price').value;
+            const file = document.getElementById('p-image').files[0];
+            if(!name || !price) return alert("Faltan datos");
+
+            const save = async (imgData = null) => {
+                if(idEdit) {
+                    const p = state.products.find(x => x.id == idEdit);
+                    p.name = name; p.price = price;
+                    if(imgData) p.img = imgData;
+                } else {
+                    state.products.push({ id: Date.now(), name, price, img: imgData, owner: state.currentUser });
+                }
+                localStorage.setItem('dc_products', JSON.stringify(state.products));
+                closeModal('product-modal'); renderInventory(); searchProducts();
+            };
+
+            if(file) toBase64(file, 400).then(save); else save();
         }
 
-        function showRoute(destLat, destLng) {
-            document.getElementById('map-container').style.display = 'block';
-            window.scrollTo({ top: document.getElementById('map-container').offsetTop - 80, behavior: 'smooth' });
-            if(!state.map) {
-                state.map = L.map('map').setView([destLat, destLng], 15);
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(state.map);
-            }
-            navigator.geolocation.getCurrentPosition(pos => {
-                const userLoc = [pos.coords.latitude, pos.coords.longitude];
-                if(state.routing) state.map.removeControl(state.routing);
-                state.routing = L.Routing.control({
-                    waypoints: [ L.latLng(userLoc), L.latLng(destLat, destLng) ],
-                    show: false, addWaypoints: false
-                }).addTo(state.map);
-                state.map.flyTo([destLat, destLng], 15);
-            }, () => {
-                alert("Por favor habilita la ubicación para ver la ruta.");
-                state.map.flyTo([destLat, destLng], 15);
-                L.marker([destLat, destLng]).addTo(state.map);
-            });
-        }
-
-        // --- SISTEMA BASE ---
         function checkSession() {
             const user = sessionStorage.getItem('dc_user'), role = sessionStorage.getItem('dc_role');
             if(user) {
@@ -370,10 +333,10 @@
                 if(role === 'merchant') {
                     switchPanel('merchant-panel'); const m = state.merchants[user];
                     document.getElementById('m-name').value = m.name || '';
+                    document.getElementById('m-rubro').value = m.rubro || '';
                     document.getElementById('m-address').value = m.address || '';
                     document.getElementById('m-phone').value = m.phone || '';
-                    if(m.logo) document.getElementById('m-logo-preview').innerHTML = `<img src="${m.logo}" width="80" style="border-radius:10px;">`;
-                    initAdjustMap(m.lat || -34.6037, m.lng || -58.3816);
+                    initAdjustMap(m.lat || -34.60, m.lng || -58.38);
                     if(m.status === 'active') document.getElementById('btn-new-product').style.display = 'inline-flex';
                     renderInventory();
                 } else if(role === 'admin') { switchPanel('admin-panel'); renderAdmin(); }
@@ -385,7 +348,7 @@
             if(!email) return alert("Email requerido");
             sessionStorage.setItem('dc_user', email); sessionStorage.setItem('dc_role', state.currentRole);
             if(state.currentRole === 'merchant' && !state.merchants[email]) {
-                state.merchants[email] = { status: 'pending', lat: -34.6037, lng: -58.3816, name: '', address: '', phone: '', logo: '' };
+                state.merchants[email] = { status: 'pending', lat: -34.60, lng: -58.38, name: '', rubro: '', address: '', phone: '' };
                 saveMerchants();
             }
             location.reload();
@@ -396,48 +359,57 @@
         function openLoginModal(role) { state.currentRole = role; document.getElementById('login-modal').classList.add('active'); }
         function closeModal(id) { document.getElementById(id).classList.remove('active'); }
         function saveMerchants() { localStorage.setItem('dc_merchants', JSON.stringify(state.merchants)); }
-        function applyLogo() {
-            const img = document.getElementById('platform-logo');
-            if(state.logo) { img.src = state.logo; img.style.display = 'block'; }
-        }
-        async function updatePlatformLogo(e) {
-            const file = e.target.files[0];
-            if(file) { state.logo = await toBase64(file, 300); localStorage.setItem('dc_logo', state.logo); applyLogo(); }
-        }
+        function applyLogo() { const img = document.getElementById('platform-logo'); if(state.logo) { img.src = state.logo; img.style.display = 'block'; } }
+        async function updatePlatformLogo(e) { const file = e.target.files[0]; if(file) { state.logo = await toBase64(file, 300); localStorage.setItem('dc_logo', state.logo); applyLogo(); } }
         function removePlatformLogo() { state.logo = ''; localStorage.removeItem('dc_logo'); location.reload(); }
-        function updateCategorySelectors() {
-            const sel = document.getElementById('m-rubro');
-            if(sel) sel.innerHTML = state.categories.map(c => `<option value="${c}">${c}</option>`).join('');
-            const list = document.getElementById('categories-list');
-            if(list) list.innerHTML = state.categories.map(c => `<span class="badge badge-active" style="margin-right:5px;">${c} <b onclick="deleteCategory('${c}')" style="cursor:pointer;">×</b></span>`).join('');
-            localStorage.setItem('dc_categories', JSON.stringify(state.categories));
+        function renderInventory() {
+            document.getElementById('inventory-body').innerHTML = state.products.filter(p => p.owner === state.currentUser).map(p => `
+                <tr><td><img src="${p.img || ''}" width="40"></td><td>${p.name}</td><td>$${p.price}</td>
+                <td><button onclick="openProductModal(${p.id})">✏️</button><button onclick="deleteProduct(${p.id})">🗑️</button></td></tr>`).join('');
         }
-        function addCategory() { const v = document.getElementById('new-category').value; if(v) { state.categories.push(v); document.getElementById('new-category').value = ''; updateCategorySelectors(); } }
-        function deleteCategory(c) { state.categories = state.categories.filter(x => x !== c); updateCategorySelectors(); }
-        function deleteProduct(id) { if(confirm("¿Eliminar?")) { state.products = state.products.filter(p => p.id !== id); localStorage.setItem('dc_products', JSON.stringify(state.products)); renderInventory(); searchProducts(); } }
-        function updateStatus(email, s) { state.merchants[email].status = s; saveMerchants(); renderAdmin(); }
-        function deleteMerchant(email) { if(confirm("¿Eliminar?")) { delete state.merchants[email]; state.products = state.products.filter(p => p.owner !== email); saveMerchants(); localStorage.setItem('dc_products', JSON.stringify(state.products)); renderAdmin(); } }
+        function deleteProduct(id) { state.products = state.products.filter(p => p.id !== id); localStorage.setItem('dc_products', JSON.stringify(state.products)); renderInventory(); }
+        function renderAdmin() {
+            document.getElementById('admin-merchants-body').innerHTML = Object.keys(state.merchants).map(email => {
+                const m = state.merchants[email];
+                return `<tr><td>${m.name || email}</td><td>${m.rubro || '-'}</td>
+                <td><span class="badge ${m.status === 'active' ? 'badge-active' : 'badge-suspended'}">${m.status}</span></td>
+                <td><button onclick="updateStatus('${email}','active')" class="btn btn-secondary btn-small">Activar</button>
+                <button onclick="deleteMerchant('${email}')" class="btn btn-danger btn-small">Eliminar</button></td></tr>`;
+            }).join('');
+            updateCategorySelectors();
+        }
+        function updateStatus(e, s) { state.merchants[e].status = s; saveMerchants(); renderAdmin(); }
+        function deleteMerchant(e) { if(confirm("¿Eliminar?")) { delete state.merchants[e]; state.products = state.products.filter(p => p.owner !== e); saveMerchants(); localStorage.setItem('dc_products', JSON.stringify(state.products)); renderAdmin(); } }
         function closeMap() { document.getElementById('map-container').style.display = 'none'; }
-        
+        function showRoute(lt, lg) {
+            document.getElementById('map-container').style.display = 'block';
+            if(!state.map) { state.map = L.map('map').setView([lt, lg], 15); L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(state.map); }
+            navigator.geolocation.getCurrentPosition(pos => {
+                if(state.routing) state.map.removeControl(state.routing);
+                state.routing = L.Routing.control({ waypoints: [ L.latLng(pos.coords.latitude, pos.coords.longitude), L.latLng(lt, lg) ], show: false }).addTo(state.map);
+                state.map.flyTo([lt, lg], 15);
+            }, () => { L.marker([lt, lg]).addTo(state.map); state.map.flyTo([lt, lg], 15); });
+        }
         function initAdjustMap(lat, lng) {
             if(state.mAdjustMap) return;
             state.mAdjustMap = L.map('m-map-small').setView([lat, lng], 14);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(state.mAdjustMap);
             state.mMarker = L.marker([lat, lng], {draggable: true}).addTo(state.mAdjustMap);
-            state.mAdjustMap.on('click', (e) => { state.mMarker.setLatLng(e.latlng); updateCoords(e.latlng.lat, e.latlng.lng); });
+            state.mAdjustMap.on('click', e => { state.mMarker.setLatLng(e.latlng); updateCoords(e.latlng.lat, e.latlng.lng); });
             state.mMarker.on('dragend', () => { const p = state.mMarker.getLatLng(); updateCoords(p.lat, p.lng); });
         }
         function updateCoords(lat, lng) { document.getElementById('m-lat').value = lat; document.getElementById('m-lng').value = lng; }
-        
-        function renderAdmin() {
-            document.getElementById('admin-merchants-body').innerHTML = Object.keys(state.merchants).map(email => {
-                const m = state.merchants[email];
-                return `<tr><td><strong>${m.name || 'Pendiente'}</strong><br><small>${email}</small></td>
-                <td><span class="badge ${m.status === 'active' ? 'badge-active' : 'badge-suspended'}">${m.status}</span></td>
-                <td><button onclick="updateStatus('${email}','active')" class="btn btn-secondary btn-small">Alta</button>
-                <button onclick="deleteMerchant('${email}')" class="btn btn-danger btn-small">🗑️</button></td></tr>`;
-            }).join('');
-            updateCategorySelectors();
+        function autoGeocode() {
+            const adr = document.getElementById('m-address').value;
+            if(!adr) return alert("Escribe una dirección");
+            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(adr)}`)
+                .then(r => r.json()).then(data => {
+                    if(data.length > 0) {
+                        const {lat, lon} = data[0];
+                        state.mMarker.setLatLng([lat, lon]); state.mAdjustMap.flyTo([lat, lon], 16);
+                        updateCoords(lat, lon);
+                    } else alert("No se encontró la dirección. Ubícala manualmente en el mapa.");
+                });
         }
     </script>
 </body>
