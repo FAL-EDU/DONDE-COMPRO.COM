@@ -3,300 +3,144 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DÓNDE COMPRO.COM - Panel de Control</title>
+    <title>DÓNDE COMPRO.COM</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
         :root { --primary: #2563eb; --secondary: #059669; --bg: #f8fafc; --text: #1e293b; --danger: #ef4444; }
         body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--bg); color: var(--text); }
-        header { background: var(--primary); color: white; padding: 1rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .container { max-width: 1100px; margin: 0 auto; padding: 20px; }
-        .btn { padding: 10px 15px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; transition: 0.2s; }
-        .btn-primary { background: var(--primary); color: white; }
-        .btn-secondary { background: var(--secondary); color: white; }
-        .btn-danger { background: var(--danger); color: white; }
-        .btn-outline { background: white; border: 1px solid #ddd; }
         
+        header { 
+            background: var(--primary); 
+            color: white; padding: 1rem; 
+            display: flex; justify-content: space-between; align-items: center; 
+            position: sticky; top: 0; z-index: 1000; 
+        }
+
+        .container { max-width: 1100px; margin: 0 auto; padding: 20px; }
         .card { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; border: 1px solid #e2e8f0; }
+        
+        /* Gestión de Paneles */
         .panel { display: none; }
         .panel.active { display: block; }
+
+        .btn { padding: 10px 15px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-outline { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.4); }
         
-        .grid-form { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        label { display: block; font-size: 0.8rem; font-weight: 600; margin-bottom: 5px; color: #64748b; }
         input, select { padding: 12px; border-radius: 8px; border: 1px solid #ddd; width: 100%; box-sizing: border-box; margin-bottom: 10px; }
-        
-        #map-admin { height: 250px; border-radius: 12px; border: 2px solid #e2e8f0; margin-bottom: 15px; }
-        .prod-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        .prod-table th, .prod-table td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
-        .prod-img-small { width: 50px; height: 50px; border-radius: 8px; object-fit: cover; }
-        .preview-img { width: 128px; height: 128px; border-radius: 12px; object-fit: cover; margin-top: 10px; border: 2px solid #ddd; }
+        #map-admin { height: 250px; border-radius: 12px; margin-bottom: 15px; border: 2px solid #ddd; }
+        .preview-img { width: 128px; height: 128px; border-radius: 10px; object-fit: cover; margin-top: 10px; border: 1px solid #ccc; }
     </style>
 </head>
 <body>
 
     <header>
-        <h2 onclick="location.reload()" style="cursor:pointer; margin:0;">DÓNDE COMPRO<span style="color:#93c5fd">.COM</span></h2>
-        <div style="display:flex; align-items:center; gap:15px;">
-            <span id="user-email" style="font-weight:700;"></span>
-            <button onclick="logout()" class="btn btn-danger btn-small">Salir</button>
-        </div>
+        <h2 onclick="showPanel('client-panel')" style="cursor:pointer; margin:0;">DÓNDE COMPRO<span style="color:#93c5fd">.COM</span></h2>
+        <div id="auth-section">
+            </div>
     </header>
 
     <main class="container">
         
-        <div id="merchant-panel" class="panel active">
-            
-            <div class="card">
-                <h3 style="margin-top:0; color:var(--primary);">🏠 Mi Perfil de Comercio</h3>
-                <div class="grid-form">
-                    <div>
-                        <label>Nombre Fantasía</label>
-                        <input type="text" id="m-name" placeholder="Ej: Panadería Central">
-                    </div>
-                    <div>
-                        <label>Rubro</label>
-                        <select id="m-rubro-select"></select>
-                    </div>
-                    <div>
-                        <label>WhatsApp de Contacto</label>
-                        <input type="text" id="m-phone" placeholder="3876123456">
-                    </div>
-                    <div>
-                        <label>Horario de Atención</label>
-                        <input type="text" id="m-hours" placeholder="Ej: 9 a 13 y 17 a 21">
-                    </div>
-                    <div>
-                        <label>Atención fuera de horario</label>
-                        <select id="m-extra">
-                            <option value="NO">NO</option>
-                            <option value="SI">SI</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label>Imagen del Local (128x128)</label>
-                        <input type="file" id="m-logo-input" accept="image/*" onchange="previewLogo(event)">
-                        <img id="m-logo-view" class="preview-img" style="display:none;">
-                    </div>
-                </div>
-
-                <div style="margin-top:15px;">
-                    <label>Dirección y GPS (Escribe o arrastra el marcador)</label>
-                    <div style="display:flex; gap:10px; margin-bottom:10px;">
-                        <input type="text" id="m-address" placeholder="Calle y N°, Rosario de la Frontera">
-                        <button onclick="syncGPS()" class="btn btn-primary">Validar</button>
-                    </div>
-                    <div id="map-admin"></div>
-                    <input type="hidden" id="m-lat"><input type="hidden" id="m-lng">
-                </div>
-                
-                <button onclick="saveMerchantProfile()" class="btn btn-secondary" style="width:100%; margin-top:10px; font-size:1.1rem;">
-                    💾 GUARDAR DATOS DEL PERFIL
-                </button>
-            </div>
-
-            <div class="card" style="border-left: 5px solid var(--secondary);">
-                <h3 style="margin-top:0;">📦 Cargar Productos</h3>
-                <div style="display:grid; grid-template-columns: 1.5fr 1fr 1fr; gap: 10px;">
-                    <input type="text" id="p-name" placeholder="Nombre del Producto">
-                    <input type="number" id="p-price" placeholder="Precio ($)">
-                    <input type="file" id="p-file" accept="image/*" style="font-size:0.7rem;">
-                </div>
-                <input type="hidden" id="p-edit-id">
-                <button onclick="saveProduct()" id="btn-save-prod" class="btn btn-secondary" style="width:100%; margin-top:10px;">
-                    ➕ AGREGAR PRODUCTO
-                </button>
-                <button onclick="cancelEdit()" id="btn-cancel-edit" class="btn btn-outline" style="width:100%; margin-top:5px; display:none;">Cancelar</button>
-            </div>
-
-            <div class="card">
-                <h3>Mi Catálogo Actual</h3>
-                <table class="prod-table">
-                    <thead>
-                        <tr><th>Imagen</th><th>Producto</th><th>Precio</th><th>Acciones</th></tr>
-                    </thead>
-                    <tbody id="inventory-list"></tbody>
-                </table>
+        <div id="client-panel" class="panel active">
+            <div class="card" style="text-align:center; padding: 40px 20px;">
+                <h1>¿Qué estás buscando?</h1>
+                <input type="text" placeholder="Escribe un producto o local..." style="max-width:500px; border-radius: 50px; padding: 15px 25px;">
+                <p>Haz clic en el título para volver aquí siempre.</p>
             </div>
         </div>
+
+        <div id="merchant-panel" class="panel">
+            <div class="card">
+                <h3 style="color:var(--primary)">⚙️ Mi Perfil de Comercio</h3>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
+                    <input type="text" id="m-name" placeholder="Nombre Fantasía">
+                    <select id="m-rubro-select"></select>
+                    <input type="text" id="m-phone" placeholder="WhatsApp">
+                    <input type="text" id="m-address" placeholder="Dirección">
+                </div>
+                <div id="map-admin"></div>
+                <button onclick="saveProfile()" class="btn" style="background:var(--secondary); color:white; width:100%">💾 GUARDAR CAMBIOS</button>
+            </div>
+        </div>
+
     </main>
 
     <script>
+        // --- ESTADO GLOBAL ---
         const state = {
             user: sessionStorage.getItem('user'),
+            role: sessionStorage.getItem('role'),
             merchants: JSON.parse(localStorage.getItem('dc_merchants')) || {},
-            products: JSON.parse(localStorage.getItem('dc_products')) || [],
-            rubros: JSON.parse(localStorage.getItem('dc_rubros')) || [],
-            map: null,
-            marker: null
+            rubros: JSON.parse(localStorage.getItem('dc_rubros')) || []
         };
 
-        // --- SALIR ---
+        // --- FUNCIÓN SALIR (REPARADA) ---
         function logout() {
-            sessionStorage.clear();
-            location.reload();
+            console.log("Cerrando sesión...");
+            sessionStorage.removeItem('user');
+            sessionStorage.removeItem('role');
+            sessionStorage.clear(); // Limpieza total por seguridad
+            
+            // Redirigir al inicio y recargar
+            window.location.href = window.location.pathname; 
+            window.location.reload(); 
         }
 
-        // --- GESTIÓN GPS ---
-        function initMap(lat = -25.074, lng = -64.918) {
-            if (!state.map) {
-                state.map = L.map('map-admin').setView([lat, lng], 15);
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(state.map);
-                state.marker = L.marker([lat, lng], {draggable: true}).addTo(state.map);
-                state.marker.on('dragend', () => {
-                    const pos = state.marker.getLatLng();
-                    document.getElementById('m-lat').value = pos.lat;
-                    document.getElementById('m-lng').value = pos.lng;
-                });
-            }
+        // --- NAVEGACIÓN ENTRE PANELES ---
+        function showPanel(panelId) {
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+            document.getElementById(panelId).classList.add('active');
         }
 
-        function syncGPS() {
-            const addr = document.getElementById('m-address').value;
-            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(addr + ", Rosario de la Frontera")}`)
-                .then(r => r.json()).then(data => {
-                    if (data[0]) {
-                        const {lat, lon} = data[0];
-                        state.map.setView([lat, lon], 16);
-                        state.marker.setLatLng([lat, lon]);
-                        document.getElementById('m-lat').value = lat;
-                        document.getElementById('m-lng').value = lon;
-                    }
-                });
-        }
-
-        // --- IMÁGENES (128x128) ---
-        async function previewLogo(e) {
-            const file = e.target.files[0];
-            if (file) {
-                const base64 = await toBase64(file, 128);
-                document.getElementById('m-logo-view').src = base64;
-                document.getElementById('m-logo-view').style.display = 'block';
-            }
-        }
-
-        function toBase64(file, size) {
-            return new Promise(resolve => {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const img = new Image();
-                    img.src = e.target.result;
-                    img.onload = () => {
-                        const canvas = document.createElement('canvas');
-                        canvas.width = size; canvas.height = size;
-                        const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0, size, size);
-                        resolve(canvas.toDataURL('image/webp'));
-                    };
-                };
-                reader.readAsDataURL(file);
-            });
-        }
-
-        // --- GUARDAR PERFIL ---
-        function saveMerchantProfile() {
-            const m = state.merchants[state.user];
-            m.name = document.getElementById('m-name').value;
-            m.rubro = document.getElementById('m-rubro-select').value;
-            m.phone = document.getElementById('m-phone').value;
-            m.hours = document.getElementById('m-hours').value;
-            m.extraHours = document.getElementById('m-extra').value;
-            m.address = document.getElementById('m-address').value;
-            m.lat = document.getElementById('m-lat').value;
-            m.lng = document.getElementById('m-lng').value;
-            m.logo = document.getElementById('m-logo-view').src;
-
-            localStorage.setItem('dc_merchants', JSON.stringify(state.merchants));
-            alert("Perfil de comercio guardado correctamente.");
-        }
-
-        // --- GESTIÓN DE PRODUCTOS ---
-        async function saveProduct() {
-            const name = document.getElementById('p-name').value;
-            const price = document.getElementById('p-price').value;
-            const file = document.getElementById('p-file').files[0];
-            const editId = document.getElementById('p-edit-id').value;
-
-            let img = editId ? state.products.find(p=>p.id==editId).img : '';
-            if (file) img = await toBase64(file, 128);
-
-            if (editId) {
-                const idx = state.products.findIndex(p => p.id == editId);
-                state.products[idx] = { ...state.products[idx], name, price, img };
+        // --- RENDER DE CABECERA ---
+        function updateHeader() {
+            const authDiv = document.getElementById('auth-section');
+            if (state.user) {
+                authDiv.innerHTML = `
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <span style="font-size:0.8rem; font-weight:bold;">${state.user}</span>
+                        <button onclick="showPanel('merchant-panel')" class="btn btn-outline">Mi Panel</button>
+                        <button onclick="logout()" class="btn btn-danger">Salir</button>
+                    </div>
+                `;
             } else {
-                state.products.push({ id: Date.now(), owner: state.user, name, price, img });
-            }
-
-            localStorage.setItem('dc_products', JSON.stringify(state.products));
-            cancelEdit();
-            renderInventory();
-        }
-
-        function renderInventory() {
-            const list = document.getElementById('inventory-list');
-            list.innerHTML = state.products.filter(p => p.owner === state.user).map(p => `
-                <tr>
-                    <td><img src="${p.img}" class="prod-img-small"></td>
-                    <td>${p.name}</td>
-                    <td>$${p.price}</td>
-                    <td>
-                        <button onclick="editProduct(${p.id})" class="btn btn-outline" style="padding:5px;">✏️</button>
-                        <button onclick="deleteProduct(${p.id})" class="btn btn-danger" style="padding:5px;">🗑️</button>
-                    </td>
-                </tr>
-            `).join('');
-        }
-
-        function editProduct(id) {
-            const p = state.products.find(x => x.id == id);
-            document.getElementById('p-name').value = p.name;
-            document.getElementById('p-price').value = p.price;
-            document.getElementById('p-edit-id').value = p.id;
-            document.getElementById('btn-save-prod').innerText = "💾 ACTUALIZAR";
-            document.getElementById('btn-cancel-edit').style.display = 'block';
-        }
-
-        function deleteProduct(id) {
-            if(confirm("¿Borrar producto?")) {
-                state.products = state.products.filter(p => p.id != id);
-                localStorage.setItem('dc_products', JSON.stringify(state.products));
-                renderInventory();
+                authDiv.innerHTML = `<button onclick="mockLogin()" class="btn btn-outline">Ingresar</button>`;
             }
         }
 
-        function cancelEdit() {
-            document.getElementById('p-name').value = '';
-            document.getElementById('p-price').value = '';
-            document.getElementById('p-edit-id').value = '';
-            document.getElementById('p-file').value = '';
-            document.getElementById('btn-save-prod').innerText = "➕ AGREGAR PRODUCTO";
-            document.getElementById('btn-cancel-edit').style.display = 'none';
+        // --- SIMULACRO LOGIN (Para pruebas) ---
+        function mockLogin() {
+            const email = prompt("Ingresa tu email de comercio:");
+            if(email) {
+                sessionStorage.setItem('user', email);
+                sessionStorage.setItem('role', 'merchant');
+                location.reload();
+            }
         }
 
+        // --- INICIALIZACIÓN ---
         document.addEventListener('DOMContentLoaded', () => {
-            if(!state.user) return;
-            document.getElementById('user-email').innerText = state.user;
-            
-            const m = state.merchants[state.user];
-            if(m) {
-                document.getElementById('m-name').value = m.name || '';
-                document.getElementById('m-phone').value = m.phone || '';
-                document.getElementById('m-hours').value = m.hours || '';
-                document.getElementById('m-extra').value = m.extraHours || 'NO';
-                document.getElementById('m-address').value = m.address || '';
-                document.getElementById('m-lat').value = m.lat || -25.074;
-                document.getElementById('m-lng').value = m.lng || -64.918;
-                if(m.logo) {
-                    document.getElementById('m-logo-view').src = m.logo;
-                    document.getElementById('m-logo-view').style.display = 'block';
-                }
-                initMap(parseFloat(m.lat) || -25.074, parseFloat(m.lng) || -64.918);
+            updateHeader();
+
+            // Si hay usuario, le mostramos su panel por defecto, 
+            // pero el botón del título lo puede llevar de vuelta al buscador.
+            if (state.user && state.role === 'merchant') {
+                showPanel('merchant-panel');
+                
+                // Iniciar mapa solo si estamos en el panel
+                setTimeout(() => {
+                    const map = L.map('map-admin').setView([-25.074, -64.918], 15);
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+                    L.marker([-25.074, -64.918], {draggable: true}).addTo(map);
+                }, 500);
             }
-            
-            const sel = document.getElementById('m-rubro-select');
-            sel.innerHTML = state.rubros.map(r => `<option value="${r.name}" ${m.rubro===r.name?'selected':''}>${r.name}</option>`).join('');
-            
-            renderInventory();
         });
+
+        function saveProfile() {
+            alert("¡Cambios guardados localmente!");
+        }
     </script>
 </body>
 </html>
