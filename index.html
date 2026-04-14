@@ -8,139 +8,153 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
         :root { --primary: #2563eb; --secondary: #059669; --bg: #f8fafc; --text: #1e293b; --danger: #ef4444; }
-        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--bg); color: var(--text); }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; background: var(--bg); color: var(--text); }
         
         header { 
             background: var(--primary); 
-            color: white; padding: 1rem; 
+            color: white; padding: 0.8rem 1.5rem; 
             display: flex; justify-content: space-between; align-items: center; 
-            position: sticky; top: 0; z-index: 1000; 
+            position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
 
+        .nav-group { display: flex; gap: 10px; align-items: center; }
         .container { max-width: 1100px; margin: 0 auto; padding: 20px; }
-        .card { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; border: 1px solid #e2e8f0; }
+        .card { background: white; border-radius: 15px; padding: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; border: 1px solid #e2e8f0; }
         
         /* Gestión de Paneles */
         .panel { display: none; }
         .panel.active { display: block; }
 
-        .btn { padding: 10px 15px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; }
+        .btn { padding: 10px 16px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; transition: 0.2s; font-size: 0.9rem; }
         .btn-danger { background: var(--danger); color: white; }
-        .btn-outline { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.4); }
+        .btn-outline { background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.3); }
+        .btn-white { background: white; color: var(--primary); }
         
         input, select { padding: 12px; border-radius: 8px; border: 1px solid #ddd; width: 100%; box-sizing: border-box; margin-bottom: 10px; }
         #map-admin { height: 250px; border-radius: 12px; margin-bottom: 15px; border: 2px solid #ddd; }
-        .preview-img { width: 128px; height: 128px; border-radius: 10px; object-fit: cover; margin-top: 10px; border: 1px solid #ccc; }
     </style>
 </head>
 <body>
 
     <header>
-        <h2 onclick="showPanel('client-panel')" style="cursor:pointer; margin:0;">DÓNDE COMPRO<span style="color:#93c5fd">.COM</span></h2>
-        <div id="auth-section">
+        <h2 onclick="showPanel('client-panel')" style="cursor:pointer; margin:0; letter-spacing: -1px;">
+            DÓNDE COMPRO<span style="color:#93c5fd">.COM</span>
+        </h2>
+        <div id="auth-section" class="nav-group">
             </div>
     </header>
 
     <main class="container">
         
         <div id="client-panel" class="panel active">
-            <div class="card" style="text-align:center; padding: 40px 20px;">
-                <h1>¿Qué estás buscando?</h1>
-                <input type="text" placeholder="Escribe un producto o local..." style="max-width:500px; border-radius: 50px; padding: 15px 25px;">
-                <p>Haz clic en el título para volver aquí siempre.</p>
+            <div class="card" style="text-align:center; padding: 60px 20px;">
+                <h1 style="font-size: 2.5rem; margin-bottom: 10px;">Encuentra lo que necesitas</h1>
+                <p style="color: #64748b; margin-bottom: 30px;">Explora comercios en Rosario de la Frontera</p>
+                <input type="text" placeholder="Buscar productos, marcas o locales..." style="max-width:600px; border-radius: 50px; padding: 18px 30px; border: 2px solid #e2e8f0; font-size: 1.1rem; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);">
             </div>
         </div>
 
         <div id="merchant-panel" class="panel">
             <div class="card">
-                <h3 style="color:var(--primary)">⚙️ Mi Perfil de Comercio</h3>
+                <h3 style="color:var(--primary)">🏪 Panel del Comerciante</h3>
+                <p>Gestiona tus productos, dirección y horarios aquí.</p>
                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
-                    <input type="text" id="m-name" placeholder="Nombre Fantasía">
-                    <select id="m-rubro-select"></select>
-                    <input type="text" id="m-phone" placeholder="WhatsApp">
-                    <input type="text" id="m-address" placeholder="Dirección">
+                    <input type="text" placeholder="Nombre del Negocio">
+                    <input type="text" placeholder="WhatsApp">
                 </div>
                 <div id="map-admin"></div>
-                <button onclick="saveProfile()" class="btn" style="background:var(--secondary); color:white; width:100%">💾 GUARDAR CAMBIOS</button>
+                <button class="btn" style="background:var(--secondary); color:white; width:100%">💾 GUARDAR CAMBIOS</button>
+            </div>
+        </div>
+
+        <div id="admin-panel" class="panel">
+            <div class="card">
+                <h3 style="color:var(--primary)">🛡️ Panel de Administración</h3>
+                <p>Control de comercios registrados y categorías del sistema.</p>
+                <div style="margin-top:20px; border-top: 1px solid #eee; padding-top:20px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; padding:10px; background:#f1f5f9; border-radius:8px;">
+                        <span>neitor38@gmail.com</span>
+                        <span style="background:#dcfce7; color:#166534; padding:4px 8px; border-radius:5px; font-size:0.8rem; font-weight:bold;">ACTIVO</span>
+                    </div>
+                </div>
             </div>
         </div>
 
     </main>
 
     <script>
-        // --- ESTADO GLOBAL ---
+        // --- ESTADO Y DATOS ---
         const state = {
             user: sessionStorage.getItem('user'),
-            role: sessionStorage.getItem('role'),
-            merchants: JSON.parse(localStorage.getItem('dc_merchants')) || {},
-            rubros: JSON.parse(localStorage.getItem('dc_rubros')) || []
+            role: sessionStorage.getItem('role')
         };
 
-        // --- FUNCIÓN SALIR (REPARADA) ---
+        // --- FUNCIÓN SALIR (CORREGIDA) ---
         function logout() {
-            console.log("Cerrando sesión...");
-            sessionStorage.removeItem('user');
-            sessionStorage.removeItem('role');
-            sessionStorage.clear(); // Limpieza total por seguridad
-            
-            // Redirigir al inicio y recargar
-            window.location.href = window.location.pathname; 
-            window.location.reload(); 
+            sessionStorage.clear(); // Borra user y role
+            // Redirección forzada para limpiar el estado de la página
+            window.location.href = window.location.pathname;
         }
 
-        // --- NAVEGACIÓN ENTRE PANELES ---
+        // --- NAVEGACIÓN ---
         function showPanel(panelId) {
             document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
             document.getElementById(panelId).classList.add('active');
         }
 
-        // --- RENDER DE CABECERA ---
+        // --- LOGIN MANUAL (Para demostración) ---
+        function loginAs(role) {
+            const email = prompt(`Ingresa email para ${role}:`);
+            if(email) {
+                sessionStorage.setItem('user', email);
+                sessionStorage.setItem('role', role);
+                window.location.reload();
+            }
+        }
+
+        // --- ACTUALIZAR ENCABEZADO ---
         function updateHeader() {
             const authDiv = document.getElementById('auth-section');
+            
             if (state.user) {
+                // Si hay sesión iniciada
+                const panelDestino = state.role === 'admin' ? 'admin-panel' : 'merchant-panel';
+                const labelIcon = state.role === 'admin' ? '🛡️' : '🏪';
+                
                 authDiv.innerHTML = `
-                    <div style="display:flex; align-items:center; gap:10px;">
-                        <span style="font-size:0.8rem; font-weight:bold;">${state.user}</span>
-                        <button onclick="showPanel('merchant-panel')" class="btn btn-outline">Mi Panel</button>
+                    <div style="display:flex; align-items:center; gap:12px;">
+                        <span style="font-size:0.85rem; font-weight:bold; background:rgba(0,0,0,0.1); padding:5px 10px; border-radius:20px;">${state.user}</span>
+                        <button onclick="showPanel('${panelDestino}')" class="btn btn-white">${labelIcon} Mi Panel</button>
                         <button onclick="logout()" class="btn btn-danger">Salir</button>
                     </div>
                 `;
             } else {
-                authDiv.innerHTML = `<button onclick="mockLogin()" class="btn btn-outline">Ingresar</button>`;
+                // Si no hay sesión (Vista Cliente)
+                authDiv.innerHTML = `
+                    <button onclick="loginAs('admin')" class="btn btn-outline">🛡️ Admin</button>
+                    <button onclick="loginAs('merchant')" class="btn btn-white">🏪 Comercio</button>
+                `;
             }
         }
 
-        // --- SIMULACRO LOGIN (Para pruebas) ---
-        function mockLogin() {
-            const email = prompt("Ingresa tu email de comercio:");
-            if(email) {
-                sessionStorage.setItem('user', email);
-                sessionStorage.setItem('role', 'merchant');
-                location.reload();
-            }
-        }
-
-        // --- INICIALIZACIÓN ---
+        // --- CARGA INICIAL ---
         document.addEventListener('DOMContentLoaded', () => {
             updateHeader();
 
-            // Si hay usuario, le mostramos su panel por defecto, 
-            // pero el botón del título lo puede llevar de vuelta al buscador.
-            if (state.user && state.role === 'merchant') {
-                showPanel('merchant-panel');
-                
-                // Iniciar mapa solo si estamos en el panel
-                setTimeout(() => {
-                    const map = L.map('map-admin').setView([-25.074, -64.918], 15);
-                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-                    L.marker([-25.074, -64.918], {draggable: true}).addTo(map);
-                }, 500);
+            // Lógica de apertura automática
+            if (state.user) {
+                if (state.role === 'admin') showPanel('admin-panel');
+                else if (state.role === 'merchant') {
+                    showPanel('merchant-panel');
+                    // Carga diferida del mapa
+                    setTimeout(() => {
+                        const map = L.map('map-admin').setView([-25.074, -64.918], 15);
+                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+                        L.marker([-25.074, -64.918], {draggable: true}).addTo(map);
+                    }, 300);
+                }
             }
         });
-
-        function saveProfile() {
-            alert("¡Cambios guardados localmente!");
-        }
     </script>
 </body>
 </html>
