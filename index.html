@@ -1,1198 +1,144 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DÓNDE COMPRO.COM - Marketplace Local</title>
-<!-- Leaflet CSS para mapas -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<style>
-/* [MISMO CSS QUE TENÉS - NO CAMBIA] */
-:root {
---primary: #2563eb; --primary-dark: #1d4ed8; --secondary: #059669;
---dark: #1e293b; --light: #f8fafc; --gray: #64748b;
---danger: #dc2626; --warning: #f59e0b;
---shadow: 0 4px 6px -1px rgba(0,0,0,0.1); --radius: 12px;
-}
-* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
-body { background: var(--light); color: var(--dark); line-height: 1.6; }
-header {
-background: white; box-shadow: var(--shadow); position: sticky; top: 0; z-index: 1000;
-padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;
-position: relative; overflow: hidden;
-}
-.header-watermark {
-position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-background-size: contain; background-repeat: repeat; background-position: center;
-opacity: 0.5; pointer-events: none; z-index: 0;
-}
-header > * { position: relative; z-index: 1; }
-.logo { display: flex; align-items: center; gap: 0.5rem; font-size: 1.3rem; font-weight: 800; color: var(--primary); }
-.logo img { height: 40px; width: auto; object-fit: contain; }
-nav { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; }
-nav a {
-color: var(--dark); text-decoration: none; font-weight: 500; padding: 0.5rem;
-border-radius: var(--radius); transition: all 0.2s; font-size: 0.95rem; cursor: pointer;
-}
-nav a:hover, nav a.active { background: var(--primary); color: white; }
-.user-actions { display: flex; gap: 0.8rem; align-items: center; }
-.btn {
-padding: 0.5rem 1rem; border: none; border-radius: var(--radius); font-weight: 600;
-cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.9rem;
-}
-.btn-primary { background: var(--primary); color: white; }
-.btn-primary:hover { background: var(--primary-dark); }
-.btn-outline { border: 2px solid var(--primary); color: var(--primary); background: transparent; }
-.btn-outline:hover { background: var(--primary); color: white; }
-.btn-success { background: var(--secondary); color: white; }
-.btn-danger { background: var(--danger); color: white; }
-.btn-warning { background: var(--warning); color: white; }
-.btn-sm { padding: 0.3rem 0.6rem; font-size: 0.8rem; }
-.cart-icon { position: relative; font-size: 1.2rem; cursor: pointer; }
-.cart-count {
-position: absolute; top: -8px; right: -8px; background: var(--danger); color: white;
-font-size: 0.7rem; width: 18px; height: 18px; border-radius: 50%;
-display: none; align-items: center; justify-content: center;
-}
-.container { max-width: 1400px; margin: 0 auto; padding: 1.5rem; }
-.panel { display: none; animation: fadeIn 0.3s ease; }
-.panel.active { display: block; }
-@keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
-.search-section {
-background: white; padding: 1.2rem; border-radius: var(--radius);
-box-shadow: var(--shadow); margin-bottom: 1.5rem;
-}
-.search-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.8rem; margin-bottom: 0.8rem; }
-.search-grid input, .search-grid select {
-padding: 0.7rem; border: 1px solid #cbd5e1; border-radius: var(--radius); font-size: 0.95rem;
-}
-.search-btn {
-width: 100%; padding: 0.7rem; background: var(--primary); color: white; border: none;
-border-radius: var(--radius); font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.4rem;
-}
-.map-container {
-background: linear-gradient(135deg, #e0f2fe 0%, #dbeafe 100%);
-border-radius: var(--radius); height: 400px; margin: 1rem 0;
-position: relative; overflow: hidden; border: 2px solid #bfdbfe;
-}
-#map { height: 100%; width: 100%; border-radius: var(--radius); }
-.map-info-box {
-position: absolute; bottom: 60px; left: 10px; right: 10px;
-background: white; padding: 0.8rem; border-radius: var(--radius);
-box-shadow: var(--shadow); display: none; z-index: 1000;
-}
-.map-info-box.active { display: block; }
-.map-legend {
-position: absolute; bottom: 10px; right: 10px; background: white;
-padding: 0.6rem; border-radius: 8px; font-size: 0.8rem; box-shadow: var(--shadow); z-index: 1000;
-}
-.legend-item { display: flex; align-items: center; gap: 0.4rem; margin: 0.2rem 0; }
-.legend-dot { width: 12px; height: 12px; border-radius: 50%; }
-.location-info { display: flex; align-items: center; gap: 0.4rem; color: var(--gray); font-size: 0.85rem; margin: 0.5rem 0; }
-.distance-badge {
-display: inline-block; background: #eff6ff; color: var(--primary);
-padding: 0.2rem 0.5rem; border-radius: 6px; font-size: 0.8rem; font-weight: 600;
-margin-top: 0.3rem;
-}
-.products-grid {
-display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-gap: 1.2rem; margin-top: 1rem;
-}
-.product-card {
-background: white; border-radius: var(--radius); overflow: hidden;
-box-shadow: var(--shadow); transition: transform 0.2s; cursor: pointer;
-}
-.product-card:hover { transform: translateY(-4px); }
-.product-img {
-height: 180px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-display: flex; align-items: center; justify-content: center; color: white; font-size: 2.5rem;
-overflow: hidden; position: relative;
-}
-.product-img img { width: 100%; height: 100%; object-fit: cover; }
-.product-info { padding: 1rem; }
-.product-title { font-weight: 600; margin-bottom: 0.3rem; font-size: 1rem; }
-.product-price { color: var(--secondary); font-weight: 700; font-size: 1.3rem; }
-.product-stock { color: var(--gray); font-size: 0.85rem; margin: 0.2rem 0; }
-.product-desc { color: var(--gray); font-size: 0.85rem; margin-bottom: 0.5rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.product-store-info {
-background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-border: 2px solid #bfdbfe; border-radius: 8px; padding: 0.7rem; margin: 0.5rem 0;
-}
-.product-store-info strong { color: var(--primary); display: block; margin-bottom: 0.3rem; font-size: 0.9rem; }
-.product-store-info p { color: var(--dark); font-size: 0.85rem; margin: 0.2rem 0; display: flex; align-items: flex-start; gap: 0.4rem; }
-.product-actions { display: flex; gap: 0.5rem; margin-top: 0.7rem; }
-.product-actions .btn { flex: 1; justify-content: center; }
-.cart-modal {
-position: fixed; top: 0; right: -400px; width: 380px; max-width: 95%;
-height: 100vh; background: white; box-shadow: -4px 0 15px rgba(0,0,0,0.15);
-z-index: 2000; transition: right 0.3s ease; padding: 1.2rem; display: flex; flex-direction: column;
-}
-.cart-modal.active { right: 0; }
-.cart-header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 0.8rem; border-bottom: 1px solid #e2e8f0; margin-bottom: 0.8rem; }
-.cart-items { flex: 1; overflow-y: auto; }
-.cart-item { display: flex; gap: 0.8rem; padding: 0.8rem 0; border-bottom: 1px solid #f1f5f9; }
-.cart-item-info { flex: 1; }
-.cart-item-title { font-weight: 500; font-size: 0.9rem; }
-.cart-item-price { color: var(--secondary); font-weight: 600; font-size: 0.95rem; }
-.cart-item-qty { display: flex; align-items: center; gap: 0.4rem; margin-top: 0.2rem; }
-.qty-btn { width: 22px; height: 22px; border: 1px solid #cbd5e1; border-radius: 4px; background: white; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-.cart-footer { padding-top: 0.8rem; border-top: 2px solid #e2e8f0; }
-.cart-total { font-weight: 700; font-size: 1.1rem; display: flex; justify-content: space-between; margin-bottom: 0.8rem; }
-.cart-actions { display: flex; gap: 0.5rem; }
-.cart-actions .btn { flex: 1; justify-content: center; }
-.merchant-dashboard { display: grid; grid-template-columns: 200px 1fr; gap: 1.2rem; }
-.sidebar { background: white; border-radius: var(--radius); padding: 0.8rem; box-shadow: var(--shadow); height: fit-content; }
-.sidebar-menu a { display: flex; align-items: center; gap: 0.6rem; padding: 0.6rem 0.8rem; color: var(--dark); text-decoration: none; border-radius: 8px; margin-bottom: 0.2rem; font-size: 0.9rem; cursor: pointer; }
-.sidebar-menu a:hover, .sidebar-menu a.active { background: var(--primary); color: white; }
-.dashboard-content { background: white; border-radius: var(--radius); padding: 1.2rem; box-shadow: var(--shadow); }
-.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 0.8rem; margin-bottom: 1.2rem; }
-.stat-card { background: #f8fafc; padding: 0.8rem; border-radius: var(--radius); text-align: center; }
-.stat-value { font-size: 1.5rem; font-weight: 700; color: var(--primary); }
-.stat-label { color: var(--gray); font-size: 0.8rem; }
-.orders-table { width: 100%; border-collapse: collapse; margin-top: 0.8rem; font-size: 0.9rem; }
-.orders-table th, .orders-table td { padding: 0.6rem 0.5rem; text-align: left; border-bottom: 1px solid #e2e8f0; }
-.orders-table th { background: #f8fafc; font-weight: 600; }
-.status-badge { padding: 0.25rem 0.6rem; border-radius: 20px; font-size: 0.8rem; font-weight: 500; }
-.status-pending { background: #fef3c7; color: #92400e; }
-.status-suspended { background: #fee2e2; color: #991b1b; }
-.admin-panel { background: white; border-radius: var(--radius); padding: 1.2rem; box-shadow: var(--shadow); }
-.admin-tabs { display: flex; gap: 0.3rem; margin-bottom: 1.2rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.4rem; flex-wrap: wrap; }
-.admin-tab { padding: 0.5rem 1rem; border: none; background: none; cursor: pointer; border-radius: 8px 8px 0 0; font-weight: 500; }
-.admin-tab.active { background: var(--primary); color: white; }
-.admin-content { display: none; }
-.admin-content.active { display: block; }
-.user-list { display: grid; gap: 0.6rem; }
-.user-card { display: flex; justify-content: space-between; align-items: center; padding: 0.8rem; border: 1px solid #e2e8f0; border-radius: var(--radius); }
-.user-actions-admin { display: flex; gap: 0.3rem; }
-.modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 3000; align-items: center; justify-content: center; padding: 1rem; }
-.modal.active { display: flex; }
-.modal-content { background: white; border-radius: var(--radius); width: 100%; max-width: 700px; max-height: 90vh; overflow-y: auto; animation: modalSlide 0.3s ease; }
-@keyframes modalSlide { from { opacity:0; transform:translateY(-15px); } to { opacity:1; transform:translateY(0); } }
-.modal-header { padding: 1rem 1.2rem; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
-.modal-body { padding: 1.2rem; }
-.form-group { margin-bottom: 0.9rem; }
-.form-group label { display: block; margin-bottom: 0.3rem; font-weight: 500; }
-.form-group input, .form-group textarea, .form-group select { width: 100%; padding: 0.7rem; border: 1px solid #cbd5e1; border-radius: var(--radius); font-size: 0.95rem; }
-.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; }
-.close-modal { background: none; border: none; font-size: 1.3rem; cursor: pointer; color: var(--gray); }
-.toast { position: fixed; bottom: 20px; right: 20px; padding: 0.9rem 1.3rem; border-radius: var(--radius); color: white; font-weight: 500; z-index: 5000; animation: slideIn 0.3s; }
-.toast.success { background: var(--secondary); }
-.toast.error { background: var(--danger); }
-.toast.info { background: var(--primary); }
-@keyframes slideIn { from { transform:translateX(100px); opacity:0; } to { transform:translateX(0); opacity:1; } }
-.hidden { display: none !important; }
-.text-center { text-align: center; }
-.text-gray { color: var(--gray); }
-.mt-1 { margin-top: 0.5rem; }
-.mt-2 { margin-top: 1rem; }
-.mb-1 { margin-bottom: 0.5rem; }
-.mb-2 { margin-bottom: 1rem; }
-.flex { display: flex; }
-.gap-1 { gap: 0.5rem; }
-.justify-between { justify-content: space-between; }
-.modal-product-layout { display: grid; grid-template-columns: 1fr 1.2fr; gap: 1.5rem; }
-.modal-address-box { background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); border: 3px solid #3b82f6; border-radius: var(--radius); padding: 1.2rem; margin-top: 1rem; }
-.modal-address-box strong { color: var(--primary); font-size: 1.1rem; display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.8rem; padding-bottom: 0.5rem; border-bottom: 2px solid #bfdbfe; }
-.modal-address-box .address-line { display: flex; align-items: flex-start; gap: 0.6rem; margin: 0.6rem 0; font-size: 0.95rem; }
-.btn-map { width: 100%; margin-top: 1rem; padding: 0.7rem; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem; }
-.btn-map:hover { background: var(--primary-dark); }
-.user-info-badge { display: none; align-items: center; gap: 0.5rem; background: #eff6ff; padding: 0.4rem 0.8rem; border-radius: 20px; border: 1px solid #bfdbfe; font-size: 0.85rem; color: var(--primary-dark); }
-.user-info-badge.active { display: flex; }
-.image-upload-container { border: 2px dashed #cbd5e1; border-radius: var(--radius); padding: 1.5rem; text-align: center; margin-bottom: 1rem; transition: all 0.2s; cursor: pointer; }
-.image-upload-container:hover { border-color: var(--primary); background: #eff6ff; }
-.image-upload-container.has-image { border-style: solid; border-color: var(--secondary); background: #f0fdf4; }
-.image-preview { max-width: 200px; max-height: 200px; border-radius: 8px; margin: 1rem auto; display: none; box-shadow: var(--shadow); }
-.image-preview.active { display: block; }
-.image-placeholder { font-size: 3rem; color: var(--gray); margin-bottom: 0.5rem; }
-.image-upload-text { color: var(--gray); font-size: 0.9rem; }
-.image-remove-btn { background: var(--danger); color: white; border: none; padding: 0.4rem 0.8rem; border-radius: 6px; cursor: pointer; margin-top: 0.5rem; font-size: 0.85rem; }
-.image-info { font-size: 0.8rem; color: var(--gray); margin-top: 0.5rem; }
-.branding-section { background: #f8fafc; border: 2px solid #e2e8f0; border-radius: var(--radius); padding: 1.2rem; margin-bottom: 1.5rem; }
-.branding-section h4 { color: var(--primary); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
-.branding-preview { display: flex; gap: 1rem; align-items: center; margin-top: 1rem; flex-wrap: wrap; }
-.branding-preview img { max-height: 60px; border: 1px solid #e2e8f0; border-radius: 8px; }
-.category-item { display: flex; justify-content: space-between; align-items: center; padding: 0.8rem; background: #f8fafc; border-radius: 8px; margin-bottom: 0.5rem; }
-@media (max-width: 768px) {
-header { padding: 0.8rem 1rem; }
-nav { width: 100%; justify-content: center; }
-.merchant-dashboard { grid-template-columns: 1fr; }
-.sidebar { display: flex; overflow-x: auto; padding: 0.4rem; }
-.sidebar-menu { display: flex; gap: 0.3rem; }
-.sidebar-menu a { padding: 0.5rem; white-space: nowrap; font-size: 0.85rem; }
-.cart-modal { width: 100%; max-width: 100%; }
-.form-row { grid-template-columns: 1fr; }
-.products-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
-.search-grid { grid-template-columns: 1fr; }
-.product-actions { flex-direction: column; }
-.modal-product-layout { grid-template-columns: 1fr; }
-.map-container { height: 300px; }
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DONDE COMPRO.COM - Rosario de la Frontera</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <style>
+        .page { display: none; }
+        .page.active { display: block; animation: fadeIn 0.3s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .nav-link.active { border-bottom: 2px solid white; }
+    </style>
 </head>
-<body>
-<header>
-<div class="header-watermark" id="header-watermark"></div>
-<div class="logo" id="platform-logo">🏪 DÓNDE COMPRO.COM</div>
-<nav id="main-nav">
-<a href="#" class="active" data-panel="client-panel">🏠 Inicio</a>
-<a href="#" data-panel="merchant-panel" id="nav-merchant">🏪 Comerciante</a>
-<a href="#" data-panel="admin-panel" id="admin-link">🛡️ Admin</a>
-</nav>
-<div class="user-actions">
-<div class="user-info-badge hidden" id="user-badge">
-<span>👤</span><span id="user-display"></span>
-<button class="btn btn-sm btn-danger" onclick="logout()">Salir</button>
-</div>
-<button class="btn btn-outline" id="login-btn" onclick="openLoginModal('merchant')">👤 Ingresar</button>
-<div class="cart-icon" onclick="toggleCart()">
-🛒 <span class="cart-count">0</span>
-</div>
-</div>
-</header>
-
-<main class="container">
-<!-- CLIENTE -->
-<section id="client-panel" class="panel active">
-<div class="search-section">
-<strong>🔍 Buscador</strong>
-<div class="search-grid">
-<input type="text" id="search-keyword" placeholder="¿Qué buscás?">
-<select id="search-category"><option value="">Todos los rubros</option></select>
-<select id="search-price">
-<option value="">Cualquier precio</option>
-<option value="0-50">Hasta $50</option>
-<option value="50-100">$50 - $100</option>
-<option value="100-500">$100 - $500</option>
-<option value="500+">Más de $500</option>
-</select>
-<select id="search-distance">
-<option value="">Cualquier distancia</option>
-<option value="1">Hasta 1 km</option>
-<option value="3">Hasta 3 km</option>
-<option value="5">Hasta 5 km</option>
-<option value="10">Hasta 10 km</option>
-</select>
-</div>
-<button class="search-btn" onclick="searchProducts()">🔎 Buscar</button>
-</div>
-
-<!-- MAPA -->
-<div>
-<strong>🗺️ Comercios Cercanos</strong>
-<div class="location-info">📍 <span id="user-location">Obteniendo ubicación...</span></div>
-<div class="map-container">
-<div id="map"></div>
-<div class="map-info-box" id="map-info-box">
-<strong id="map-store-name">Nombre del Comercio</strong>
-<p id="map-store-address" class="text-gray" style="font-size:0.85rem; margin:0.3rem 0;">📍 Dirección</p>
-<p id="map-store-distance" style="font-size:0.85rem; color:var(--primary); font-weight:600;"></p>
-<button class="btn btn-primary btn-sm" onclick="closeMapInfo()">❌ Cerrar</button>
-<button class="btn btn-success btn-sm mt-1" onclick="openInGoogleMaps()">🗺️ Cómo llegar</button>
-</div>
-<div class="map-legend">
-<div class="legend-item"><span class="legend-dot" style="background:var(--secondary)"></span> Tú</div>
-<div class="legend-item"><span class="legend-dot" style="background:#059669"></span> Alimentos</div>
-<div class="legend-item"><span class="legend-dot" style="background:#dc2626"></span> Farmacia</div>
-<div class="legend-item"><span class="legend-dot" style="background:#7c3aed"></span> Electrónica</div>
-</div>
-</div>
-</div>
-
-<div>
-<strong>📦 Productos</strong>
-<p class="text-gray mb-1" style="font-size:0.85rem">Cada producto muestra dirección y distancia</p>
-<div class="products-grid" id="products-container"></div>
-</div>
-</section>
-
-<!-- COMERCIANTE -->
-<section id="merchant-panel" class="panel">
-<div class="merchant-dashboard">
-<aside class="sidebar">
-<div class="sidebar-menu">
-<a href="#" class="active" onclick="switchMerchantTab('register'); return false;">📝 Registro</a>
-<a href="#" onclick="switchMerchantTab('inventory'); return false;">📦 Inventario</a>
-<a href="#" onclick="switchMerchantTab('orders'); return false;">🧾 Pedidos</a>
-</div>
-</aside>
-<div class="dashboard-content">
-<div id="merchant-register" class="merchant-tab">
-<strong>📝 Registro de Comercio</strong>
-<p class="text-gray mb-2">Completá los datos de tu comercio</p>
-<div class="form-group">
-<label>🏪 Nombre del Comercio *</label>
-<input type="text" id="merchant-store-name" placeholder="Ej: Pizzería Don Luigi">
-</div>
-<div class="form-group">
-<label>📍 Dirección *</label>
-<input type="text" id="merchant-address" placeholder="Av. Siempre Viva 123">
-</div>
-<div class="form-row">
-<div class="form-group">
-<label>📞 Teléfono</label>
-<input type="tel" id="merchant-phone" placeholder="11-1234-5678">
-</div>
-<div class="form-group">
-<label>📧 Email</label>
-<input type="email" id="merchant-email-display" readonly>
-</div>
-</div>
-<div class="form-row">
-<div class="form-group">
-<label>🕐 Horario</label>
-<input type="text" id="merchant-hours" placeholder="Ej: 9:00 - 20:00">
-</div>
-<div class="form-group">
-<label>🌙 ¿Fuera de horario?</label>
-<select id="merchant-after-hours">
-<option value="no">No</option>
-<option value="yes">Sí</option>
-</select>
-</div>
-</div>
-<div class="form-row">
-<div class="form-group">
-<label>🌐 Latitud</label>
-<input type="text" id="merchant-lat" placeholder="-34.6037">
-</div>
-<div class="form-group">
-<label>🌐 Longitud</label>
-<input type="text" id="merchant-lng" placeholder="-58.3816">
-</div>
-</div>
-<button class="btn btn-primary" onclick="saveMerchantProfile()">💾 Guardar</button>
-</div>
-
-<div id="merchant-inventory" class="merchant-tab hidden">
-<strong>📦 Inventario</strong>
-<button class="btn btn-success btn-sm" onclick="openProductModal()">➕ Nuevo</button>
-<table class="orders-table">
-<thead><tr><th>Producto</th><th>Precio</th><th>Stock</th><th>Acciones</th></tr></thead>
-<tbody id="inventory-body"></tbody>
-</table>
-</div>
-
-<div id="merchant-orders" class="merchant-tab hidden">
-<strong>🧾 Pedidos</strong>
-<table class="orders-table">
-<thead><tr><th>Pedido</th><th>Total</th><th>Estado</th></tr></thead>
-<tbody id="orders-body"></tbody>
-</table>
-</div>
-</div>
-</div>
-</section>
-
-<!-- ADMIN -->
-<section id="admin-panel" class="panel">
-<div class="admin-panel">
-<strong>🛡️ Panel Administrador</strong>
-<div class="admin-tabs">
-<button class="admin-tab active" onclick="switchAdminTab('merchants'); return false;">🏪 Comerciantes</button>
-<button class="admin-tab" onclick="switchAdminTab('categories'); return false;">📂 Rubros</button>
-<button class="admin-tab" onclick="switchAdminTab('branding'); return false;">🎨 Branding</button>
-</div>
-
-<div id="admin-merchants" class="admin-content active">
-<div class="branding-section">
-<h4>🏪 Comerciantes</h4>
-<div id="merchants-list" class="user-list"></div>
-</div>
-</div>
-
-<div id="admin-categories" class="admin-content">
-<div class="branding-section">
-<h4>📂 Rubros</h4>
-<div class="form-row mb-2">
-<div class="form-group">
-<label>Nombre</label>
-<input type="text" id="category-name" placeholder="Ej: Hogar">
-</div>
-<div class="form-group">
-<label>Emoji</label>
-<input type="text" id="category-icon" placeholder="🏠" maxlength="2">
-</div>
-</div>
-<div class="flex gap-1 mb-2">
-<button class="btn btn-success" onclick="addCategory()">➕ Agregar</button>
-<button class="btn btn-outline" onclick="resetCategoryForm()">🔄 Limpiar</button>
-</div>
-<div id="categories-list"></div>
-</div>
-</div>
-
-<div id="admin-branding" class="admin-content">
-<div class="branding-section">
-<h4>🖼️ Logo</h4>
-<div class="image-upload-container" id="logo-container" onclick="document.getElementById('logo-input').click()">
-<div class="image-placeholder" id="logo-placeholder">🖼️</div>
-<div class="image-upload-text" id="logo-text">Click para subir</div>
-<img id="logo-preview" class="image-preview">
-<button class="image-remove-btn" id="logo-remove" onclick="removeLogo(event)" style="display:none;">🗑️</button>
-</div>
-<input type="file" id="logo-input" accept="image/*" style="display:none;" onchange="handleLogoUpload(event)">
-<button class="btn btn-primary mt-2" onclick="savePlatformLogo()">💾 Guardar</button>
-</div>
-
-<div class="branding-section">
-<h4>🌊 Fondo</h4>
-<div class="image-upload-container" id="watermark-container" onclick="document.getElementById('watermark-input').click()">
-<div class="image-placeholder" id="watermark-placeholder">🌊</div>
-<div class="image-upload-text" id="watermark-text">Click para subir</div>
-<img id="watermark-preview" class="image-preview">
-<button class="image-remove-btn" id="watermark-remove" onclick="removeWatermark(event)" style="display:none;">🗑️</button>
-</div>
-<input type="file" id="watermark-input" accept="image/*" style="display:none;" onchange="handleWatermarkUpload(event)">
-<button class="btn btn-primary mt-2" onclick="savePlatformWatermark()">💾 Guardar</button>
-</div>
-</div>
-</div>
-</section>
-</main>
-
-<!-- CARRITO -->
-<div class="cart-modal" id="cart-modal">
-<div class="cart-header"><strong>🛒 Carrito</strong><button class="close-modal" onclick="toggleCart()">✕</button></div>
-<div class="cart-items" id="cart-items"></div>
-<div class="cart-footer">
-<div class="cart-total"><span>Total:</span><span id="cart-total">$0.00</span></div>
-<button class="btn btn-success" onclick="checkout()">💳 Pagar</button>
-</div>
-</div>
-
-<!-- LOGIN -->
-<div class="modal" id="login-modal">
-<div class="modal-content">
-<div class="modal-header">
-<strong id="login-title">👤 Iniciar Sesión</strong>
-<button class="close-modal" onclick="closeLoginModal()">✕</button>
-</div>
-<div class="modal-body">
-<div class="form-group">
-<label>📧 Email</label>
-<input type="email" id="login-email" placeholder="tu@email.com">
-</div>
-<div class="form-group">
-<label>🔑 Contraseña</label>
-<input type="password" id="login-password" placeholder="Contraseña">
-</div>
-<button class="btn btn-primary" style="width:100%" onclick="login()">🔐 Ingresar</button>
-<p class="text-center text-gray mt-2" style="font-size:0.8rem">
-<strong>🔒 Producción:</strong> Las credenciales se gestionan desde Firebase Console
-</p>
-</div>
-</div>
-</div>
-
-<!-- PRODUCTO -->
-<div class="modal" id="product-modal">
-<div class="modal-content">
-<div class="modal-header">
-<strong id="product-modal-title">Producto</strong>
-<button class="close-modal" onclick="closeProductModal()">✕</button>
-</div>
-<div class="modal-body">
-<div class="form-group"><label>Nombre</label><input type="text" id="product-name"></div>
-<div class="form-row">
-<div class="form-group"><label>Precio</label><input type="number" id="product-price" step="0.01"></div>
-<div class="form-group"><label>Stock</label><input type="number" id="product-stock"></div>
-</div>
-<div class="form-group"><label>Categoría</label><select id="product-category"></select></div>
-<button class="btn btn-success" style="width:100%" onclick="saveProduct()">💾 Guardar</button>
-</div>
-</div>
-</div>
-
-<!-- Leaflet JS -->
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script>
-// ===== ESTADO =====
-const state = {
-currentUser: null,
-currentRole: null,
-products: [],
-cart: [],
-orders: [],
-currentProduct: null,
-platformLogo: null,
-platformWatermark: null,
-userLocation: null,
-map: null,
-mapMarkers: [],
-categories: []
-};
-
-// ✅ SIN CONTRASEÑAS HARDCODEADAS
-// 🔒 PARA PRODUCCIÓN: Usar Firebase Authentication
-
-// ===== INICIALIZACIÓN =====
-document.addEventListener('DOMContentLoaded', () => {
-checkSession();
-initMap();
-getUserLocation();
-loadCategories();
-populateCategoryDropdowns();
-loadProducts();
-setupEventListeners();
-});
-
-// ===== MAPA =====
-function initMap() {
-state.map = L.map('map').setView([-34.6037, -58.3816], 13);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-attribution: '© OpenStreetMap'
-}).addTo(state.map);
-}
-
-function getUserLocation() {
-if (navigator.geolocation) {
-navigator.geolocation.getCurrentPosition(
-(position) => {
-state.userLocation = {lat: position.coords.latitude, lng: position.coords.longitude};
-document.getElementById('user-location').textContent = `📍 Lat: ${state.userLocation.lat.toFixed(4)}, Lng: ${state.userLocation.lng.toFixed(4)}`;
-state.map.setView([state.userLocation.lat, state.userLocation.lng], 13);
-L.marker([state.userLocation.lat, state.userLocation.lng], {
-icon: L.divIcon({
-className: 'user-marker',
-html: '<div style="background:#059669; width:20px; height:20px; border-radius:50%; border:3px solid white;"></div>',
-iconSize: [20, 20]
-})
-}).addTo(state.map).bindPopup('📍 Tu ubicación').openPopup();
-updateProductDistances();
-renderProducts(state.products);
-},
-(error) => {
-document.getElementById('user-location').textContent = '📍 Ubicación no disponible';
-state.userLocation = {lat: -34.6037, lng: -58.3816};
-updateProductDistances();
-renderProducts(state.products);
-}
-);
-} else {
-document.getElementById('user-location').textContent = '📍 Geolocalización no disponible';
-state.userLocation = {lat: -34.6037, lng: -58.3816};
-updateProductDistances();
-renderProducts(state.products);
-}
-}
-
-function calculateDistance(lat1, lng1, lat2, lng2) {
-const R = 6371;
-const dLat = (lat2 - lat1) * Math.PI / 180;
-const dLng = (lng2 - lng1) * Math.PI / 180;
-const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-Math.sin(dLng/2) * Math.sin(dLng/2);
-const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-return R * c;
-}
-
-function updateProductDistances() {
-if (!state.userLocation) return;
-state.products.forEach(p => {
-p.distance = (p.lat && p.lng) ? calculateDistance(state.userLocation.lat, state.userLocation.lng, p.lat, p.lng) : null;
-});
-}
-
-function updateMapMarkers(products) {
-state.mapMarkers.forEach(marker => state.map.removeLayer(marker));
-state.mapMarkers = [];
-const colors = {'food': '#059669', 'pharmacy': '#dc2626', 'electronics': '#7c3aed', 'clothing': '#0891b2'};
-products.forEach(p => {
-if (p.lat && p.lng) {
-const marker = L.marker([p.lat, p.lng], {
-icon: L.divIcon({
-className: 'product-marker',
-html: `<div style="background:${colors[p.category] || '#2563eb'}; width:30px; height:30px; border-radius:50% 50% 50% 0; transform:rotate(-45deg); border:3px solid white;"></div>`,
-iconSize: [30, 30]
-})
-}).addTo(state.map);
-marker.bindPopup(`<strong>${p.name}</strong><br>$${formatPrice(p.price)}<br>🏪 ${p.store}`);
-marker.on('click', () => showMapInfo(p));
-state.mapMarkers.push(marker);
-}
-});
-}
-
-function showMapInfo(product) {
-state.currentProduct = product;
-document.getElementById('map-store-name').textContent = product.store;
-document.getElementById('map-store-address').textContent = '📍 ' + product.address;
-document.getElementById('map-store-distance').textContent = product.distance ? `📏 ${product.distance.toFixed(2)} km` : '';
-document.getElementById('map-info-box').classList.add('active');
-}
-
-function closeMapInfo() {
-document.getElementById('map-info-box').classList.remove('active');
-}
-
-function openInGoogleMaps() {
-if (!state.currentProduct?.address) return;
-window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(state.currentProduct.address)}`, '_blank');
-}
-
-// ===== AUTH =====
-let loginType = 'merchant';
-
-function openLoginModal(type) {
-loginType = type;
-document.getElementById('login-title').textContent = type === 'admin' ? '🛡️ Admin' : '🏪 Comerciante';
-document.getElementById('login-email').value = '';
-document.getElementById('login-password').value = '';
-document.getElementById('login-modal').classList.add('active');
-}
-
-function closeLoginModal() {
-document.getElementById('login-modal').classList.remove('active');
-}
-
-function login() {
-const email = document.getElementById('login-email').value.trim().toLowerCase();
-const password = document.getElementById('login-password').value;
-
-if (!email || !password) {
-showToast('⚠️ Completá email y contraseña', 'error');
-return;
-}
-
-// 🔒 PARA PRODUCCIÓN: Firebase Authentication
-// ⚠️ ESTO ES SOLO PARA DEMOSTRACIÓN LOCAL
-showToast('🔒 Configurar Firebase Auth para producción', 'error');
-
-// Solo para desarrollo local (eliminar en producción)
-if (window.location.hostname === 'localhost') {
-state.currentUser = email;
-state.currentRole = loginType;
-sessionStorage.setItem('dc_user', email);
-sessionStorage.setItem('dc_role', loginType);
-updateUserUI();
-closeLoginModal();
-showToast('✅ Bienvenido (DEV)', 'success');
-
-if (loginType === 'admin') {
-switchPanel('admin-panel');
-} else {
-document.getElementById('merchant-email-display').value = email;
-switchPanel('merchant-panel');
-}
-}
-}
-
-function logout() {
-state.currentUser = null;
-state.currentRole = null;
-sessionStorage.removeItem('dc_user');
-sessionStorage.removeItem('dc_role');
-updateUserUI();
-showToast('👋 Sesión cerrada', 'info');
-switchPanel('client-panel');
-}
-
-function checkSession() {
-const user = sessionStorage.getItem('dc_user');
-const role = sessionStorage.getItem('dc_role');
-if (user && role) {
-state.currentUser = user;
-state.currentRole = role;
-updateUserUI();
-if (role === 'merchant') {
-document.getElementById('merchant-email-display').value = user;
-}
-}
-}
-
-function updateUserUI() {
-const badge = document.getElementById('user-badge');
-const display = document.getElementById('user-display');
-const loginBtn = document.getElementById('login-btn');
-
-if (state.currentUser) {
-badge.classList.remove('hidden');
-display.textContent = state.currentUser + (state.currentRole === 'admin' ? ' (Admin)' : '');
-loginBtn.classList.add('hidden');
-} else {
-badge.classList.add('hidden');
-loginBtn.classList.remove('hidden');
-}
-}
-
-// ===== NAVEGACIÓN =====
-function switchPanel(panelId) {
-document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-document.getElementById(panelId).classList.add('active');
-}
-
-function switchMerchantTab(tabId) {
-document.querySelectorAll('.merchant-tab').forEach(t => t.classList.add('hidden'));
-document.getElementById('merchant-' + tabId).classList.remove('hidden');
-}
-
-function switchAdminTab(tabId) {
-document.querySelectorAll('.admin-content').forEach(c => c.classList.remove('active'));
-document.getElementById('admin-' + tabId).classList.add('active');
-}
-
-// ===== CATEGORÍAS =====
-function loadCategories() {
-const saved = localStorage.getItem('dc_categories');
-state.categories = saved ? JSON.parse(saved) : [
-{id: 'food', name: 'Alimentos', icon: '🍕'},
-{id: 'pharmacy', name: 'Farmacia', icon: '💊'},
-{id: 'electronics', name: 'Electrónica', icon: '🔌'},
-{id: 'clothing', name: 'Ropa', icon: '👕'}
-];
-if (!saved) saveCategories();
-}
-
-function saveCategories() {
-localStorage.setItem('dc_categories', JSON.stringify(state.categories));
-}
-
-function renderCategoriesList() {
-const container = document.getElementById('categories-list');
-if (state.categories.length === 0) {
-container.innerHTML = '<p class="text-center text-gray">📭 Sin rubros</p>';
-return;
-}
-container.innerHTML = state.categories.map((cat, i) => `
-<div class="category-item">
-<div><strong>${cat.icon} ${cat.name}</strong></div>
-<div class="user-actions-admin">
-<button class="btn btn-warning btn-sm" onclick="editCategory(${i})">✏️</button>
-<button class="btn btn-danger btn-sm" onclick="deleteCategory(${i})">🗑️</button>
-</div>
-</div>
-`).join('');
-}
-
-function populateCategoryDropdowns() {
-const search = document.getElementById('search-category');
-const product = document.getElementById('product-category');
-search.innerHTML = '<option value="">Todos</option>';
-product.innerHTML = '';
-state.categories.forEach(cat => {
-search.innerHTML += `<option value="${cat.id}">${cat.icon} ${cat.name}</option>`;
-product.innerHTML += `<option value="${cat.id}">${cat.icon} ${cat.name}</option>`;
-});
-}
-
-function addCategory() {
-const name = document.getElementById('category-name').value.trim();
-const icon = document.getElementById('category-icon').value.trim() || '📦';
-if (!name) { showToast('⚠️ Nombre requerido', 'error'); return; }
-
-const newId = name.toLowerCase().replace(/[^a-z0-9]/g, '-');
-db.collection('categories').doc(newId).set({name, icon})
-.then(() => {
-showToast('✅ Agregado', 'success');
-loadCategories();
-resetCategoryForm();
-})
-.catch((error) => {
-// Fallback a localStorage para demo
-state.categories.push({id: newId, name, icon});
-saveCategories();
-renderCategoriesList();
-populateCategoryDropdowns();
-resetCategoryForm();
-showToast('✅ Agregado (local)', 'success');
-});
-}
-
-function resetCategoryForm() {
-document.getElementById('category-name').value = '';
-document.getElementById('category-icon').value = '';
-}
-
-// ===== BÚSQUEDA =====
-function searchProducts() {
-const keyword = document.getElementById('search-keyword').value.toLowerCase();
-const category = document.getElementById('search-category').value;
-const price = document.getElementById('search-price').value;
-const distance = document.getElementById('search-distance').value;
-let results = state.products.slice();
-
-if (keyword) results = results.filter(p => p.name.toLowerCase().includes(keyword));
-if (category) results = results.filter(p => p.category === category);
-if (price) {
-const [min, max] = price.split('-').map(v => v === '+' ? Infinity : parseFloat(v));
-results = results.filter(p => p.price >= (min || 0) && p.price <= (max || Infinity));
-}
-if (distance && state.userLocation) {
-results = results.filter(p => p.distance && p.distance <= parseFloat(distance));
-}
-
-renderProducts(results);
-updateMapMarkers(results);
-showToast(`🔍 ${results.length} resultados`, 'info');
-}
-
-// ===== PRODUCTOS =====
-function renderProducts(products) {
-const container = document.getElementById('products-container');
-if (!products?.length) {
-container.innerHTML = '<p class="text-center text-gray" style="grid-column:1/-1; padding:3rem">📭 Sin productos</p>';
-return;
-}
-container.innerHTML = products.map(p => {
-const img = p.image ? `<img src="${p.image}" onerror="this.style.display='none'">` : '📦';
-const dist = p.distance ? `<span class="distance-badge">📏 ${p.distance.toFixed(2)} km</span>` : '';
-return `
-<div class="product-card">
-<div class="product-img">${img}</div>
-<div class="product-info">
-<div class="product-title">${p.name}</div>
-<div class="product-price">$${formatPrice(p.price)}</div>
-<div class="product-stock">${p.stock} disponibles</div>
-<div class="product-store-info">
-<strong>🏪 ${p.store}</strong>
-<p>📍 ${p.address}</p>
-<p>📞 ${p.phone}</p>
-${dist}
-</div>
-<div class="product-actions">
-<button class="btn btn-primary btn-sm" onclick="openProductModal('${p.id}')">👁️ Ver</button>
-<button class="btn btn-success btn-sm" onclick="buyNow('${p.id}')">⚡ Comprar</button>
-</div>
-</div>
-</div>`;
-}).join('');
-}
-
-function formatPrice(p) {
-return parseFloat(p).toLocaleString('es-AR', {minimumFractionDigits: 2});
-}
-
-function openProductModal(id) {
-const p = state.products.find(x => x.id === id);
-if (!p) return;
-state.currentProduct = p;
-document.getElementById('product-name').value = p.name;
-document.getElementById('product-price').value = p.price;
-document.getElementById('product-stock').value = p.stock;
-document.getElementById('product-category').value = p.category;
-document.getElementById('product-modal').classList.add('active');
-}
-
-function closeProductModal() {
-document.getElementById('product-modal').classList.remove('active');
-}
-
-// ===== CARRITO =====
-function toggleCart() {
-document.getElementById('cart-modal').classList.toggle('active');
-}
-
-function addToCart(id, qty=1) {
-const p = state.products.find(x => x.id === id);
-if (!p) return;
-const existing = state.cart.find(i => i.id === id);
-if (existing) existing.qty += qty;
-else state.cart.push({...p, qty});
-updateCartUI();
-showToast('✅ Añadido', 'success');
-}
-
-function updateCartUI() {
-const count = document.querySelector('.cart-count');
-const items = document.getElementById('cart-items');
-const total = document.getElementById('cart-total');
-const qty = state.cart.reduce((s, i) => s + i.qty, 0);
-
-count.textContent = qty;
-count.style.display = qty > 0 ? 'flex' : 'none';
-
-if (!state.cart.length) {
-items.innerHTML = '<p class="text-center text-gray" style="padding:2rem">🛍️ Vacío</p>';
-} else {
-items.innerHTML = state.cart.map(i => `
-<div class="cart-item">
-<div class="cart-item-info">
-<div class="cart-item-title">${i.name}</div>
-<div class="cart-item-price">$${i.price.toFixed(2)}</div>
-<div class="cart-item-qty">
-<button class="qty-btn" onclick="updateQty('${i.id}',-1)">-</button>
-<span>${i.qty}</span>
-<button class="qty-btn" onclick="updateQty('${i.id}',1)">+</button>
-</div>
-</div>
-</div>`).join('');
-}
-
-total.textContent = '$' + state.cart.reduce((s, i) => s + i.price * i.qty, 0).toFixed(2);
-}
-
-function updateQty(id, change) {
-const item = state.cart.find(i => i.id === id);
-if (!item) return;
-item.qty += change;
-if (item.qty <= 0) state.cart = state.cart.filter(i => i.id !== id);
-updateCartUI();
-}
-
-function checkout() {
-if (!state.cart.length) { showToast('⚠️ Vacío', 'error'); return; }
-const order = {
-id: 'ORD-' + Math.floor(Math.random() * 9000),
-total: state.cart.reduce((s, i) => s + i.price * i.qty, 0),
-date: new Date().toISOString(),
-items: state.cart,
-status: 'pending'
-};
-state.orders.push(order);
-state.cart = [];
-updateCartUI();
-toggleCart();
-showToast(`✅ ${order.id}`, 'success');
-}
-
-function buyNow(id) {
-const p = state.products.find(x => x.id === id);
-if (!p) return;
-showToast(`✅ Compra: ${p.name}`, 'success');
-}
-
-// ===== COMERCIANTE =====
-function saveMerchantProfile() {
-const profile = {
-email: state.currentUser,
-storeName: document.getElementById('merchant-store-name').value,
-address: document.getElementById('merchant-address').value,
-phone: document.getElementById('merchant-phone').value,
-hours: document.getElementById('merchant-hours').value,
-afterHours: document.getElementById('merchant-after-hours').value
-};
-
-if (!profile.storeName || !profile.address) {
-showToast('⚠️ Nombre y dirección requeridos', 'error');
-return;
-}
-
-localStorage.setItem('dc_merchant_' + state.currentUser, JSON.stringify(profile));
-showToast('✅ Guardado', 'success');
-}
-
-function renderInventory() {
-const tbody = document.getElementById('inventory-body');
-const myProducts = state.products.filter(p => p.owner === state.currentUser);
-
-if (!myProducts.length) {
-tbody.innerHTML = '<tr><td colspan="4" class="text-center text-gray">📭 Sin productos</td></tr>';
-return;
-}
-
-tbody.innerHTML = myProducts.map(p => `
-<tr>
-<td>${p.name}</td>
-<td>$${formatPrice(p.price)}</td>
-<td>${p.stock}</td>
-<td>
-<button class="btn btn-primary btn-sm" onclick="editProduct('${p.id}')">✏️</button>
-<button class="btn btn-danger btn-sm" onclick="deleteProduct('${p.id}')">🗑️</button>
-</td>
-</tr>`).join('');
-}
-
-function openProductModal() {
-if (!state.currentUser) { showToast('⚠️ Iniciá sesión', 'error'); return; }
-document.getElementById('product-name').value = '';
-document.getElementById('product-price').value = '';
-document.getElementById('product-stock').value = '';
-document.getElementById('product-modal').classList.add('active');
-}
-
-function saveProduct() {
-if (!state.currentUser) { showToast('⚠️ Sesión requerida', 'error'); return; }
-
-const product = {
-id: Date.now(),
-name: document.getElementById('product-name').value,
-price: parseFloat(document.getElementById('product-price').value),
-stock: parseInt(document.getElementById('product-stock').value),
-category: document.getElementById('product-category').value,
-owner: state.currentUser,
-store: 'Mi Comercio',
-address: 'Dirección',
-phone: 'Teléfono'
-};
-
-state.products.push(product);
-renderInventory();
-renderProducts(state.products);
-updateMapMarkers(state.products);
-closeProductModal();
-showToast('✅ Guardado', 'success');
-}
-
-function editProduct(id) {
-const p = state.products.find(x => x.id === id);
-if (!p || p.owner !== state.currentUser) { showToast('🚫 No autorizado', 'error'); return; }
-document.getElementById('product-name').value = p.name;
-document.getElementById('product-price').value = p.price;
-document.getElementById('product-stock').value = p.stock;
-document.getElementById('product-modal').classList.add('active');
-}
-
-function deleteProduct(id) {
-if (!confirm('¿Eliminar?')) return;
-state.products = state.products.filter(p => p.id !== id);
-renderInventory();
-renderProducts(state.products);
-updateMapMarkers(state.products);
-showToast('🗑️ Eliminado', 'info');
-}
-
-function renderOrders() {
-const tbody = document.getElementById('orders-body');
-if (!state.orders.length) {
-tbody.innerHTML = '<tr><td colspan="3" class="text-center text-gray">📭 Sin pedidos</td></tr>';
-return;
-}
-tbody.innerHTML = state.orders.map(o => `
-<tr>
-<td>${o.id}</td>
-<td>$${formatPrice(o.total)}</td>
-<td><span class="status-badge status-pending">⏳</span></td>
-</tr>`).join('');
-}
-
-// ===== BRANDING =====
-function handleLogoUpload(event) {
-const file = event.target.files[0];
-if (!file) return;
-const reader = new FileReader();
-reader.onload = (e) => {
-state.platformLogo = e.target.result;
-document.getElementById('logo-preview').src = e.target.result;
-document.getElementById('logo-preview').classList.add('active');
-document.getElementById('logo-remove').style.display = 'inline-block';
-};
-reader.readAsDataURL(file);
-}
-
-function removeLogo(e) {
-e.stopPropagation();
-state.platformLogo = null;
-document.getElementById('logo-preview').src = '';
-document.getElementById('logo-preview').classList.remove('active');
-document.getElementById('logo-remove').style.display = 'none';
-}
-
-function savePlatformLogo() {
-if (!state.platformLogo) { showToast('⚠️ Subí logo', 'error'); return; }
-localStorage.setItem('dc_platform_logo', state.platformLogo);
-updatePlatformBranding();
-showToast('✅ Guardado', 'success');
-}
-
-function handleWatermarkUpload(event) {
-const file = event.target.files[0];
-if (!file) return;
-const reader = new FileReader();
-reader.onload = (e) => {
-state.platformWatermark = e.target.result;
-document.getElementById('watermark-preview').src = e.target.result;
-document.getElementById('watermark-preview').classList.add('active');
-document.getElementById('watermark-remove').style.display = 'inline-block';
-};
-reader.readAsDataURL(file);
-}
-
-function removeWatermark(e) {
-e.stopPropagation();
-state.platformWatermark = null;
-document.getElementById('watermark-preview').src = '';
-document.getElementById('watermark-preview').classList.remove('active');
-document.getElementById('watermark-remove').style.display = 'none';
-}
-
-function savePlatformWatermark() {
-if (!state.platformWatermark) { showToast('⚠️ Subí fondo', 'error'); return; }
-localStorage.setItem('dc_platform_watermark', state.platformWatermark);
-updatePlatformBranding();
-showToast('✅ Guardado', 'success');
-}
-
-function loadPlatformBranding() {
-const logo = localStorage.getItem('dc_platform_logo');
-const watermark = localStorage.getItem('dc_platform_watermark');
-if (logo) {
-state.platformLogo = logo;
-document.getElementById('logo-preview').src = logo;
-document.getElementById('logo-preview').classList.add('active');
-document.getElementById('logo-remove').style.display = 'inline-block';
-}
-if (watermark) {
-state.platformWatermark = watermark;
-document.getElementById('watermark-preview').src = watermark;
-document.getElementById('watermark-preview').classList.add('active');
-document.getElementById('watermark-remove').style.display = 'inline-block';
-}
-updatePlatformBranding();
-}
-
-function updatePlatformBranding() {
-const logo = document.getElementById('platform-logo');
-if (state.platformLogo) {
-logo.innerHTML = `<img src="${state.platformLogo}"> <span>DÓNDE COMPRO.COM</span>`;
-}
-const wm = document.getElementById('header-watermark');
-if (state.platformWatermark) {
-wm.style.backgroundImage = `url(${state.platformWatermark})`;
-wm.style.display = 'block';
-} else {
-wm.style.backgroundImage = 'none';
-wm.style.display = 'none';
-}
-}
-
-// ===== LOCALSTORAGE =====
-function loadData() {
-const products = localStorage.getItem('dc_products');
-state.products = products ? JSON.parse(products) : [];
-const orders = localStorage.getItem('dc_orders');
-state.orders = orders ? JSON.parse(orders) : [];
-}
-
-function loadProducts() {
-const products = localStorage.getItem('dc_products');
-state.products = products ? JSON.parse(products) : [];
-renderProducts(state.products);
-updateMapMarkers(state.products);
-}
-
-// ===== UTILS =====
-function showToast(msg, type='info') {
-const t = document.createElement('div');
-t.className = `toast ${type}`;
-t.textContent = msg;
-document.body.appendChild(t);
-setTimeout(() => t.remove(), 2500);
-}
-
-// ===== EVENT LISTENERS =====
-function setupEventListeners() {
-document.querySelectorAll('[data-panel]').forEach(lnk => {
-lnk.onclick = e => {
-e.preventDefault();
-const panel = lnk.dataset.panel;
-if (panel === 'admin-panel' && state.currentRole !== 'admin') {
-openLoginModal('admin');
-return;
-}
-if (panel === 'merchant-panel' && !state.currentUser) {
-openLoginModal('merchant');
-return;
-}
-switchPanel(panel);
-};
-});
-
-document.querySelectorAll('.modal').forEach(m => m.onclick = e => {
-if (e.target === m) m.classList.remove('active');
-});
-}
-</script>
+<body class="bg-slate-50">
+
+    <nav class="bg-blue-600 text-white shadow-lg sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <h1 class="text-xl font-black cursor-pointer" onclick="navigate('inicio')">DONDE COMPRO.COM</h1>
+            <div id="user-nav" class="flex gap-4 items-center">
+                <button onclick="navigate('comerciante')" class="text-sm hover:text-blue-200">Soy Comercio</button>
+                <div id="auth-status">
+                    </div>
+            </div>
+        </div>
+    </nav>
+
+    <main id="inicio" class="page active container mx-auto p-4">
+        <div class="text-center my-10">
+            <h2 class="text-4xl font-extrabold text-slate-800">Rosario de la Frontera</h2>
+            <p class="text-slate-500">Encuentra todo lo que necesitas en un solo lugar</p>
+        </div>
+        <div id="grid-comercios" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            </div>
+    </main>
+
+    <section id="comerciante" class="page container mx-auto p-4">
+        <div class="bg-white rounded-xl shadow-md p-6 max-w-2xl mx-auto">
+            <h2 class="text-2xl font-bold mb-6">Panel de Gestión</h2>
+            <div id="merchant-tools" class="hidden">
+                <p class="mb-4 text-green-600 font-medium">Sesión iniciada como: <span id="user-email"></span></p>
+                <button onclick="logout()" class="text-red-500 text-sm underline">Cerrar Sesión</button>
+            </div>
+            <div id="login-form">
+                <h3 class="text-lg mb-4 text-slate-600">Inicia sesión para gestionar tu tienda</h3>
+                <input type="email" id="email" placeholder="Email" class="w-full p-2 border rounded mb-2">
+                <input type="password" id="password" placeholder="Contraseña" class="w-full p-2 border rounded mb-4">
+                <button onclick="login()" class="w-full bg-blue-600 text-white py-2 rounded font-bold">Entrar</button>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        // 1. CONFIGURACIÓN DE FIREBASE (Reemplaza con tus datos reales)
+        const firebaseConfig = {
+            apiKey: "AIzaSy...",
+            authDomain: "tu-proyecto.firebaseapp.com",
+            projectId: "tu-proyecto",
+            storageBucket: "tu-proyecto.appspot.com",
+            messagingSenderId: "123456789",
+            appId: "1:123456789:web:abcdef"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // 2. SISTEMA DE NAVEGACIÓN
+        function navigate(pageId) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+            window.scrollTo(0,0);
+        }
+
+        // 3. GESTIÓN DE AUTENTICACIÓN
+        function login() {
+            const email = document.getElementById('email').value;
+            const pass = document.getElementById('password').value;
+
+            auth.signInWithEmailAndPassword(email, pass)
+                .then(() => {
+                    alert("¡Bienvenido!");
+                    updateUI(auth.currentUser);
+                })
+                .catch(err => alert("Error: " + err.message));
+        }
+
+        function logout() {
+            auth.signOut().then(() => updateUI(null));
+        }
+
+        function updateUI(user) {
+            const authStatus = document.getElementById('auth-status');
+            const merchantTools = document.getElementById('merchant-tools');
+            const loginForm = document.getElementById('login-form');
+
+            if (user) {
+                authStatus.innerHTML = `<button onclick="navigate('comerciante')" class="bg-blue-800 px-3 py-1 rounded-full text-xs">Mi Cuenta</button>`;
+                merchantTools.classList.remove('hidden');
+                loginForm.classList.add('hidden');
+                document.getElementById('user-email').innerText = user.email;
+            } else {
+                authStatus.innerHTML = `<button onclick="navigate('comerciante')" class="bg-white text-blue-600 px-3 py-1 rounded-full text-xs font-bold">Ingresar</button>`;
+                merchantTools.classList.add('hidden');
+                loginForm.classList.remove('hidden');
+            }
+        }
+
+        // Escuchar cambios de sesión
+        auth.onAuthStateChanged(user => updateUI(user));
+
+        // 4. CARGA DE DATOS DESDE FIRESTORE
+        async function loadComercios() {
+            const grid = document.getElementById('grid-comercios');
+            const snapshot = await db.collection('comercios').get();
+            
+            if(snapshot.empty) {
+                grid.innerHTML = '<p class="text-center col-span-3 text-slate-400">No hay comercios registrados aún.</p>';
+                return;
+            }
+
+            grid.innerHTML = '';
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                grid.innerHTML += `
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                        <h3 class="text-xl font-bold">${data.nombre}</h3>
+                        <p class="text-blue-600 text-sm font-bold uppercase">${data.rubro}</p>
+                    </div>
+                `;
+            });
+        }
+
+        // Carga inicial
+        loadComercios();
+    </script>
 </body>
 </html>
 
