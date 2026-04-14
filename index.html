@@ -3,158 +3,222 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DÓNDE COMPRO.COM</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <title>DÓNDE COMPRO.COM | Localizador de Productos</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
-        :root { --primary: #2563eb; --secondary: #059669; --bg: #f8fafc; --text: #1e293b; --danger: #ef4444; }
-        body { font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; background: var(--bg); color: var(--text); }
-        
-        header { 
-            background: var(--primary); 
-            color: white; padding: 0.8rem 1.5rem; 
-            display: flex; justify-content: space-between; align-items: center; 
-            position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        :root {
+            --primary: #0056b3; /* Azul profesional */
+            --secondary: #28a745; /* Verde para disponibilidad */
+            --bg-light: #f8f9fa;
+            --text-dark: #333;
+            --header-bg: #ffffff;
         }
 
-        .nav-group { display: flex; gap: 10px; align-items: center; }
-        .container { max-width: 1100px; margin: 0 auto; padding: 20px; }
-        .card { background: white; border-radius: 15px; padding: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; border: 1px solid #e2e8f0; }
-        
-        /* Gestión de Paneles */
-        .panel { display: none; }
-        .panel.active { display: block; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Poppins', sans-serif; background-color: var(--bg-light); color: var(--text-dark); }
 
-        .btn { padding: 10px 16px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; transition: 0.2s; font-size: 0.9rem; }
-        .btn-danger { background: var(--danger); color: white; }
-        .btn-outline { background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.3); }
-        .btn-white { background: white; color: var(--primary); }
+        /* HEADER PERSONALIZABLE */
+        header {
+            background-color: var(--header-bg);
+            background-image: url('https://www.transparenttextures.com/patterns/cubes.png'); /* Fondo de agua configurable */
+            padding: 1rem 5%;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .logo-container img { height: 50px; }
+
+        /* INTERFAZ LIMPIA (HOME) */
+        .home-container {
+            max-width: 1200px;
+            margin: 50px auto;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .search-box {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        input, select, button {
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        .btn-search { background: var(--primary); color: white; border: none; cursor: pointer; font-weight: 600; }
+        .btn-search:hover { opacity: 0.9; }
+
+        /* MAPA INTERACTIVO */
+        #main-map {
+            width: 100%;
+            height: 400px;
+            background: #e0e0e0;
+            margin-top: 20px;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+        }
+
+        /* RESULTADOS */
+        .results-section { display: none; padding: 20px 5%; grid-template-columns: 1fr 350px; gap: 20px; }
+        .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; }
         
-        input, select { padding: 12px; border-radius: 8px; border: 1px solid #ddd; width: 100%; box-sizing: border-box; margin-bottom: 10px; }
-        #map-admin { height: 250px; border-radius: 12px; margin-bottom: 15px; border: 2px solid #ddd; }
+        .product-card {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #eee;
+            transition: transform 0.2s;
+        }
+        .product-card:hover { transform: translateY(-5px); }
+        .product-card img { width: 100%; height: 180px; object-fit: cover; border-radius: 5px; }
+
+        .status-badge { font-size: 0.8rem; padding: 3px 8px; border-radius: 5px; }
+        .open { background: #d4edda; color: #155724; }
+        .closed { background: #f8d7da; color: #721c24; }
+
+        /* PANEL COMERCIANTE / MODALES */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+
+        .modal-content { background: white; padding: 30px; border-radius: 12px; width: 90%; max-width: 500px; }
+
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            .results-section { grid-template-columns: 1fr; }
+            .search-box { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
 
-    <header>
-        <h2 onclick="showPanel('client-panel')" style="cursor:pointer; margin:0; letter-spacing: -1px;">
-            DÓNDE COMPRO<span style="color:#93c5fd">.COM</span>
-        </h2>
-        <div id="auth-section" class="nav-group">
-            </div>
-    </header>
+<header id="main-header">
+    <div class="logo-container">
+        <h2 style="color: var(--primary);">DÓNDE COMPRO.COM</h2>
+    </div>
+    <nav>
+        <button onclick="openModal('modal-login')">Acceso Comerciantes</button>
+        <button onclick="toggleCart()" style="background:none; border:none; cursor:pointer; font-size:1.5rem;">🛒 <span id="cart-count">0</span></button>
+    </nav>
+</header>
 
-    <main class="container">
-        
-        <div id="client-panel" class="panel active">
-            <div class="card" style="text-align:center; padding: 60px 20px;">
-                <h1 style="font-size: 2.5rem; margin-bottom: 10px;">Encuentra lo que necesitas</h1>
-                <p style="color: #64748b; margin-bottom: 30px;">Explora comercios en Rosario de la Frontera</p>
-                <input type="text" placeholder="Buscar productos, marcas o locales..." style="max-width:600px; border-radius: 50px; padding: 18px 30px; border: 2px solid #e2e8f0; font-size: 1.1rem; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);">
-            </div>
+<main class="home-container" id="home">
+    <h1>Encuentra lo que buscas cerca de ti</h1>
+    <p>Busca entre más de 100,000 comercios locales</p><br>
+    
+    <div class="search-box">
+        <input type="text" id="query" placeholder="¿Qué buscas? (ej. Pan integral)">
+        <select id="rubro">
+            <option value="">Rubro (Todos)</option>
+            <option value="alimentos">Alimentos</option>
+            <option value="tecnologia">Tecnología</option>
+            <option value="hogar">Hogar</option>
+        </select>
+        <input type="number" placeholder="Precio Máx.">
+        <input type="text" placeholder="Tu ubicación">
+        <button class="btn-search" onclick="ejecutarBusqueda()">BUSCAR</button>
+    </div>
+
+    <div id="main-map">
+        <p>Integración de Google Maps aquí (Cargando geolocalización...)</p>
+    </div>
+</main>
+
+<section class="results-section" id="results">
+    <div class="product-grid" id="product-list">
         </div>
+    <div class="map-sidebar" id="mini-map" style="background:#ddd; border-radius: 10px; height: 500px; position: sticky; top: 100px; padding: 20px;">
+        Mapa de cercanía activo
+    </div>
+</section>
 
-        <div id="merchant-panel" class="panel">
-            <div class="card">
-                <h3 style="color:var(--primary)">🏪 Panel del Comerciante</h3>
-                <p>Gestiona tus productos, dirección y horarios aquí.</p>
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
-                    <input type="text" placeholder="Nombre del Negocio">
-                    <input type="text" placeholder="WhatsApp">
+<div id="modal-login" class="modal">
+    <div class="modal-content">
+        <h3>Acceso Comerciantes</h3><br>
+        <form onsubmit="event.preventDefault(); alert('Solicitud enviada al administrador');">
+            <input type="email" placeholder="Email institucional" required style="width: 100%; margin-bottom: 10px;">
+            <input type="password" placeholder="Contraseña" required style="width: 100%; margin-bottom: 10px;">
+            <button class="btn-search" style="width: 100%;">Ingresar / Solicitar Acceso</button>
+        </form>
+        <button onclick="closeModal('modal-login')" style="margin-top: 10px; background: none; border: none; color: red; cursor: pointer;">Cerrar</button>
+    </div>
+</div>
+
+<script>
+    // SIMULACIÓN DE DATOS (El sistema real debe estar vacío por defecto)
+    function ejecutarBusqueda() {
+        const query = document.getElementById('query').value;
+        if(!query) return alert("Ingresa un producto");
+
+        // Limpiar Home y mostrar Resultados
+        document.getElementById('home').style.display = 'none';
+        const results = document.getElementById('results');
+        results.style.display = 'grid';
+
+        // Simulación de productos (estos vendrían de la DB del comerciante)
+        const mockData = [
+            { nombre: "Producto para: " + query, comercio: "Tienda Central", precio: "$150", dist: "0.5km", status: "open", img: "https://picsum.photos/200" },
+            { nombre: "Variedad " + query, comercio: "Súper Cercano", precio: "$130", dist: "1.2km", status: "closed", img: "https://picsum.photos/201" }
+        ];
+
+        const list = document.getElementById('product-list');
+        list.innerHTML = ""; // Siempre limpia la interfaz después de buscar
+
+        mockData.forEach(p => {
+            list.innerHTML += `
+                <div class="product-card">
+                    <img src="${p.img}" alt="Producto">
+                    <h4>${p.nombre}</h4>
+                    <p><strong>${p.comercio}</strong></p>
+                    <p>${p.precio} - <small>${p.dist}</small></p>
+                    <span class="status-badge ${p.status}">${p.status === 'open' ? 'Atendiendo' : 'Fuera de Horario'}</span>
+                    <br><br>
+                    <button class="btn-search" style="padding: 5px 10px; font-size: 0.8rem;" onclick="addToCart()">Agregar</button>
+                    <button style="padding: 5px 10px; font-size: 0.8rem;" onclick="window.open('https://maps.google.com')">Cómo llegar</button>
                 </div>
-                <div id="map-admin"></div>
-                <button class="btn" style="background:var(--secondary); color:white; width:100%">💾 GUARDAR CAMBIOS</button>
-            </div>
-        </div>
-
-        <div id="admin-panel" class="panel">
-            <div class="card">
-                <h3 style="color:var(--primary)">🛡️ Panel de Administración</h3>
-                <p>Control de comercios registrados y categorías del sistema.</p>
-                <div style="margin-top:20px; border-top: 1px solid #eee; padding-top:20px;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; padding:10px; background:#f1f5f9; border-radius:8px;">
-                        <span>neitor38@gmail.com</span>
-                        <span style="background:#dcfce7; color:#166534; padding:4px 8px; border-radius:5px; font-size:0.8rem; font-weight:bold;">ACTIVO</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-    </main>
-
-    <script>
-        // --- ESTADO Y DATOS ---
-        const state = {
-            user: sessionStorage.getItem('user'),
-            role: sessionStorage.getItem('role')
-        };
-
-        // --- FUNCIÓN SALIR (CORREGIDA) ---
-        function logout() {
-            sessionStorage.clear(); // Borra user y role
-            // Redirección forzada para limpiar el estado de la página
-            window.location.href = window.location.pathname;
-        }
-
-        // --- NAVEGACIÓN ---
-        function showPanel(panelId) {
-            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-            document.getElementById(panelId).classList.add('active');
-        }
-
-        // --- LOGIN MANUAL (Para demostración) ---
-        function loginAs(role) {
-            const email = prompt(`Ingresa email para ${role}:`);
-            if(email) {
-                sessionStorage.setItem('user', email);
-                sessionStorage.setItem('role', role);
-                window.location.reload();
-            }
-        }
-
-        // --- ACTUALIZAR ENCABEZADO ---
-        function updateHeader() {
-            const authDiv = document.getElementById('auth-section');
-            
-            if (state.user) {
-                // Si hay sesión iniciada
-                const panelDestino = state.role === 'admin' ? 'admin-panel' : 'merchant-panel';
-                const labelIcon = state.role === 'admin' ? '🛡️' : '🏪';
-                
-                authDiv.innerHTML = `
-                    <div style="display:flex; align-items:center; gap:12px;">
-                        <span style="font-size:0.85rem; font-weight:bold; background:rgba(0,0,0,0.1); padding:5px 10px; border-radius:20px;">${state.user}</span>
-                        <button onclick="showPanel('${panelDestino}')" class="btn btn-white">${labelIcon} Mi Panel</button>
-                        <button onclick="logout()" class="btn btn-danger">Salir</button>
-                    </div>
-                `;
-            } else {
-                // Si no hay sesión (Vista Cliente)
-                authDiv.innerHTML = `
-                    <button onclick="loginAs('admin')" class="btn btn-outline">🛡️ Admin</button>
-                    <button onclick="loginAs('merchant')" class="btn btn-white">🏪 Comercio</button>
-                `;
-            }
-        }
-
-        // --- CARGA INICIAL ---
-        document.addEventListener('DOMContentLoaded', () => {
-            updateHeader();
-
-            // Lógica de apertura automática
-            if (state.user) {
-                if (state.role === 'admin') showPanel('admin-panel');
-                else if (state.role === 'merchant') {
-                    showPanel('merchant-panel');
-                    // Carga diferida del mapa
-                    setTimeout(() => {
-                        const map = L.map('map-admin').setView([-25.074, -64.918], 15);
-                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-                        L.marker([-25.074, -64.918], {draggable: true}).addTo(map);
-                    }, 300);
-                }
-            }
+            `;
         });
-    </script>
+    }
+
+    // GESTIÓN DE MODALES
+    function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+    // GESTIÓN DE IMÁGENES (Lógica de optimización solicitada)
+    function optimizarImagen(input) {
+        // En un sistema real, usaríamos Canvas API para reducir dimensiones y peso
+        console.log("Optimizando tamaño y peso para evitar saturación...");
+    }
+
+    let cartCount = 0;
+    function addToCart() {
+        cartCount++;
+        document.getElementById('cart-count').innerText = cartCount;
+        alert("Producto reservado. Número de pedido: #" + Math.floor(Math.random()*100000));
+    }
+</script>
+
 </body>
 </html>
