@@ -1,69 +1,54 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DÓNDE COMPRO.COM - Marketplace Local</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-
-<style>
-:root {
-    --primary: #2563eb; --primary-dark: #1d4ed8; --secondary: #059669;
-    --dark: #1e293b; --light: #f8fafc; --gray: #64748b;
-    --danger: #dc2626; --warning: #f59e0b;
-    --shadow: 0 4px 6px -1px rgba(0,0,0,0.1); --radius: 12px;
-}
-* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
-body { background: var(--light); color: var(--dark); line-height: 1.6; }
-
-/* Navegación y Estilos Generales */
-header {
-    background: white; box-shadow: var(--shadow); position: sticky; top: 0; z-index: 1000;
-    padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center;
-}
-.logo { font-size: 1.5rem; font-weight: 800; color: var(--primary); text-decoration: none; }
-.logo span { color: var(--warning); }
-nav { display: flex; gap: 1.5rem; }
-nav a { text-decoration: none; color: var(--gray); font-weight: 500; transition: 0.2s; cursor: pointer; }
-nav a:hover { color: var(--primary); }
-
-.container { max-width: 1200px; margin: 2rem auto; padding: 0 1rem; }
-.panel { display: none; }
-.panel.active { display: block; animation: fadeIn 0.3s ease; }
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-/* Formularios y Botones */
-.btn { 
-    padding: 0.6rem 1.2rem; border-radius: 8px; border: none; font-weight: 600; 
-    cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; gap: 0.5rem;
-}
-.btn-primary { background: var(--primary); color: white; }
-.btn-primary:hover { background: var(--primary-dark); }
-input, select { 
-    width: 100%; padding: 0.8rem; border: 1.5px solid #e2e8f0; border-radius: 8px; 
-    margin-bottom: 1rem; outline: none; transition: 0.2s;
-}
-input:focus { border-color: var(--primary); }
-
-/* Modales */
-.modal {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 2000;
-}
-.modal-content { background: white; padding: 2rem; border-radius: var(--radius); width: 100%; max-width: 400px; }
-
-/* Toasts */
-.toast {
-    position: fixed; bottom: 20px; right: 20px; padding: 1rem 2rem; 
-    border-radius: 8px; color: white; z-index: 3000; animation: slideIn 0.3s ease;
-}
-.toast.success { background: var(--secondary); }
-.toast.error { background: var(--danger); }
-@keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DÓNDE COMPRO.COM - Marketplace Local</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    
+    <style>
+        :root {
+            --primary: #2563eb; --primary-dark: #1d4ed8; --secondary: #059669;
+            --dark: #1e293b; --light: #f8fafc; --gray: #64748b;
+            --danger: #dc2626; --warning: #f59e0b;
+            --shadow: 0 4px 6px -1px rgba(0,0,0,0.1); --radius: 12px;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { background: var(--light); color: var(--dark); line-height: 1.6; }
+        header {
+            background: white; box-shadow: var(--shadow); position: sticky; top: 0; z-index: 1000;
+            padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center;
+        }
+        .logo { font-size: 1.5rem; font-weight: 800; color: var(--primary); text-decoration: none; }
+        .logo span { color: var(--warning); }
+        nav { display: flex; gap: 1.5rem; align-items: center; }
+        nav a { text-decoration: none; color: var(--gray); font-weight: 500; transition: 0.2s; cursor: pointer; }
+        nav a:hover { color: var(--primary); }
+        .container { max-width: 1200px; margin: 2rem auto; padding: 0 1rem; }
+        .panel { display: none; }
+        .panel.active { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        
+        .card { background: white; padding: 1.5rem; border-radius: var(--radius); box-shadow: var(--shadow); border: 1px solid #eee; transition: 0.3s; }
+        .img-preview { width: 128px; height: 128px; object-fit: cover; border-radius: 8px; border: 2px dashed #ccc; margin-bottom: 1rem; }
+        
+        .btn {
+            padding: 0.6rem 1.2rem; border-radius: 8px; border: none; font-weight: 600;
+            cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; gap: 0.5rem;
+            justify-content: center;
+        }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-secondary { background: var(--secondary); color: white; }
+        input, select, textarea { width: 100%; padding: 0.8rem; border: 1.5px solid #e2e8f0; border-radius: 8px; margin-bottom: 1rem; outline: none; }
+        
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 2000; }
+        .modal-content { background: white; padding: 2rem; border-radius: var(--radius); width: 90%; max-width: 500px; max-height: 90vh; overflow-y: auto; }
+        .toast { position: fixed; bottom: 20px; right: 20px; padding: 1rem 2rem; border-radius: 8px; color: white; z-index: 3000; animation: slideIn 0.3s ease; }
+        @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+    </style>
 </head>
 <body>
 
@@ -71,7 +56,6 @@ input:focus { border-color: var(--primary); }
     <a href="#" class="logo" onclick="switchPanel('explore-panel')">DONDE COMPRO<span>.COM</span></a>
     <nav>
         <a onclick="switchPanel('explore-panel')">Explorar</a>
-        <a onclick="checkAccess('merchant-panel')">Mi Tienda</a>
         <a onclick="checkAccess('admin-panel')">Admin</a>
         <div id="user-info" style="font-size: 0.8rem; color: var(--gray);"></div>
     </nav>
@@ -85,37 +69,31 @@ input:focus { border-color: var(--primary); }
             </div>
     </div>
 
-    <div id="merchant-panel" class="panel">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-            <h2>Gestión de mi Comercio</h2>
-            <button class="btn btn-primary" onclick="logout()">Cerrar Sesión</button>
-        </div>
-        <div style="background: white; padding: 1.5rem; border-radius: var(--radius); box-shadow: var(--shadow);">
-            <h3>Cargar Nuevo Producto</h3>
-            <div style="margin-top: 1rem;">
-                <input type="text" id="new-prod-name" placeholder="Nombre del producto">
-                <input type="number" id="new-prod-price" placeholder="Precio $">
-                <button class="btn btn-primary" onclick="addProduct()">Guardar Producto</button>
-            </div>
-        </div>
-    </div>
-
     <div id="admin-panel" class="panel">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
             <h2>Panel de Control Central</h2>
             <button class="btn btn-primary" onclick="logout()">Cerrar Sesión</button>
         </div>
-        <div style="background: white; padding: 1.5rem; border-radius: var(--radius); box-shadow: var(--shadow);">
+        
+        <div class="card">
             <h3>Registrar Nuevo Comercio</h3>
             <div style="margin-top: 1rem;">
-                <input type="text" id="new-shop-name" placeholder="Nombre del Comercio">
-                <select id="new-shop-category">
+                <input type="text" id="shop-name" placeholder="Nombre del Comercio">
+                <select id="shop-category">
                     <option value="Gastronomía">Gastronomía</option>
                     <option value="Indumentaria">Indumentaria</option>
                     <option value="Ferretería">Ferretería</option>
                     <option value="Servicios">Servicios</option>
                 </select>
-                <button class="btn btn-primary" onclick="createShop()">Dar de Alta</button>
+                <input type="text" id="shop-location" placeholder="Coordenadas o Dirección (Link Google Maps)">
+                <textarea id="shop-extra-hours" placeholder="Detalles de atención fuera de horario"></textarea>
+                
+                <p style="font-size: 0.8rem; color: var(--gray); margin-bottom: 0.5rem;">Imagen del Comercio (se ajustará a 128x128):</p>
+                <input type="file" id="shop-img-input" accept="image/*" onchange="previewAndResize(this)">
+                <canvas id="resize-canvas" style="display:none;"></canvas>
+                <img id="img-preview-el" class="img-preview" src="" alt="Vista previa">
+                
+                <button class="btn btn-primary" style="width: 100%;" onclick="createShop()">Dar de Alta Comercio</button>
             </div>
         </div>
     </div>
@@ -123,141 +101,155 @@ input:focus { border-color: var(--primary); }
 
 <div id="login-modal" class="modal">
     <div class="modal-content">
-        <h2 id="login-title" style="margin-bottom: 1.5rem;">Iniciar Sesión</h2>
-        <input type="email" id="login-email" placeholder="Email">
+        <h2 style="margin-bottom: 1.5rem;">Acceso Administrativo</h2>
+        <input type="email" id="login-email" placeholder="Email Autorizado">
         <input type="password" id="login-password" placeholder="Contraseña">
-        <button class="btn btn-primary" style="width: 100%; justify-content: center;" onclick="login()">Ingresar</button>
-        <button class="btn" style="width: 100%; margin-top: 0.5rem; justify-content: center;" onclick="closeLoginModal()">Cancelar</button>
+        <button class="btn btn-primary" style="width: 100%;" onclick="login()">Ingresar</button>
+        <button class="btn" style="width: 100%; margin-top: 0.5rem;" onclick="closeLoginModal()">Cancelar</button>
     </div>
 </div>
 
 <script>
-// ===== CONFIGURACIÓN FIREBASE =====
-const firebaseConfig = {
-  apiKey: "AIzaSyB3kBkd3pj-o8RPZxXJfOo7GTl64d7un7c",
-  authDomain: "donde-compro-12345.firebaseapp.com",
-  projectId: "donde-compro-12345",
-  storageBucket: "donde-compro-12345.firebasestorage.app",
-  messagingSenderId: "769310157775",
-  appId: "1:769310157775:web:ab9db00bc911fb3abdc0ba",
-  measurementId: "G-NQZXDP6TS6"
-};
+    // 1. CONFIGURACIÓN FIREBASE [cite: 1]
+    const firebaseConfig = {
+        apiKey: "AIzaSyB3kBkd3pj-o8RPZxXJfOo7GTl64d7un7c",
+        authDomain: "donde-compro-12345.firebaseapp.com",
+        projectId: "donde-compro-12345",
+        storageBucket: "donde-compro-12345.firebasestorage.app",
+        messagingSenderId: "769310157775",
+        appId: "1:769310157775:web:ab9db00bc911fb3abdc0ba"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
 
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.firestore();
+    // 2. ACTIVAR MODO OFFLINE
+    db.enablePersistence().catch(err => console.error("Error persistencia:", err.code));
 
-// ===== ESTADO GLOBAL =====
-let state = {
-    currentPanel: 'explore-panel',
-    currentRole: null, // 'admin' o 'merchant'
-    pendingPanel: null
-};
+    const ADMIN_EMAILS = ['admin1@ejemplo.com', 'admin2@ejemplo.com']; // Reemplazar con tus correos reales
+    let resizedImageBase64 = null;
 
-// ===== NAVEGACIÓN Y ACCESO =====
-function switchPanel(panelId) {
-    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-    document.getElementById(panelId).classList.add('active');
-    state.currentPanel = panelId;
-}
-
-function checkAccess(targetPanel) {
-    const user = auth.currentUser;
-    if (user) {
-        switchPanel(targetPanel);
-    } else {
-        state.pendingPanel = targetPanel;
-        document.getElementById('login-modal').style.display = 'flex';
+    // 3. NAVEGACIÓN
+    function switchPanel(panelId) {
+        document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+        document.getElementById(panelId).classList.add('active');
     }
-}
 
-function closeLoginModal() {
-    document.getElementById('login-modal').style.display = 'none';
-}
-
-// ===== FIREBASE AUTH =====
-async function login() {
-    const email = document.getElementById('login-email').value;
-    const pass = document.getElementById('login-password').value;
-
-    try {
-        await auth.signInWithEmailAndPassword(email, pass);
-        showToast("✅ Acceso concedido", "success");
-        closeLoginModal();
-        if (state.pendingPanel) switchPanel(state.pendingPanel);
-    } catch (error) {
-        showToast("❌ Error: " + error.message, "error");
+    function checkAccess(targetPanel) {
+        const user = auth.currentUser;
+        if (user && ADMIN_EMAILS.includes(user.email)) {
+            switchPanel(targetPanel);
+        } else {
+            document.getElementById('login-modal').style.display = 'flex';
+        }
     }
-}
 
-async function logout() {
-    await auth.signOut();
-    showToast("Sesión cerrada");
-    switchPanel('explore-panel');
-}
+    function closeLoginModal() { document.getElementById('login-modal').style.display = 'none'; }
 
-// Observador de estado de usuario
-auth.onAuthStateChanged(user => {
-    const info = document.getElementById('user-info');
-    if (user) {
-        info.textContent = `Conectado: ${user.email}`;
-    } else {
-        info.textContent = '';
+    // 4. LÓGICA DE IMÁGENES (RESIZE A 128x128)
+    function previewAndResize(input) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.getElementById('resize-canvas');
+                    const ctx = canvas.getContext('2d');
+                    canvas.width = 128;
+                    canvas.height = 128;
+                    ctx.drawImage(img, 0, 0, 128, 128);
+                    resizedImageBase64 = canvas.toDataURL('image/jpeg', 0.8);
+                    document.getElementById('img-preview-el').src = resizedImageBase64;
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
     }
-});
 
-// ===== CRUD FIRESTORE (Ejemplos iniciales) =====
-async function createShop() {
-    const name = document.getElementById('new-shop-name').value;
-    const cat = document.getElementById('new-shop-category').value;
-    
-    if(!name) return showToast("Nombre requerido", "error");
+    // 5. FIREBASE AUTH
+    async function login() {
+        const email = document.getElementById('login-email').value;
+        const pass = document.getElementById('login-password').value;
+        if (!ADMIN_EMAILS.includes(email)) return showToast("Email no autorizado", "error");
 
-    try {
-        await db.collection('comercios').add({
-            nombre: name,
-            rubro: cat,
-            fechaAlta: firebase.firestore.FieldValue.serverTimestamp()
+        try {
+            await auth.signInWithEmailAndPassword(email, pass);
+            showToast("Bienvenido Admin", "success");
+            closeLoginModal();
+            switchPanel('admin-panel');
+        } catch (e) { showToast("Error: " + e.message, "error"); }
+    }
+
+    async function logout() {
+        await auth.signOut();
+        switchPanel('explore-panel');
+        showToast("Sesión cerrada");
+    }
+
+    // 6. CRUD FIRESTORE
+    async function createShop() {
+        const name = document.getElementById('shop-name').value;
+        const cat = document.getElementById('shop-category').value;
+        const loc = document.getElementById('shop-location').value;
+        const extra = document.getElementById('shop-extra-hours').value;
+
+        if(!name || !resizedImageBase64) return showToast("Faltan datos o imagen", "error");
+
+        try {
+            await db.collection('comercios').add({
+                nombre: name,
+                rubro: cat,
+                ubicacion: loc,
+                atencionExtra: extra,
+                foto: resizedImageBase64,
+                fecha: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            showToast("Comercio guardado localmente/nube", "success");
+            loadExploreData();
+            switchPanel('explore-panel');
+        } catch (e) { showToast("Error al guardar", "error"); }
+    }
+
+    async function loadExploreData() {
+        const grid = document.getElementById('grid-items');
+        grid.innerHTML = '<p>Cargando datos...</p>';
+        
+        // El listener 'onSnapshot' es mejor para modo Offline
+        db.collection('comercios').orderBy('fecha', 'desc').onSnapshot(snapshot => {
+            grid.innerHTML = '';
+            snapshot.forEach(doc => {
+                const d = doc.data();
+                grid.innerHTML += `
+                    <div class="card">
+                        <img src="${d.foto}" style="width:100%; height:150px; object-fit:cover; border-radius:8px; margin-bottom:1rem;">
+                        <h3 style="color:var(--primary)">${d.nombre}</h3>
+                        <p style="font-size:0.8rem; font-weight:bold; color:var(--gray)">${d.rubro.toUpperCase()}</p>
+                        <p style="font-size:0.85rem; margin:0.5rem 0;">${d.atencionExtra ? '🌙 ' + d.atencionExtra : ''}</p>
+                        <div style="display:flex; gap:0.5rem; margin-top:1rem;">
+                            <a href="${d.ubicacion}" target="_blank" class="btn btn-secondary" style="flex:1; font-size:0.75rem;">📍 Cómo llegar</a>
+                            <button class="btn btn-primary" style="flex:1; font-size:0.75rem;">Ver Productos</button>
+                        </div>
+                    </div>
+                `;
+            });
         });
-        showToast("Comercio creado con éxito", "success");
-        document.getElementById('new-shop-name').value = '';
-        loadExploreData();
-    } catch (e) {
-        showToast("Error al guardar", "error");
     }
-}
 
-async function loadExploreData() {
-    const grid = document.getElementById('grid-items');
-    grid.innerHTML = '<p>Cargando comercios...</p>';
+    function showToast(msg, type='info') {
+        const t = document.createElement('div');
+        t.className = `toast ${type === 'success' ? 'success' : 'error'}`;
+        t.style.background = type === 'success' ? 'var(--secondary)' : 'var(--danger)';
+        t.textContent = msg;
+        document.body.appendChild(t);
+        setTimeout(() => t.remove(), 3000);
+    }
 
-    const snapshot = await db.collection('comercios').get();
-    grid.innerHTML = '';
-    
-    snapshot.forEach(doc => {
-        const data = doc.data();
-        grid.innerHTML += `
-            <div style="background:white; padding:1.5rem; border-radius:var(--radius); shadow:var(--shadow); border:1px solid #eee">
-                <h3 style="color:var(--primary)">${data.nombre}</h3>
-                <p style="font-size:0.8rem; font-weight:bold; color:var(--gray)">${data.rubro.toUpperCase()}</p>
-                <button class="btn btn-primary" style="margin-top:1rem; width:100%; font-size:0.8rem">Ver Productos</button>
-            </div>
-        `;
+    auth.onAuthStateChanged(user => {
+        document.getElementById('user-info').textContent = user ? `Admin: ${user.email}` : '';
     });
-}
 
-// ===== UTILS =====
-function showToast(msg, type='info') {
-    const t = document.createElement('div');
-    t.className = `toast ${type}`;
-    t.textContent = msg;
-    document.body.appendChild(t);
-    setTimeout(() => t.remove(), 3000);
-}
-
-// Carga Inicial
-loadExploreData();
-
+    loadExploreData();
 </script>
 </body>
 </html>
