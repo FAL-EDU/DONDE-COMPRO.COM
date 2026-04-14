@@ -3,279 +3,251 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DÓNDE COMPRO.COM | App de Localización</title>
+    <title>DÓNDE COMPRO.COM | Gestión Social</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --primary: #0056b3;
-            --secondary: #28a745;
-            --bg-light: #f8f9fa;
-            --text-dark: #333;
-            --header-bg: #ffffff;
-        }
-
+        :root { --primary: #0056b3; --secondary: #28a745; --bg: #f4f7f6; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Poppins', sans-serif; background-color: var(--bg-light); color: var(--text-dark); }
+        body { font-family: 'Poppins', sans-serif; background-color: var(--bg); }
 
-        /* HEADER */
+        /* BARRA SUPERIOR */
         header {
-            background-color: var(--header-bg);
-            background-image: url('https://www.transparenttextures.com/patterns/cubes.png');
-            padding: 1rem 5%;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            background: #fff;
+            padding: 15px 5%;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            position: sticky;
-            top: 0;
-            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: sticky; top: 0; z-index: 1000;
         }
 
-        .logo-container h2 { color: var(--primary); }
-        .nav-buttons { display: flex; gap: 10px; align-items: center; }
-
-        /* HOME LIMPIO */
-        .home-container {
-            max-width: 1200px;
-            margin: 60px auto;
-            text-align: center;
-            padding: 20px;
+        .admin-access-btn {
+            background: #333; color: white; border: none;
+            padding: 8px 15px; border-radius: 5px; cursor: pointer;
+            font-weight: 600; font-size: 0.8rem;
         }
 
-        .search-box {
-            background: white;
-            padding: 40px;
-            border-radius: 20px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.08);
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 15px;
+        /* BUSCADOR CENTRAL */
+        .hero {
+            max-width: 900px; margin: 80px auto; text-align: center; padding: 0 20px;
         }
 
-        input, select, button {
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            font-size: 1rem;
+        .search-container {
+            background: white; padding: 30px; border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 10px; margin-top: 30px;
         }
 
-        .btn-search { background: var(--primary); color: white; border: none; cursor: pointer; font-weight: 600; }
+        input, select { padding: 12px; border: 1px solid #ddd; border-radius: 8px; width: 100%; }
+        .btn-main { background: var(--primary); color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; }
 
-        /* SECCIÓN RESULTADOS */
-        .results-section { display: none; padding: 20px 5%; grid-template-columns: 1fr 350px; gap: 20px; }
-        .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
-        
-        .no-results { grid-column: 1 / -1; padding: 50px; text-align: center; color: #999; }
+        /* SECCIÓN DE RESULTADOS */
+        #results-view { display: none; padding: 40px 5%; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; }
+        .empty-msg { text-align: center; color: #888; padding: 50px; grid-column: 1/-1; }
 
-        /* MODALES */
+        /* VENTANAS MODALES (PANELES) */
         .modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.6);
-            justify-content: center;
-            align-items: center;
-            z-index: 2000;
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7); z-index: 2000; justify-content: center; align-items: center;
+        }
+        .modal-content {
+            background: white; padding: 30px; border-radius: 15px; width: 90%; max-width: 800px;
+            max-height: 90vh; overflow-y: auto;
         }
 
-        .modal-content { 
-            background: white; 
-            padding: 30px; 
-            border-radius: 15px; 
-            width: 90%; 
-            max-width: 800px; 
-            max-height: 85vh; 
-            overflow-y: auto; 
-        }
-
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th, td { padding: 10px; border-bottom: 1px solid #eee; text-align: left; font-size: 0.9rem; }
-
-        .btn-admin-access { background: #333; color: white; font-size: 0.8rem; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: left; }
+        .badge-pending { background: #fff3cd; color: #856404; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; }
     </style>
 </head>
 <body>
 
 <header>
-    <div class="logo-container">
-        <h2 id="sitio-nombre">DÓNDE COMPRO.COM</h2>
-        <p id="sitio-slogan" style="font-size: 0.8rem; color: #666;">Gestión de productos en comercios cercanos</p>
+    <div>
+        <h1 id="main-logo" style="color: var(--primary); font-size: 1.5rem;">DÓNDE COMPRO.COM</h1>
+        <p id="main-slogan" style="font-size: 0.7rem; color: #777;">App de localización y gestión</p>
     </div>
-    <div class="nav-buttons">
-        <button class="btn-admin-access" onclick="verificarAdmin()">ACCESO ADMIN</button>
-        <button onclick="openModal('modal-registro')">Registro Comercio</button>
+    <div>
+        <button class="admin-access-btn" onclick="accesoAdmin()">⚙️ PANEL DE CONTROL (ADMIN)</button>
+        <button onclick="abrirModal('modal-registro')" style="padding: 8px 15px; border-radius: 5px; cursor: pointer; border: 1px solid #ddd; margin-left: 10px;">Registrar Mi Comercio</button>
     </div>
 </header>
 
-<main class="home-container" id="home-view">
-    <h1>Buscador de Productos</h1>
-    <p>La base de datos está vacía. Registre un comercio para comenzar.</p><br>
-    
-    <div class="search-box">
-        <input type="text" id="query" placeholder="¿Qué buscas?">
-        <select id="rubro-select"></select>
-        <button class="btn-search" onclick="buscar()">BUSCAR</button>
+<div id="home-view" class="hero">
+    <h2 id="hero-text">Busca productos en comercios de tu zona</h2>
+    <div class="search-container">
+        <input type="text" id="search-input" placeholder="¿Qué producto buscas?">
+        <select id="search-rubro"><option value="">Todos los rubros</option></select>
+        <button class="btn-main" onclick="ejecutarBusqueda()">BUSCAR</button>
     </div>
-</main>
+    <div style="margin-top: 30px; height: 300px; background: #eee; border-radius: 15px; display: flex; align-items: center; justify-content: center; color: #999;">
+        [ Mapa de Google Maps se cargará aquí ]
+    </div>
+</div>
 
-<section class="results-section" id="results-view">
-    <div id="lista-productos" class="product-grid"></div>
-    <aside>
-        <div style="background:#ddd; height:300px; border-radius:10px; display:flex; align-items:center; justify-content:center;">Mapa Activo</div>
-        <button onclick="location.reload()" style="width:100%; margin-top:20px;">Nueva Búsqueda / Limpiar</button>
-    </aside>
-</section>
+<div id="results-view">
+    <button onclick="irAHome()" style="margin-bottom: 20px; border: none; background: none; color: var(--primary); cursor: pointer; font-weight: bold;">← Volver a buscar</button>
+    <div id="productos-grid" class="grid">
+        </div>
+</div>
 
 <div id="modal-registro" class="modal">
     <div class="modal-content" style="max-width: 400px;">
-        <h3>Solicitud de Alojamiento</h3><br>
-        <input type="text" id="reg-nombre" placeholder="Nombre del comercio" style="width:100%; margin-bottom:10px;">
-        <select id="reg-rubro" style="width:100%; margin-bottom:20px;"></select>
-        <button class="btn-search" style="width:100%;" onclick="enviarSolicitud()">Enviar para Aprobación</button>
-        <button onclick="closeModal('modal-registro')" style="background:none; border:none; color:red; margin-top:10px; cursor:pointer;">Cerrar</button>
+        <h3>Solicitud de Acceso</h3><br>
+        <p style="font-size: 0.8rem; margin-bottom: 15px;">Completa los datos para que el administrador autorice tu ingreso.</p>
+        <input type="text" id="reg-nombre" placeholder="Nombre del comercio" style="margin-bottom: 10px;">
+        <select id="reg-rubro-select" style="margin-bottom: 20px;"></select>
+        <button class="btn-main" style="width: 100%;" onclick="registrarComercio()">Enviar Solicitud</button>
+        <button onclick="cerrarModal('modal-registro')" style="width: 100%; margin-top: 10px; background: none; border: none; color: #999; cursor: pointer;">Cerrar</button>
     </div>
 </div>
 
 <div id="modal-admin" class="modal">
     <div class="modal-content">
-        <h2>Panel de Control General</h2>
+        <h2 style="border-bottom: 2px solid var(--primary); padding-bottom: 10px;">Panel Administrativo Oculto</h2>
         
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px; margin-top:20px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 20px;">
             <section>
-                <h3>Configuración Visual</h3>
-                <label>Slogan:</label>
-                <input type="text" id="new-slogan" placeholder="Nuevo slogan..." style="width:100%;">
-                <button onclick="actualizarSlogan()" style="margin-top:10px;">Cambiar</button>
+                <h4>1. Personalización</h4><br>
+                <label style="font-size: 0.8rem;">Slogan del sitio:</label>
+                <input type="text" id="admin-slogan-input" placeholder="Escribe el nuevo slogan">
+                <button onclick="cambiarSlogan()" style="margin-top:5px; padding: 5px 10px;">Actualizar Slogan</button>
 
-                <h3 style="margin-top:20px;">Gestión de Rubros</h3>
-                <input type="text" id="new-rubro" placeholder="Nombre rubro">
-                <button onclick="addRubro()">Añadir</button>
-                <ul id="admin-rubros-list" style="margin-top:10px;"></ul>
+                <h4 style="margin-top: 25px;">2. Gestión de Rubros</h4><br>
+                <div style="display: flex; gap: 5px;">
+                    <input type="text" id="nuevo-rubro-txt" placeholder="Nuevo rubro (ej: Panadería)">
+                    <button onclick="crearRubro()">+</button>
+                </div>
+                <ul id="lista-rubros-admin" style="margin-top: 10px; font-size: 0.9rem;"></ul>
             </section>
 
             <section>
-                <h3>Solicitudes Pendientes</h3>
-                <table id="table-pendientes">
+                <h4>3. Solicitudes Pendientes</h4>
+                <table id="tabla-pendientes">
                     <thead><tr><th>Comercio</th><th>Acción</th></tr></thead>
                     <tbody></tbody>
                 </table>
 
-                <h3 style="margin-top:20px;">Comercios Activos</h3>
-                <table id="table-activos">
+                <h4 style="margin-top: 25px;">4. Comercios Activos</h4>
+                <table id="tabla-activos">
                     <thead><tr><th>Nombre</th><th>Fecha Alta</th><th>Acción</th></tr></thead>
                     <tbody></tbody>
                 </table>
             </section>
         </div>
-        <button onclick="closeModal('modal-admin')" style="width:100%; margin-top:20px; padding:10px;">Cerrar Panel</button>
+        <button onclick="cerrarModal('modal-admin')" style="margin-top: 30px; width: 100%; padding: 10px; background: #333; color: white; border: none; border-radius: 8px; cursor: pointer;">SALIR DEL PANEL</button>
     </div>
 </div>
 
 <script>
-    // ESTADO INICIAL TOTALMENTE LIMPIO (Sin comercios ni productos predefinidos)
-    let rubros = ["Alimentos", "Ferretería", "Tecnología"];
+    // --- BASE DE DATOS LOCAL (VACÍA AL INICIO) ---
+    let rubros = ["Alimentos", "Hogar", "Indumentaria"];
     let comerciosActivos = [];
     let solicitudesPendientes = [];
 
-    window.onload = () => {
-        refreshRubros();
-    };
+    // --- FUNCIONES DE NAVEGACIÓN ---
+    function abrirModal(id) { document.getElementById(id).style.display = 'flex'; }
+    function cerrarModal(id) { document.getElementById(id).style.display = 'none'; }
 
-    function openModal(id) { document.getElementById(id).style.display = 'flex'; }
-    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-
-    // ACCESO ADMIN CON DOBLE CORREO
-    function verificarAdmin() {
-        let m1 = prompt("Correo Administrador 1:");
-        let m2 = prompt("Correo Administrador 2:");
-        if(m1 && m2) { openModal('modal-admin'); }
-    }
-
-    // FLUJO DE DATOS
-    function enviarSolicitud() {
-        const nombre = document.getElementById('reg-nombre').value;
-        const rubro = document.getElementById('reg-rubro').value;
-        if(!nombre) return alert("Ingrese el nombre");
+    function accesoAdmin() {
+        // Doble validación de correos
+        let correo1 = prompt("Validación de Seguridad: Ingrese primer correo autorizado:");
+        let correo2 = prompt("Validación de Seguridad: Ingrese segundo correo autorizado:");
         
-        solicitudesPendientes.push({ nombre, rubro, id: Date.now() });
-        updateAdminTables();
-        closeModal('modal-registro');
-        alert("Solicitud enviada al Administrador.");
-    }
-
-    function aprobar(id) {
-        const idx = solicitudesPendientes.findIndex(s => s.id === id);
-        const c = solicitudesPendientes.splice(idx, 1)[0];
-        c.fechaAlta = new Date().toLocaleDateString();
-        comerciosActivos.push(c);
-        updateAdminTables();
-    }
-
-    function eliminarComercio(id) {
-        comerciosActivos = comerciosActivos.filter(c => c.id !== id);
-        updateAdminTables();
-    }
-
-    // BUSCADOR
-    function buscar() {
-        const query = document.getElementById('query').value;
-        document.getElementById('home-view').style.display = 'none';
-        document.getElementById('results-view').style.display = 'grid';
-        
-        const list = document.getElementById('lista-productos');
-        list.innerHTML = "";
-
-        // Solo muestra resultados si hay comercios activos
-        if(comerciosActivos.length === 0) {
-            list.innerHTML = `<div class="no-results"><h3>No hay comercios registrados que ofrezcan "${query}"</h3></div>`;
+        if(correo1 && correo2) {
+            abrirModal('modal-admin');
         } else {
-            comerciosActivos.forEach(c => {
-                list.innerHTML += `
-                    <div class="product-card" style="background:white; padding:15px; border-radius:10px;">
-                        <img src="https://picsum.photos/200/150" style="width:100%; border-radius:5px;">
-                        <h4>Resultado para: ${query}</h4>
-                        <p><strong>Comercio: ${c.nombre}</strong></p>
-                        <p>Precio: $---</p>
-                        <button class="btn-search" style="width:100%; margin-top:5px;">Ver Tienda</button>
-                    </div>`;
-            });
+            alert("Acceso denegado. Se requieren ambos correos.");
         }
     }
 
-    // UI UPDATES
-    function updateAdminTables() {
-        const bodyP = document.querySelector('#table-pendientes tbody');
-        const bodyA = document.querySelector('#table-activos tbody');
+    function ejecutarBusqueda() {
+        const prod = document.getElementById('search-input').value;
+        document.getElementById('home-view').style.display = 'none';
+        document.getElementById('results-view').style.display = 'block';
         
-        bodyP.innerHTML = solicitudesPendientes.map(s => `
-            <tr><td>${s.nombre}</td><td><button onclick="aprobar(${s.id})">Aprobar</button></td></tr>
+        const grid = document.getElementById('productos-grid');
+        grid.innerHTML = ""; // Limpiar resultados anteriores
+
+        // Buscar solo en comercios aprobados
+        if(comerciosActivos.length === 0) {
+            grid.innerHTML = `<div class="empty-msg"><h3>No hay comercios aprobados todavía.</h3><p>El administrador debe dar de alta comercios desde el panel.</p></div>`;
+        } else {
+            // Aquí mostraría los productos reales si existieran en una base de datos
+            grid.innerHTML = `<div class="empty-msg"><h3>Buscando "${prod}"...</h3><p>Se encontraron comercios activos, pero no tienen productos cargados.</p></div>`;
+        }
+    }
+
+    function irAHome() {
+        document.getElementById('results-view').style.display = 'none';
+        document.getElementById('home-view').style.display = 'block';
+    }
+
+    // --- LÓGICA DE GESTIÓN ---
+    function registrarComercio() {
+        const nombre = document.getElementById('reg-nombre').value;
+        const rubro = document.getElementById('reg-rubro-select').value;
+        if(!nombre) return alert("Por favor, escribe el nombre del comercio.");
+
+        solicitudesPendientes.push({ id: Date.now(), nombre, rubro });
+        actualizarTablasAdmin();
+        cerrarModal('modal-registro');
+        alert("¡Solicitud enviada! Espera a que el administrador te dé de alta.");
+    }
+
+    function aprobarComercio(id) {
+        const index = solicitudesPendientes.findIndex(s => s.id === id);
+        const comercio = solicitudesPendientes.splice(index, 1)[0];
+        comercio.fechaAlta = new Date().toLocaleDateString();
+        comerciosActivos.push(comercio);
+        actualizarTablasAdmin();
+    }
+
+    function eliminarComercio(id) {
+        if(confirm("¿Seguro que quieres eliminar este comercio?")) {
+            comerciosActivos = comerciosActivos.filter(c => c.id !== id);
+            actualizarTablasAdmin();
+        }
+    }
+
+    // --- ACTUALIZACIÓN DE INTERFAZ ---
+    function actualizarTablasAdmin() {
+        const tbodyP = document.querySelector('#tabla-pendientes tbody');
+        const tbodyA = document.querySelector('#tabla-activos tbody');
+
+        tbodyP.innerHTML = solicitudesPendientes.map(s => `
+            <tr><td>${s.nombre}</td><td><button onclick="aprobarComercio(${s.id})" style="background:var(--secondary); color:white; border:none; padding:5px; border-radius:3px; cursor:pointer;">Aprobar</button></td></tr>
         `).join('');
 
-        bodyA.innerHTML = comerciosActivos.map(a => `
-            <tr>
-                <td>${a.nombre}</td>
-                <td>${a.fechaAlta}</td>
-                <td><button onclick="eliminarComercio(${a.id})" style="color:red;">Eliminar</button></td>
-            </tr>
+        tbodyA.innerHTML = comerciosActivos.map(a => `
+            <tr><td>${a.nombre}</td><td>${a.fechaAlta}</td><td><button onclick="eliminarComercio(${a.id})" style="color:red; background:none; border:none; cursor:pointer;">Eliminar</button></td></tr>
         `).join('');
     }
 
-    function refreshRubros() {
+    function crearRubro() {
+        const txt = document.getElementById('nuevo-rubro-txt').value;
+        if(txt) {
+            rubros.push(txt);
+            actualizarRubrosUI();
+            document.getElementById('nuevo-rubro-txt').value = "";
+        }
+    }
+
+    function actualizarRubrosUI() {
         const html = rubros.map(r => `<option value="${r}">${r}</option>`).join('');
-        document.getElementById('rubro-select').innerHTML = html;
-        document.getElementById('reg-rubro').innerHTML = html;
-        document.getElementById('admin-rubros-list').innerHTML = rubros.map((r,i) => `<li>${r} <span onclick="rubros.splice(${i},1);refreshRubros();" style="color:red; cursor:pointer;">(x)</span></li>`).join('');
+        document.getElementById('search-rubro').innerHTML = '<option value="">Todos los rubros</option>' + html;
+        document.getElementById('reg-rubro-select').innerHTML = html;
+        document.getElementById('lista-rubros-admin').innerHTML = rubros.map((r, i) => `<li>${r} <span style="color:red; cursor:pointer; margin-left:10px;" onclick="rubros.splice(${i},1); actualizarRubrosUI();">(x)</span></li>`).join('');
     }
 
-    function addRubro() {
-        const val = document.getElementById('new-rubro').value;
-        if(val) { rubros.push(val); refreshRubros(); document.getElementById('new-rubro').value=""; }
+    function cambiarSlogan() {
+        const n = document.getElementById('admin-slogan-input').value;
+        if(n) document.getElementById('main-slogan').innerText = n;
     }
 
-    function actualizarSlogan() {
-        const s = document.getElementById('new-slogan').value;
-        if(s) document.getElementById('sitio-slogan').innerText = s;
-    }
+    // Inicializar rubros al cargar
+    actualizarRubrosUI();
 </script>
 
 </body>
