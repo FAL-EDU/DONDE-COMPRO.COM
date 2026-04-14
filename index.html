@@ -3,134 +3,113 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DÓNDE COMPRO.COM</title>
+    <title>DÓNDE COMPRO.COM - Gestión Total</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.js"></script>
     <style>
-        :root { --primary: #2563eb; --secondary: #059669; --bg: #f8fafc; --text: #1e293b; }
-        body { font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; background: var(--bg); color: var(--text); }
-        
-        header { 
-            background: var(--primary); 
-            color: white; padding: 0.8rem 1.5rem; 
-            display: flex; justify-content: space-between; align-items: center; 
-            position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
-        }
-        
-        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
-        .btn { padding: 10px 16px; border-radius: 10px; border: none; cursor: pointer; font-weight: 600; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px; justify-content: center; }
+        :root { --primary: #2563eb; --secondary: #059669; --bg: #f8fafc; --text: #1e293b; --danger: #ef4444; --warning: #f59e0b; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--bg); color: var(--text); }
+        header { background: var(--primary); color: white; padding: 1rem; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; }
+        .container { max-width: 1100px; margin: 0 auto; padding: 20px; }
+        .btn { padding: 10px 15px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; transition: 0.2s; }
         .btn-primary { background: var(--primary); color: white; }
         .btn-secondary { background: var(--secondary); color: white; }
-        .btn-danger { background: #ef4444; color: white; }
-        .btn-outline { background: white; border: 1px solid #ddd; color: #444; }
-
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-warning { background: var(--warning); color: white; }
+        .btn-outline { background: white; border: 1px solid #ddd; }
+        
+        .card { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; }
         .panel { display: none; }
         .panel.active { display: block; }
-        .card { background: white; border-radius: 20px; padding: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #f1f5f9; margin-bottom: 20px; }
         
-        input, select { padding: 12px; border-radius: 10px; border: 1px solid #ddd; width: 100%; box-sizing: border-box; }
+        input, select { padding: 12px; border-radius: 8px; border: 1px solid #ddd; width: 100%; box-sizing: border-box; margin-bottom: 10px; }
         
-        /* Estilos específicos Admin */
-        .admin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .item-list { margin-top: 15px; border-top: 1px solid #eee; }
-        .item-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f9f9f9; }
-        .rubro-img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; background: #eee; }
-
-        #route-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 3000; flex-direction: column; }
+        /* Listas Admin */
+        .item-row { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #eee; background: #fff; }
+        .item-row:last-child { border-bottom: none; }
+        .status-pill { padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; }
+        .status-active { background: #dcfce7; color: #166534; }
+        .status-pending { background: #fef9c3; color: #854d0e; }
+        .status-suspended { background: #fee2e2; color: #991b1b; }
     </style>
 </head>
 <body>
 
     <header>
-        <div onclick="switchPanel('client-panel')" style="cursor:pointer; display:flex; align-items:center; gap:10px;">
-            <img id="main-logo-view" src="" style="height:40px; display:none;">
-            <h2 id="main-title-view" style="margin:0;">DÓNDE COMPRO.COM</h2>
-        </div>
+        <h2 onclick="location.reload()" style="cursor:pointer; margin:0;">DÓNDE COMPRO.COM</h2>
         <div id="nav-auth">
             <button onclick="openLogin('admin')" class="btn btn-outline" id="btn-admin-login">🛡️ Admin</button>
             <button onclick="openLogin('merchant')" class="btn btn-outline" id="btn-merch-login">🏪 Comercio</button>
             <div id="user-info" style="display:none; align-items:center; gap:10px;">
                 <span id="user-email" style="font-weight:700;"></span>
-                <button onclick="goToPanel()" class="btn btn-primary">Mi Panel</button>
-                <button onclick="logout()" class="btn btn-danger">Salir</button>
+                <button onclick="logout()" class="btn btn-danger btn-small">Salir</button>
             </div>
         </div>
     </header>
 
     <main class="container">
         
-        <div id="client-panel" class="panel active">
-            <div style="text-align:center; padding:40px 0;">
-                <h1 id="hero-title">Encuentra comercios locales</h1>
-                <div style="max-width:600px; margin:0 auto; display:flex; gap:10px; background:white; padding:8px; border-radius:50px; box-shadow:0 10px 20px rgba(0,0,0,0.05);">
-                    <input type="text" id="search-input" placeholder="Buscar producto o comercio..." style="border:none; border-radius:50px;">
-                    <button onclick="search()" class="btn btn-primary" style="border-radius:50px;">Buscar</button>
-                </div>
-            </div>
-            <div id="search-results" class="grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:20px;"></div>
-        </div>
-
         <div id="merchant-panel" class="panel">
             <div class="card">
-                <h2>Perfil de Comercio</h2>
-                <div class="admin-grid">
-                    <input type="text" id="m-name" placeholder="Nombre del Negocio">
-                    <select id="m-rubro-select"></select>
+                <h2>⚙️ Configuración de mi Comercio</h2>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div>
+                        <label>Nombre Fantasía</label>
+                        <input type="text" id="m-name" placeholder="Ej: Panadería El Sol">
+                    </div>
+                    <div>
+                        <label>Rubro</label>
+                        <select id="m-rubro-select"></select>
+                    </div>
                     <input type="text" id="m-address" placeholder="Dirección">
-                    <input type="text" id="m-phone" placeholder="WhatsApp">
-                    <input type="text" id="m-hours" placeholder="Horario de atención">
-                    <select id="m-extra">
-                        <option value="NO">Atención fuera de horario: NO</option>
-                        <option value="SI">Atención fuera de horario: SI</option>
-                    </select>
+                    <input type="text" id="m-phone" placeholder="WhatsApp (ej: 3876123456)">
+                    <input type="text" id="m-hours" placeholder="Horario comercial">
+                    <div>
+                        <label>Atención fuera de horario</label>
+                        <select id="m-extra">
+                            <option value="NO">NO</option>
+                            <option value="SI">SI</option>
+                        </select>
+                    </div>
                 </div>
                 <div style="margin-top:15px;">
-                    <label>Logo de tu comercio:</label>
-                    <input type="file" onchange="uploadImage(event, 'm-logo')">
+                    <label>Logo (Subir para cambiar)</label>
+                    <input type="file" id="m-logo-file" accept="image/*" onchange="previewMerchantLogo(event)">
                     <div id="m-logo-preview" style="margin-top:10px;"></div>
                 </div>
-                <button onclick="saveMerchant()" class="btn btn-secondary" style="width:100%; margin-top:20px;">Guardar Cambios</button>
+                <button onclick="saveMerchantProfile()" class="btn btn-secondary" style="width:100%; margin-top:20px;">
+                    💾 GUARDAR CAMBIOS
+                </button>
             </div>
-            <h3>Mis Productos</h3>
-            <div id="merch-products"></div>
         </div>
 
         <div id="admin-panel" class="panel">
-            <div class="admin-grid">
-                <div class="card">
-                    <h3>⚙️ Configuración Web</h3>
-                    <input type="text" id="cfg-title" placeholder="Título de la web" style="margin-bottom:10px;">
-                    <label>Logo Principal:</label>
-                    <input type="file" onchange="uploadImage(event, 'cfg-logo')">
-                    <button onclick="saveConfig()" class="btn btn-primary" style="width:100%; margin-top:10px;">Actualizar Identidad</button>
-                </div>
-
+            <div style="display:grid; grid-template-columns: 1fr 1.5fr; gap: 20px;">
                 <div class="card">
                     <h3>📦 Rubros / Categorías</h3>
-                    <div style="display:flex; gap:5px; margin-bottom:10px;">
-                        <input type="text" id="new-rubro-name" placeholder="Nuevo rubro...">
-                        <input type="file" id="new-rubro-img" style="width:100px;">
-                    </div>
-                    <button onclick="addRubro()" class="btn btn-secondary" style="width:100%;">Añadir Rubro</button>
-                    <div id="rubros-list" class="item-list"></div>
+                    <input type="text" id="new-rubro-name" placeholder="Nombre del rubro...">
+                    <input type="file" id="new-rubro-img" accept="image/*">
+                    <button onclick="addRubro()" class="btn btn-primary" style="width:100%;">Añadir Rubro</button>
+                    
+                    <div id="rubros-list" style="margin-top:20px; border:1px solid #eee; border-radius:10px;"></div>
+                </div>
+
+                <div class="card">
+                    <h3>🏪 Gestión de Comercios</h3>
+                    <p style="font-size:0.8rem; color:#666;">Control de altas, bajas y suspensiones</p>
+                    <div id="admin-merchants-list" style="border:1px solid #eee; border-radius:10px; overflow:hidden;"></div>
                 </div>
             </div>
-
-            <div class="card" style="margin-top:20px;">
-                <h3>🏪 Solicitudes de Comercios</h3>
-                <div id="admin-merchants-list" class="item-list"></div>
-            </div>
         </div>
+
     </main>
 
-    <div id="login-modal" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:2000; justify-content:center; align-items:center;">
-        <div class="card" style="width:300px;">
-            <h3 id="login-role-title">Ingreso</h3>
-            <input type="email" id="login-email" placeholder="email@ejemplo.com" style="margin-bottom:15px;">
-            <button onclick="login()" class="btn btn-primary" style="width:100%;">Entrar</button>
-            <button onclick="this.parentElement.parentElement.style.display='none'" class="btn btn-outline" style="width:100%; margin-top:5px;">Cerrar</button>
+    <div id="login-modal" class="panel" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:2000; display:none; justify-content:center; align-items:center;">
+        <div class="card" style="width:320px;">
+            <h3 id="login-title">Ingreso</h3>
+            <input type="email" id="login-email" placeholder="Tu email...">
+            <button onclick="processLogin()" class="btn btn-primary" style="width:100%;">Entrar</button>
+            <button onclick="document.getElementById('login-modal').style.display='none'" class="btn btn-outline" style="width:100%; margin-top:5px;">Cancelar</button>
         </div>
     </div>
 
@@ -138,88 +117,159 @@
         const state = {
             user: sessionStorage.getItem('user'),
             role: sessionStorage.getItem('role'),
-            config: JSON.parse(localStorage.getItem('dc_config')) || { title: 'DÓNDE COMPRO.COM', logo: '' },
             merchants: JSON.parse(localStorage.getItem('dc_merchants')) || {},
             rubros: JSON.parse(localStorage.getItem('dc_rubros')) || [],
-            products: JSON.parse(localStorage.getItem('dc_products')) || []
+            tempLogo: null
         };
 
-        // --- ADMIN FUNCTIONS ---
+        // --- 1) FUNCIONALIDAD COMERCIANTE: GUARDAR CAMBIOS ---
+        async function previewMerchantLogo(e) {
+            const file = e.target.files[0];
+            if(file) state.tempLogo = await toBase64(file, 128);
+            document.getElementById('m-logo-preview').innerHTML = `<img src="${state.tempLogo}" style="width:60px; border-radius:50%">`;
+        }
+
+        function saveMerchantProfile() {
+            const m = state.merchants[state.user];
+            if(!m) return;
+
+            m.name = document.getElementById('m-name').value;
+            m.rubro = document.getElementById('m-rubro-select').value;
+            m.address = document.getElementById('m-address').value;
+            m.phone = document.getElementById('m-phone').value;
+            m.hours = document.getElementById('m-hours').value;
+            m.extraHours = document.getElementById('m-extra').value;
+            
+            if(state.tempLogo) m.logo = state.tempLogo;
+
+            localStorage.setItem('dc_merchants', JSON.stringify(state.merchants));
+            alert("¡Cambios guardados con éxito!");
+            state.tempLogo = null;
+        }
+
+        // --- 2) FUNCIONALIDAD ADMIN: RUBROS (CREAR/ELIMINAR) ---
         async function addRubro() {
             const name = document.getElementById('new-rubro-name').value;
             const file = document.getElementById('new-rubro-img').files[0];
-            if(!name) return;
+            if(!name) return alert("Ingresa un nombre");
+
             let img = '';
-            if(file) img = await toBase64(file, 128);
+            if(file) img = await toBase64(file, 100);
+
             state.rubros.push({ name, img });
-            saveAndReload();
+            updateStorage();
+            renderAdmin();
+            document.getElementById('new-rubro-name').value = '';
         }
 
-        function saveConfig() {
-            state.config.title = document.getElementById('cfg-title').value;
-            localStorage.setItem('dc_config', JSON.stringify(state.config));
-            location.reload();
+        function deleteRubro(index) {
+            if(confirm("¿Eliminar este rubro?")) {
+                state.rubros.splice(index, 1);
+                updateStorage();
+                renderAdmin();
+            }
         }
 
+        // --- 3) FUNCIONALIDAD ADMIN: COMERCIOS (ALTA/BAJA/SUSPENDER) ---
+        function setMerchantStatus(email, newStatus) {
+            if(newStatus === 'deleted') {
+                if(confirm(`¿Estás seguro de ELIMINAR permanentemente a ${email}?`)) {
+                    delete state.merchants[email];
+                } else return;
+            } else {
+                state.merchants[email].status = newStatus;
+            }
+            updateStorage();
+            renderAdmin();
+        }
+
+        // --- CORE RENDER ---
         function renderAdmin() {
-            document.getElementById('cfg-title').value = state.config.title;
+            // Lista Rubros
             const rList = document.getElementById('rubros-list');
             rList.innerHTML = state.rubros.map((r, i) => `
                 <div class="item-row">
                     <div style="display:flex; align-items:center; gap:10px;">
-                        <img src="${r.img}" class="rubro-img">
+                        <img src="${r.img || ''}" style="width:30px; height:30px; border-radius:50%; background:#eee;">
                         <span>${r.name}</span>
                     </div>
-                    <button onclick="deleteRubro(${i})" class="btn btn-danger btn-small">🗑️</button>
+                    <button onclick="deleteRubro(${i})" class="btn btn-danger" style="padding:5px;">🗑️</button>
                 </div>
             `).join('');
 
+            // Lista Comercios
             const mList = document.getElementById('admin-merchants-list');
-            mList.innerHTML = Object.keys(state.merchants).map(email => `
-                <div class="item-row">
-                    <span>${email} <b>(${state.merchants[email].status})</b></span>
-                    <div>
-                        ${state.merchants[email].status === 'pending' ? `<button onclick="updateMerch('${email}', 'active')" class="btn btn-secondary">Aprobar</button>` : ''}
-                        <button onclick="updateMerch('${email}', 'inactive')" class="btn btn-danger">Bloquear</button>
+            mList.innerHTML = Object.keys(state.merchants).map(email => {
+                const m = state.merchants[email];
+                const statusClass = `status-${m.status}`;
+                return `
+                    <div class="item-row" style="flex-direction:column; align-items:flex-start; gap:10px;">
+                        <div style="width:100%; display:flex; justify-content:space-between;">
+                            <strong>${m.name || email}</strong>
+                            <span class="status-pill ${statusClass}">${m.status}</span>
+                        </div>
+                        <div style="display:flex; gap:5px; width:100%;">
+                            <button onclick="setMerchantStatus('${email}', 'active')" class="btn btn-secondary" style="flex:1; font-size:0.7rem;">ALTA</button>
+                            <button onclick="setMerchantStatus('${email}', 'suspended')" class="btn btn-warning" style="flex:1; font-size:0.7rem;">SUSPENDER</button>
+                            <button onclick="setMerchantStatus('${email}', 'deleted')" class="btn btn-danger" style="flex:1; font-size:0.7rem;">BAJA</button>
+                        </div>
                     </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
-        function updateMerch(email, status) {
-            state.merchants[email].status = status;
-            saveAndReload();
+        function loadMerchantPanel() {
+            const m = state.merchants[state.user];
+            if(!m) return;
+            document.getElementById('m-name').value = m.name || '';
+            document.getElementById('m-address').value = m.address || '';
+            document.getElementById('m-phone').value = m.phone || '';
+            document.getElementById('m-hours').value = m.hours || '';
+            document.getElementById('m-extra').value = m.extraHours || 'NO';
+            if(m.logo) document.getElementById('m-logo-preview').innerHTML = `<img src="${m.logo}" style="width:60px; border-radius:50%">`;
+            
+            // Actualizar selector de rubros con los rubros actuales del admin
+            const sel = document.getElementById('m-rubro-select');
+            sel.innerHTML = state.rubros.map(r => `<option value="${r.name}" ${m.rubro === r.name ? 'selected' : ''}>${r.name}</option>`).join('');
         }
 
-        // --- CORE ---
+        // --- SISTEMA ---
         function openLogin(role) {
-            state.tempRole = role;
-            document.getElementById('login-role-title').innerText = role === 'admin' ? 'Admin' : 'Comercio';
+            state.pendingRole = role;
             document.getElementById('login-modal').style.display = 'flex';
         }
 
-        function login() {
-            const email = document.getElementById('login-email').value;
+        function processLogin() {
+            const email = document.getElementById('login-email').value.toLowerCase();
             if(!email) return;
             sessionStorage.setItem('user', email);
-            sessionStorage.setItem('role', state.tempRole);
-            if(state.tempRole === 'merchant' && !state.merchants[email]) {
+            sessionStorage.setItem('role', state.pendingRole);
+            if(state.pendingRole === 'merchant' && !state.merchants[email]) {
                 state.merchants[email] = { status: 'pending', name: '', rubro: '', logo: '' };
+                updateStorage();
             }
-            saveAndReload();
-        }
-
-        function saveAndReload() {
-            localStorage.setItem('dc_rubros', JSON.stringify(state.rubros));
-            localStorage.setItem('dc_merchants', JSON.stringify(state.merchants));
             location.reload();
         }
 
-        async function uploadImage(e, type) {
-            const file = e.target.files[0];
-            const base64 = await toBase64(file, type === 'cfg-logo' ? 256 : 128);
-            if(type === 'cfg-logo') state.config.logo = base64;
-            if(type === 'm-logo') state.merchants[state.user].logo = base64;
+        function checkSession() {
+            if(state.user) {
+                document.getElementById('btn-admin-login').style.display = 'none';
+                document.getElementById('btn-merch-login').style.display = 'none';
+                document.getElementById('user-info').style.display = 'flex';
+                document.getElementById('user-email').innerText = state.user;
+                if(state.role === 'admin') { 
+                    document.getElementById('admin-panel').classList.add('active'); 
+                    renderAdmin(); 
+                } else { 
+                    document.getElementById('merchant-panel').classList.add('active'); 
+                    loadMerchantPanel(); 
+                }
+            }
+        }
+
+        function updateStorage() {
+            localStorage.setItem('dc_rubros', JSON.stringify(state.rubros));
+            localStorage.setItem('dc_merchants', JSON.stringify(state.merchants));
         }
 
         function toBase64(file, size) {
@@ -240,32 +290,7 @@
             });
         }
 
-        function checkSession() {
-            if(state.user) {
-                document.getElementById('btn-admin-login').style.display = 'none';
-                document.getElementById('btn-merch-login').style.display = 'none';
-                document.getElementById('user-info').style.display = 'flex';
-                document.getElementById('user-email').innerText = state.user;
-                if(state.role === 'admin') { switchPanel('admin-panel'); renderAdmin(); }
-                if(state.role === 'merchant') { switchPanel('merchant-panel'); loadMerchantPanel(); }
-            }
-            if(state.config.logo) {
-                document.getElementById('main-logo-view').src = state.config.logo;
-                document.getElementById('main-logo-view').style.display = 'block';
-            }
-            document.getElementById('main-title-view').innerText = state.config.title;
-            
-            // Cargar rubros en el selector de comerciante
-            const sel = document.getElementById('m-rubro-select');
-            if(sel) sel.innerHTML = state.rubros.map(r => `<option value="${r.name}">${r.name}</option>`).join('');
-        }
-
         function logout() { sessionStorage.clear(); location.reload(); }
-        function switchPanel(id) { 
-            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-        }
-        function goToPanel() { state.role === 'admin' ? switchPanel('admin-panel') : switchPanel('merchant-panel'); }
 
         document.addEventListener('DOMContentLoaded', checkSession);
     </script>
