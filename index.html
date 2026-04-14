@@ -7,17 +7,18 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary: #0056b3; /* Azul profesional */
-            --secondary: #28a745; /* Verde para disponibilidad */
+            --primary: #0056b3;
+            --secondary: #28a745;
             --bg-light: #f8f9fa;
             --text-dark: #333;
             --header-bg: #ffffff;
+            --accent-color: #0056b3;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Poppins', sans-serif; background-color: var(--bg-light); color: var(--text-dark); }
+        body { font-family: 'Poppins', sans-serif; background-color: var(--bg-light); color: var(--text-dark); overflow-x: hidden; }
 
-        /* HEADER PERSONALIZABLE */
+        /* HEADER Y MARCA DE AGUA */
         header {
             background-color: var(--header-bg);
             background-image: url('https://www.transparenttextures.com/patterns/cubes.png'); /* Fondo de agua configurable */
@@ -32,22 +33,24 @@
         }
 
         .logo-container img { height: 50px; }
+        .slogan-text { font-size: 0.9rem; color: #666; font-style: italic; }
 
-        /* INTERFAZ LIMPIA (HOME) */
+        /* CONTENEDOR PRINCIPAL (HOME LIMPIO) */
         .home-container {
             max-width: 1200px;
-            margin: 50px auto;
+            margin: 60px auto;
             text-align: center;
             padding: 20px;
+            transition: all 0.5s ease;
         }
 
         .search-box {
             background: white;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.08);
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
             gap: 15px;
         }
 
@@ -56,56 +59,67 @@
             border: 1px solid #ddd;
             border-radius: 8px;
             font-size: 1rem;
+            outline: none;
         }
 
-        .btn-search { background: var(--primary); color: white; border: none; cursor: pointer; font-weight: 600; }
-        .btn-search:hover { opacity: 0.9; }
+        .btn-search { background: var(--accent-color); color: white; border: none; cursor: pointer; font-weight: 600; transition: 0.3s; }
+        .btn-search:hover { filter: brightness(1.1); }
 
-        /* MAPA INTERACTIVO */
-        #main-map {
-            width: 100%;
-            height: 400px;
-            background: #e0e0e0;
-            margin-top: 20px;
-            border-radius: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #666;
-        }
-
-        /* RESULTADOS */
-        .results-section { display: none; padding: 20px 5%; grid-template-columns: 1fr 350px; gap: 20px; }
-        .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; }
+        /* RESULTADOS Y MAPA */
+        .results-section { display: none; padding: 20px 5%; grid-template-columns: 1fr 400px; gap: 20px; }
+        .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
         
         .product-card {
             background: white;
-            padding: 15px;
-            border-radius: 10px;
+            padding: 20px;
+            border-radius: 12px;
             border: 1px solid #eee;
-            transition: transform 0.2s;
+            position: relative;
         }
-        .product-card:hover { transform: translateY(-5px); }
-        .product-card img { width: 100%; height: 180px; object-fit: cover; border-radius: 5px; }
+        .product-card img { width: 100%; height: 200px; object-fit: cover; border-radius: 8px; margin-bottom: 15px; }
 
-        .status-badge { font-size: 0.8rem; padding: 3px 8px; border-radius: 5px; }
+        .status-badge { font-size: 0.75rem; padding: 4px 10px; border-radius: 20px; font-weight: bold; }
         .open { background: #d4edda; color: #155724; }
         .closed { background: #f8d7da; color: #721c24; }
 
-        /* PANEL COMERCIANTE / MODALES */
+        /* MODALES */
         .modal {
             display: none;
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5);
+            background: rgba(0,0,0,0.6);
             justify-content: center;
             align-items: center;
             z-index: 2000;
         }
 
-        .modal-content { background: white; padding: 30px; border-radius: 12px; width: 90%; max-width: 500px; }
+        .modal-content { 
+            background: white; 
+            padding: 40px; 
+            border-radius: 15px; 
+            width: 95%; 
+            max-width: 900px; 
+            max-height: 85vh; 
+            overflow-y: auto; 
+            position: relative;
+        }
 
-        /* RESPONSIVE */
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: left; }
+        th { background: #f4f4f4; }
+
+        /* BOTÓN ADMIN OCULTO */
+        .admin-trigger {
+            position: fixed;
+            bottom: 5px;
+            right: 5px;
+            width: 10px;
+            height: 10px;
+            background: transparent;
+            cursor: default;
+            z-index: 9999;
+        }
+
         @media (max-width: 768px) {
             .results-section { grid-template-columns: 1fr; }
             .search-box { grid-template-columns: 1fr; }
@@ -114,109 +128,231 @@
 </head>
 <body>
 
-<header id="main-header">
+<header>
     <div class="logo-container">
-        <h2 style="color: var(--primary);">DÓNDE COMPRO.COM</h2>
+        <h2 id="sitio-nombre" style="color: var(--accent-color);">DÓNDE COMPRO.COM</h2>
+        <p id="sitio-slogan" class="slogan-text">Localizador de productos en comercios cercanos</p>
     </div>
     <nav>
-        <button onclick="openModal('modal-login')">Acceso Comerciantes</button>
-        <button onclick="toggleCart()" style="background:none; border:none; cursor:pointer; font-size:1.5rem;">🛒 <span id="cart-count">0</span></button>
+        <button onclick="openModal('modal-comerciante')" style="background:none; border: 1px solid #ddd; cursor:pointer;">Acceso Comerciantes</button>
+        <button onclick="alert('Carrito de compras / Reservas')" style="background:none; border:none; cursor:pointer; font-size:1.5rem; margin-left:15px;">🛒</button>
     </nav>
 </header>
 
-<main class="home-container" id="home">
-    <h1>Encuentra lo que buscas cerca de ti</h1>
-    <p>Busca entre más de 100,000 comercios locales</p><br>
+<main class="home-container" id="home-view">
+    <h1 id="hero-title">¿Qué estás buscando hoy?</h1><br>
     
     <div class="search-box">
-        <input type="text" id="query" placeholder="¿Qué buscas? (ej. Pan integral)">
-        <select id="rubro">
-            <option value="">Rubro (Todos)</option>
-            <option value="alimentos">Alimentos</option>
-            <option value="tecnologia">Tecnología</option>
-            <option value="hogar">Hogar</option>
-        </select>
-        <input type="number" placeholder="Precio Máx.">
-        <input type="text" placeholder="Tu ubicación">
-        <button class="btn-search" onclick="ejecutarBusqueda()">BUSCAR</button>
+        <input type="text" id="input-busqueda" placeholder="Ej: Neumáticos, Pan, Celular...">
+        <select id="select-rubros">
+            </select>
+        <input type="number" placeholder="Precio máximo">
+        <input type="text" placeholder="Mi ubicación (GPS activo)">
+        <button class="btn-search" onclick="realizarBusqueda()">BUSCAR AHORA</button>
     </div>
 
-    <div id="main-map">
-        <p>Integración de Google Maps aquí (Cargando geolocalización...)</p>
+    <div id="home-map" style="width:100%; height:350px; background:#e9ecef; margin-top:30px; border-radius:15px; display:flex; align-items:center; justify-content:center; color:#999;">
+        Mapa interactivo cargando...
     </div>
 </main>
 
-<section class="results-section" id="results">
-    <div class="product-grid" id="product-list">
-        </div>
-    <div class="map-sidebar" id="mini-map" style="background:#ddd; border-radius: 10px; height: 500px; position: sticky; top: 100px; padding: 20px;">
-        Mapa de cercanía activo
-    </div>
+<section class="results-section" id="results-view">
+    <div id="lista-productos" class="product-grid"></div>
+    <aside style="background:#fff; border-radius:12px; padding:15px; box-shadow:0 5px 15px rgba(0,0,0,0.05);">
+        <h3>Comercios cercanos</h3>
+        <div id="sidebar-map" style="width:100%; height:400px; background:#eee; margin-top:10px;"></div>
+        <button onclick="volverAlHome()" style="margin-top:20px; width:100%;">Nueva búsqueda</button>
+    </aside>
 </section>
 
-<div id="modal-login" class="modal">
-    <div class="modal-content">
-        <h3>Acceso Comerciantes</h3><br>
-        <form onsubmit="event.preventDefault(); alert('Solicitud enviada al administrador');">
-            <input type="email" placeholder="Email institucional" required style="width: 100%; margin-bottom: 10px;">
-            <input type="password" placeholder="Contraseña" required style="width: 100%; margin-bottom: 10px;">
-            <button class="btn-search" style="width: 100%;">Ingresar / Solicitar Acceso</button>
-        </form>
-        <button onclick="closeModal('modal-login')" style="margin-top: 10px; background: none; border: none; color: red; cursor: pointer;">Cerrar</button>
+<div id="modal-comerciante" class="modal">
+    <div class="modal-content" style="max-width: 450px;">
+        <h3>Acceso para Comercios</h3>
+        <p><small>Inicie sesión o solicite su alta en la plataforma.</small></p><br>
+        <input type="email" id="reg-email" placeholder="Email" style="width:100%; margin-bottom:10px;">
+        <input type="password" placeholder="Contraseña" style="width:100%; margin-bottom:10px;">
+        <input type="text" id="reg-nombre" placeholder="Nombre del Comercio" style="width:100%; margin-bottom:10px;">
+        <select id="reg-rubro" style="width:100%; margin-bottom:20px;"></select>
+        <button class="btn-search" style="width:100%;" onclick="solicitarAcceso()">SOLICITAR ALOJAMIENTO</button>
+        <button onclick="closeModal('modal-comerciante')" style="background:none; border:none; color:red; margin-top:15px; cursor:pointer;">Cancelar</button>
     </div>
 </div>
 
-<script>
-    // SIMULACIÓN DE DATOS (El sistema real debe estar vacío por defecto)
-    function ejecutarBusqueda() {
-        const query = document.getElementById('query').value;
-        if(!query) return alert("Ingresa un producto");
-
-        // Limpiar Home y mostrar Resultados
-        document.getElementById('home').style.display = 'none';
-        const results = document.getElementById('results');
-        results.style.display = 'grid';
-
-        // Simulación de productos (estos vendrían de la DB del comerciante)
-        const mockData = [
-            { nombre: "Producto para: " + query, comercio: "Tienda Central", precio: "$150", dist: "0.5km", status: "open", img: "https://picsum.photos/200" },
-            { nombre: "Variedad " + query, comercio: "Súper Cercano", precio: "$130", dist: "1.2km", status: "closed", img: "https://picsum.photos/201" }
-        ];
-
-        const list = document.getElementById('product-list');
-        list.innerHTML = ""; // Siempre limpia la interfaz después de buscar
-
-        mockData.forEach(p => {
-            list.innerHTML += `
-                <div class="product-card">
-                    <img src="${p.img}" alt="Producto">
-                    <h4>${p.nombre}</h4>
-                    <p><strong>${p.comercio}</strong></p>
-                    <p>${p.precio} - <small>${p.dist}</small></p>
-                    <span class="status-badge ${p.status}">${p.status === 'open' ? 'Atendiendo' : 'Fuera de Horario'}</span>
-                    <br><br>
-                    <button class="btn-search" style="padding: 5px 10px; font-size: 0.8rem;" onclick="addToCart()">Agregar</button>
-                    <button style="padding: 5px 10px; font-size: 0.8rem;" onclick="window.open('https://maps.google.com')">Cómo llegar</button>
+<div id="modal-admin" class="modal">
+    <div class="modal-content">
+        <h2 style="color: var(--primary); border-bottom: 2px solid #eee; padding-bottom: 10px;">Panel de Administración General</h2>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 20px;">
+            <section>
+                <h3>1. Personalización del Sitio</h3>
+                <label>Logo (URL):</label>
+                <input type="text" id="admin-logo" style="width:100%;" placeholder="url de la imagen">
+                <label>Slogan:</label>
+                <input type="text" id="admin-slogan-input" style="width:100%;" placeholder="Texto bajo el logo">
+                <button onclick="guardarCambiosVisuales()" style="margin-top:10px;">Guardar Cambios</button>
+                
+                <h3 style="margin-top:20px;">2. Gestión de Rubros</h3>
+                <div style="display:flex; gap:5px;">
+                    <input type="text" id="input-nuevo-rubro" placeholder="Nuevo rubro...">
+                    <button onclick="agregarRubro()">+</button>
                 </div>
-            `;
-        });
-    }
+                <ul id="lista-rubros-admin" style="margin-top:10px; font-size:0.9rem;"></ul>
+            </section>
 
-    // GESTIÓN DE MODALES
+            <section>
+                <h3>3. Solicitudes de Alta (Pendientes)</h3>
+                <table id="tabla-solicitudes">
+                    <thead><tr><th>Comercio</th><th>Acción</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+
+                <h3 style="margin-top:20px;">4. Comercios Activos</h3>
+                <table id="tabla-activos">
+                    <thead><tr><th>Nombre</th><th>Alta</th><th>Estado</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </section>
+        </div>
+        <button onclick="closeModal('modal-admin')" style="margin-top:30px; width:100%; padding:10px; background:#333; color:#fff;">CERRAR PANEL</button>
+    </div>
+</div>
+
+<div class="admin-trigger" onclick="verificarAdmin()"></div>
+
+<script>
+    // ESTADO DE LA APP
+    let rubros = ["Farmacias", "Supermercados", "Ferreterías", "Tecnología", "Indumentaria"];
+    let comerciosActivos = [];
+    let solicitudesPendientes = [];
+
+    // INICIALIZACIÓN
+    window.onload = () => {
+        actualizarSelectsRubros();
+        actualizarListaRubrosAdmin();
+    };
+
+    // FUNCIONES DE INTERFAZ
     function openModal(id) { document.getElementById(id).style.display = 'flex'; }
     function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
-    // GESTIÓN DE IMÁGENES (Lógica de optimización solicitada)
-    function optimizarImagen(input) {
-        // En un sistema real, usaríamos Canvas API para reducir dimensiones y peso
-        console.log("Optimizando tamaño y peso para evitar saturación...");
+    function realizarBusqueda() {
+        const query = document.getElementById('input-busqueda').value;
+        if(!query) return alert("Por favor escribe un producto.");
+        
+        document.getElementById('home-view').style.display = 'none';
+        document.getElementById('results-view').style.display = 'grid';
+        
+        // Simulación de resultados (En un entorno real vendría de la BD)
+        const lista = document.getElementById('lista-productos');
+        lista.innerHTML = ""; // Limpiar antes de mostrar
+        
+        for(let i=1; i<=3; i++) {
+            lista.innerHTML += `
+                <div class="product-card">
+                    <img src="https://picsum.photos/400/300?random=${i}" alt="Producto">
+                    <span class="status-badge open">Atendiendo</span>
+                    <h3>${query} - Modelo ${i}</h3>
+                    <p><strong>Comercio Proximidad ${i}</strong></p>
+                    <p style="color:var(--secondary); font-weight:600;">$${(Math.random()*1000).toFixed(2)}</p>
+                    <p><small>Distancia: ${ (i*0.5).toFixed(1) } km</small></p>
+                    <button class="btn-search" style="width:100%; margin-top:10px;" onclick="alert('Pedido generado #'+Math.floor(Math.random()*9999))">Reservar Producto</button>
+                </div>
+            `;
+        }
     }
 
-    let cartCount = 0;
-    function addToCart() {
-        cartCount++;
-        document.getElementById('cart-count').innerText = cartCount;
-        alert("Producto reservado. Número de pedido: #" + Math.floor(Math.random()*100000));
+    function volverAlHome() {
+        document.getElementById('results-view').style.display = 'none';
+        document.getElementById('home-view').style.display = 'block';
+        document.getElementById('input-busqueda').value = "";
+    }
+
+    // GESTIÓN DE COMERCIANTES
+    function solicitarAcceso() {
+        const nombre = document.getElementById('reg-nombre').value;
+        const rubro = document.getElementById('reg-rubro').value;
+        const email = document.getElementById('reg-email').value;
+
+        if(!nombre || !email) return alert("Completa los datos");
+
+        solicitudesPendientes.push({ nombre, rubro, email, id: Date.now() });
+        actualizarTablasAdmin();
+        closeModal('modal-comerciante');
+        alert("Solicitud enviada. El administrador revisará su cuenta.");
+    }
+
+    // GESTIÓN ADMINISTRADOR
+    function verificarAdmin() {
+        const mail1 = prompt("Ingrese primer correo de administrador:");
+        const mail2 = prompt("Ingrese segundo correo de administrador:");
+        
+        // Simulación de validación de 2 correos
+        if(mail1 && mail2) {
+            openModal('modal-admin');
+        }
+    }
+
+    function aprobarComercio(id) {
+        const index = solicitudesPendientes.findIndex(s => s.id === id);
+        const comercio = solicitudesPendientes.splice(index, 1)[0];
+        comercio.fechaAlta = new Date().toLocaleDateString();
+        comerciosActivos.push(comercio);
+        actualizarTablasAdmin();
+    }
+
+    function actualizarTablasAdmin() {
+        const tbodyS = document.querySelector('#tabla-solicitudes tbody');
+        const tbodyA = document.querySelector('#tabla-activos tbody');
+        
+        tbodyS.innerHTML = solicitudesPendientes.map(s => `
+            <tr>
+                <td>${s.nombre}</td>
+                <td><button onclick="aprobarComercio(${s.id})" style="background:green; color:white;">Aprobar</button></td>
+            </tr>
+        `).join('');
+
+        tbodyA.innerHTML = comerciosActivos.map(a => `
+            <tr>
+                <td>${a.nombre}</td>
+                <td>${a.fechaAlta}</td>
+                <td style="color:green; font-weight:bold;">ACTIVO</td>
+            </tr>
+        `).join('');
+    }
+
+    function guardarCambiosVisuales() {
+        const slogan = document.getElementById('admin-slogan-input').value;
+        if(slogan) document.getElementById('sitio-slogan').innerText = slogan;
+        alert("Configuración visual actualizada.");
+    }
+
+    // GESTIÓN DE RUBROS
+    function agregarRubro() {
+        const nuevo = document.getElementById('input-nuevo-rubro').value;
+        if(nuevo) {
+            rubros.push(nuevo);
+            actualizarSelectsRubros();
+            actualizarListaRubrosAdmin();
+            document.getElementById('input-nuevo-rubro').value = "";
+        }
+    }
+
+    function borrarRubro(index) {
+        rubros.splice(index, 1);
+        actualizarSelectsRubros();
+        actualizarListaRubrosAdmin();
+    }
+
+    function actualizarSelectsRubros() {
+        const selects = [document.getElementById('select-rubros'), document.getElementById('reg-rubro')];
+        selects.forEach(s => {
+            s.innerHTML = rubros.map(r => `<option value="${r}">${r}</option>`).join('');
+        });
+    }
+
+    function actualizarListaRubrosAdmin() {
+        const lista = document.getElementById('lista-rubros-admin');
+        lista.innerHTML = rubros.map((r, i) => `<li>${r} <span style="color:red; cursor:pointer;" onclick="borrarRubro(${i})">[x]</span></li>`).join('');
     }
 </script>
 
