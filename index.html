@@ -11,211 +11,251 @@
     <style>
         :root { --primary: #2563eb; --secondary: #059669; --bg: #f8fafc; --text: #1e293b; }
         body { font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; background: var(--bg); color: var(--text); }
-        header { background: var(--primary); color: white; padding: 0.8rem 1.5rem; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        
+        /* HEADER CON ACCESOS */
+        header { 
+            background: var(--primary); 
+            color: white; 
+            padding: 0.8rem 1.5rem; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            position: sticky; 
+            top: 0; 
+            z-index: 1000; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
+        }
+        
+        .nav-buttons { display: flex; gap: 10px; align-items: center; }
         
         .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
-        .btn { padding: 10px 16px; border-radius: 10px; border: none; cursor: pointer; font-weight: 600; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px; justify-content: center; }
-        .btn-primary { background: var(--primary); color: white; }
-        .btn-outline { background: white; border: 1px solid #e2e8f0; color: #64748b; }
+        .btn { padding: 10px 16px; border-radius: 10px; border: none; cursor: pointer; font-weight: 600; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px; justify-content: center; font-size: 0.9rem; }
+        .btn-primary { background: var(--primary); color: white; border: 1px solid rgba(255,255,255,0.2); }
+        .btn-secondary { background: var(--secondary); color: white; }
+        .btn-white { background: white; color: var(--primary); }
+        .btn-outline { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); color: white; }
         .btn-danger { background: #ef4444; color: white; }
 
-        /* Estilos Buscador */
+        /* BUSCADOR */
         .hero { padding: 40px 20px; text-align: center; background: white; border-bottom: 1px solid #e2e8f0; border-radius: 0 0 30px 30px; }
         .search-box { background: white; padding: 6px; border-radius: 50px; display: flex; box-shadow: 0 10px 25px rgba(0,0,0,0.05); max-width: 600px; margin: 20px auto; border: 1px solid #e2e8f0; }
         .search-box input { border: none; flex: 1; padding: 12px 25px; outline: none; border-radius: 50px; font-size: 1.1rem; }
 
-        /* Mapa Flotante / Modal para "Cómo Llegar" */
-        #route-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 2000; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
-        .route-content { background: white; width: 95%; max-width: 900px; height: 80vh; border-radius: 20px; position: relative; overflow: hidden; display: flex; flex-direction: column; }
-        #map-display { flex-grow: 1; width: 100%; }
-        .map-header { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; }
-
-        /* Tarjetas */
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 25px; margin-top: 30px; }
-        .card { background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid #f1f5f9; }
-        .prod-img { width: 100%; height: 180px; object-fit: cover; }
-        .card-body { padding: 20px; }
-        
-        .store-info-box { background: #f8fafc; padding: 12px; border-radius: 12px; margin: 12px 0; border: 1px solid #e2e8f0; font-size: 0.85rem; }
-        .store-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
-        .store-logo { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-
+        /* PANELES */
         .panel { display: none; }
         .panel.active { display: block; }
+
+        /* MODALES */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
+        .modal.active { display: flex; }
+        .modal-content { background: white; padding: 30px; border-radius: 20px; width: 90%; max-width: 400px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
+
+        /* TARJETAS Y TABLAS */
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 25px; margin-top: 30px; }
+        .card { background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #f1f5f9; padding: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; background: white; border-radius: 10px; overflow: hidden; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #f1f5f9; }
+
+        #route-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 3000; flex-direction: column; }
+        #map-display { flex-grow: 1; width: 100%; }
     </style>
 </head>
 <body>
 
     <header>
-        <div onclick="location.reload()" style="cursor:pointer">
+        <div onclick="showClientPanel()" style="cursor:pointer">
             <h2 style="margin:0; font-weight: 800;">DÓNDE COMPRO<span style="color: #93c5fd;">.COM</span></h2>
         </div>
-        <nav style="display:flex; gap:10px;">
-            <button onclick="openLoginModal('merchant')" id="login-btn" class="btn btn-outline btn-small">🏪 Mi Comercio</button>
-            <div id="user-badge" style="display:none; align-items:center;">
-                <span id="user-display" style="font-size:0.85rem; margin-right:10px; font-weight:700;"></span>
-                <button onclick="logout()" class="btn btn-danger btn-small">Salir</button>
+        <div class="nav-buttons">
+            <button onclick="openLoginModal('admin')" id="btn-admin-access" class="btn btn-outline">🛡️ Admin</button>
+            <button onclick="openLoginModal('merchant')" id="btn-merchant-access" class="btn btn-white">🏪 Mi Comercio</button>
+            
+            <div id="user-badge" style="display:none; gap: 10px; align-items: center;">
+                <span id="user-display" style="font-weight: 700; font-size: 0.8rem; background: rgba(0,0,0,0.2); padding: 5px 12px; border-radius: 20px;"></span>
+                <button onclick="goToMyPanel()" id="btn-back-panel" class="btn btn-white" style="display:none;">⚙️ Mi Panel</button>
+                <button onclick="logout()" class="btn btn-danger">Salir</button>
             </div>
-        </nav>
+        </div>
     </header>
 
-    <div id="client-panel" class="panel active">
-        <div class="hero">
-            <h1>Encuentra lo que necesitas</h1>
-            <div class="search-box">
-                <input type="text" id="search-keyword" placeholder="Buscar productos o tiendas..." onkeyup="if(event.key==='Enter') searchProducts()">
-                <button onclick="searchProducts()" class="btn btn-primary" style="border-radius:50px; padding: 0 25px;">Buscar</button>
+    <main class="container">
+        
+        <div id="client-panel" class="panel active">
+            <div class="hero">
+                <h1>¿Qué buscas hoy?</h1>
+                <div class="search-box">
+                    <input type="text" id="search-keyword" placeholder="Producto o nombre de local..." onkeyup="if(event.key==='Enter') searchProducts()">
+                    <button onclick="searchProducts()" class="btn btn-primary" style="border-radius:50px; padding: 0 25px;">Buscar</button>
+                </div>
             </div>
-        </div>
-        <div class="container">
             <div id="products-container" class="grid"></div>
         </div>
-    </div>
 
-    <div id="route-modal">
-        <div class="route-content">
-            <div class="map-header">
-                <div>
-                    <strong id="dest-name">Cargando ruta...</strong><br>
-                    <small id="route-info" style="color:var(--secondary);">Calculando distancia...</small>
+        <div id="merchant-panel" class="panel">
+            <div class="card">
+                <h2>Configuración de Comercio</h2>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <input type="text" id="m-name" placeholder="Nombre Fantasía">
+                    <select id="m-rubro"></select>
+                    <input type="text" id="m-address" placeholder="Dirección Exacta">
+                    <input type="text" id="m-phone" placeholder="WhatsApp (ej: 3876123456)">
+                    <input type="text" id="m-hours" placeholder="Horario (ej: 9 a 13 y 17 a 21)">
+                    <select id="m-extra-hours">
+                        <option value="NO">Atención fuera de horario: NO</option>
+                        <option value="SI">Atención fuera de horario: SI</option>
+                    </select>
                 </div>
-                <button onclick="closeRoute()" class="btn btn-danger" style="border-radius:50%;">×</button>
+                <div style="margin-top:15px;">
+                    <label>Logo del Comercio:</label>
+                    <input type="file" id="m-logo-input" accept="image/*" onchange="previewLogo(event)">
+                    <div id="logo-preview-area" style="margin-top:10px;"></div>
+                </div>
+                <button onclick="saveMerchantProfile()" class="btn btn-secondary" style="width:100%; margin-top:20px;">Guardar Datos de Tienda</button>
             </div>
-            <div id="map-display"></div>
-        </div>
-    </div>
 
-    <div id="merchant-panel" class="panel">
-        <div class="container">
-            <button onclick="switchPanel('client-panel')" class="btn btn-outline">← Volver</button>
-            <div class="card" style="padding:20px; margin-top:20px;">
-                <h3>Configuración de Comercio</h3>
-                <p>Usa este panel para gestionar tus productos y datos de contacto.</p>
+            <div style="margin-top:30px; display:flex; justify-content:space-between;">
+                <h3>Mis Productos</h3>
+                <button onclick="openProductModal()" id="btn-add-prod" class="btn btn-primary" style="display:none;">+ Nuevo Producto</button>
             </div>
+            <table id="inventory-table">
+                <thead><tr><th>Producto</th><th>Precio</th><th>Acciones</th></tr></thead>
+                <tbody id="inventory-body"></tbody>
+            </table>
+        </div>
+
+        <div id="admin-panel" class="panel">
+            <div class="card">
+                <h2>Panel de Control (Admin)</h2>
+                <p>Aquí puedes aprobar comercios nuevos y gestionar rubros.</p>
+                <div id="admin-merchants-list"></div>
+            </div>
+        </div>
+
+    </main>
+
+    <div id="login-modal" class="modal">
+        <div class="modal-content">
+            <h3 id="login-title">Ingreso</h3>
+            <input type="email" id="login-email" placeholder="Email registrado" style="width:100%; padding:12px; margin-bottom:15px; border-radius:10px; border:1px solid #ddd; box-sizing:border-box;">
+            <button onclick="processLogin()" class="btn btn-primary" style="width:100%;">Entrar</button>
+            <button onclick="closeModal('login-modal')" style="width:100%; background:none; border:none; margin-top:10px; cursor:pointer;">Cancelar</button>
         </div>
     </div>
 
     <script>
         const state = {
-            currentUser: null,
+            currentUser: sessionStorage.getItem('dc_user'),
+            currentRole: sessionStorage.getItem('dc_role'),
             merchants: JSON.parse(localStorage.getItem('dc_merchants')) || {},
             products: JSON.parse(localStorage.getItem('dc_products')) || [],
-            categories: JSON.parse(localStorage.getItem('dc_categories_v3')) || [],
-            map: null,
-            routingControl: null
+            categories: JSON.parse(localStorage.getItem('dc_categories_v3')) || [{name:'General'}]
         };
 
-        // --- BUSQUEDA ---
-        function searchProducts() {
-            const key = document.getElementById('search-keyword').value.toLowerCase().trim();
-            const container = document.getElementById('products-container');
+        // --- NAVEGACIÓN ---
+        function openLoginModal(role) {
+            state.pendingRole = role;
+            document.getElementById('login-title').innerText = role === 'admin' ? 'Acceso Administrador' : 'Acceso Comerciante';
+            document.getElementById('login-modal').classList.add('active');
+        }
+
+        function processLogin() {
+            const email = document.getElementById('login-email').value.toLowerCase();
+            if(!email) return alert("Email requerido");
             
-            const filtered = state.products.filter(p => {
-                const m = state.merchants[p.owner] || {};
-                return m.status === 'active' && (p.name.toLowerCase().includes(key) || m.name.toLowerCase().includes(key));
-            });
-
-            if(!key || filtered.length === 0) {
-                container.innerHTML = `<p style="grid-column:1/-1; text-align:center; color:#94a3b8;">No hay resultados para mostrar.</p>`;
-                return;
+            sessionStorage.setItem('dc_user', email);
+            sessionStorage.setItem('dc_role', state.pendingRole);
+            
+            if(state.pendingRole === 'merchant' && !state.merchants[email]) {
+                state.merchants[email] = { status:'pending', name:'', rubro:'General', hours:'', extraHours:'NO' };
+                localStorage.setItem('dc_merchants', JSON.stringify(state.merchants));
             }
-
-            container.innerHTML = filtered.map(p => {
-                const m = state.merchants[p.owner];
-                return `
-                    <div class="card">
-                        <img class="prod-img" src="${p.img || 'https://via.placeholder.com/400x200'}">
-                        <div class="card-body">
-                            <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-                                <h3 style="margin:0;">${p.name}</h3>
-                                <span style="font-weight:bold; color:var(--secondary);">$${p.price}</span>
-                            </div>
-                            <div class="store-info-box">
-                                <div class="store-header">
-                                    <img src="${m.logo || ''}" class="store-logo">
-                                    <strong>${m.name}</strong>
-                                </div>
-                                📍 ${m.address}<br>
-                                🕒 ${m.hours}<br>
-                                ${m.extraHours === 'SI' ? '✅ Atiende fuera de horario' : ''}
-                            </div>
-                            <button onclick="initRoute(${m.lat}, ${m.lng}, '${m.name}')" class="btn btn-primary" style="width:100%;">
-                                📍 Cómo llegar
-                            </button>
-                        </div>
-                    </div>`;
-            }).join('');
+            location.reload();
         }
 
-        // --- MAPA Y RUTA ---
-        function initRoute(destLat, destLng, storeName) {
-            document.getElementById('route-modal').style.display = 'flex';
-            document.getElementById('dest-name').innerText = `Ruta a: ${storeName}`;
-
-            // Inicializar mapa si no existe
-            if (!state.map) {
-                state.map = L.map('map-display').setView([-25.074, -64.918], 15);
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(state.map);
-            }
-
-            // Obtener ubicación actual
-            navigator.geolocation.getCurrentPosition(
-                (pos) => {
-                    const userLat = pos.coords.latitude;
-                    const userLng = pos.coords.longitude;
-                    calculateRoute(userLat, userLng, destLat, destLng);
-                },
-                () => {
-                    // Si falla el GPS, usar el centro de la ciudad como inicio por defecto
-                    calculateRoute(-25.074, -64.918, destLat, destLng);
-                    alert("No pudimos obtener tu GPS. Iniciando ruta desde el centro.");
+        function checkSession() {
+            if(state.currentUser) {
+                document.getElementById('btn-admin-access').style.display = 'none';
+                document.getElementById('btn-merchant-access').style.display = 'none';
+                document.getElementById('user-badge').style.display = 'flex';
+                document.getElementById('user-display').innerText = state.currentUser;
+                document.getElementById('btn-back-panel').style.display = 'inline-flex';
+                
+                if(state.currentRole === 'merchant') {
+                    showMerchantPanel();
+                } else if(state.currentRole === 'admin') {
+                    showAdminPanel();
                 }
-            );
-        }
-
-        function calculateRoute(startLat, startLng, endLat, endLng) {
-            // Limpiar ruta anterior
-            if (state.routingControl) {
-                state.map.removeControl(state.routingControl);
             }
-
-            state.routingControl = L.Routing.control({
-                waypoints: [
-                    L.latLng(startLat, startLng),
-                    L.latLng(endLat, endLng)
-                ],
-                routeWhileDragging: false,
-                lineOptions: { styles: [{ color: '#2563eb', weight: 6 }] },
-                createMarker: function() { return null; } // Opcional: no mostrar los marcadores por defecto de la ruta
-            }).on('routesfound', function(e) {
-                const routes = e.routes;
-                const summary = routes[0].summary;
-                document.getElementById('route-info').innerText = 
-                    `Distancia: ${(summary.totalDistance / 1000).toFixed(1)} km | Tiempo: ${Math.round(summary.totalTime / 60)} min`;
-            }).addTo(state.map);
-
-            // Añadir marcador de destino personalizado
-            L.marker([endLat, endLng]).addTo(state.map).bindPopup("Destino").openPopup();
         }
 
-        function closeRoute() {
-            document.getElementById('route-modal').style.display = 'none';
-        }
+        function showClientPanel() { switchPanel('client-panel'); }
+        function showMerchantPanel() { switchPanel('merchant-panel'); loadMerchantData(); }
+        function showAdminPanel() { switchPanel('admin-panel'); renderAdmin(); }
+        function goToMyPanel() { state.currentRole === 'admin' ? showAdminPanel() : showMerchantPanel(); }
 
         function switchPanel(id) {
             document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
             document.getElementById(id).classList.add('active');
         }
 
-        // --- INICIALIZACIÓN ---
+        function logout() { sessionStorage.clear(); location.reload(); }
+
+        // --- LÓGICA DE COMERCIANTE ---
+        function loadMerchantData() {
+            const m = state.merchants[state.currentUser];
+            if(!m) return;
+            document.getElementById('m-name').value = m.name || '';
+            document.getElementById('m-address').value = m.address || '';
+            document.getElementById('m-phone').value = m.phone || '';
+            document.getElementById('m-hours').value = m.hours || '';
+            document.getElementById('m-extra-hours').value = m.extraHours || 'NO';
+            if(m.status === 'active') document.getElementById('btn-add-prod').style.display = 'inline-flex';
+            renderInventory();
+        }
+
+        function saveMerchantProfile() {
+            const m = state.merchants[state.currentUser];
+            m.name = document.getElementById('m-name').value;
+            m.address = document.getElementById('m-address').value;
+            m.phone = document.getElementById('m-phone').value;
+            m.hours = document.getElementById('m-hours').value;
+            m.extraHours = document.getElementById('m-extra-hours').value;
+            m.rubro = document.getElementById('m-rubro').value;
+            
+            localStorage.setItem('dc_merchants', JSON.stringify(state.merchants));
+            alert("Perfil guardado. Si eres nuevo, espera aprobación del admin.");
+        }
+
+        function renderInventory() {
+            const body = document.getElementById('inventory-body');
+            body.innerHTML = state.products.filter(p => p.owner === state.currentUser).map(p => `
+                <tr><td>${p.name}</td><td>$${p.price}</td><td><button onclick="deleteProd(${p.id})" class="btn btn-danger">🗑️</button></td></tr>
+            `).join('');
+        }
+
+        function renderAdmin() {
+            const list = document.getElementById('admin-merchants-list');
+            list.innerHTML = Object.keys(state.merchants).map(email => `
+                <div style="padding:10px; border-bottom:1px solid #eee; display:flex; justify-content:space-between;">
+                    <span>${email} (${state.merchants[email].status})</span>
+                    ${state.merchants[email].status === 'pending' ? `<button onclick="approve('${email}')">Aprobar</button>` : ''}
+                </div>
+            `).join('');
+        }
+
+        function approve(email) {
+            state.merchants[email].status = 'active';
+            localStorage.setItem('dc_merchants', JSON.stringify(state.merchants));
+            renderAdmin();
+        }
+
+        function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+        // Inicialización
         document.addEventListener('DOMContentLoaded', () => {
-            // Simulación de sesión (aquí iría tu lógica de checkSession anterior)
-            const user = sessionStorage.getItem('dc_user');
-            if(user) {
-                document.getElementById('login-btn').style.display = 'none';
-                document.getElementById('user-badge').style.display = 'flex';
-                document.getElementById('user-display').innerText = user;
-            }
+            const sel = document.getElementById('m-rubro');
+            sel.innerHTML = state.categories.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
+            checkSession();
         });
     </script>
 </body>
