@@ -68,7 +68,7 @@
 
     <div class="search-box">
         <input type="text" id="main-search" placeholder="¿Qué buscas? (Ej: Pan, Coca Cola...)" onkeyup="if(event.key==='Enter') buscar()">
-        <select id="search-rubro"><option value="">Todos los rubros</option></select>
+        <select id="search-rubro" onchange="buscar()"><option value="">Todos los rubros</option></select>
         <button class="btn btn-secondary" onclick="buscar()">BUSCAR</button>
     </div>
 
@@ -160,7 +160,7 @@
     let tActiva = null;
 
     function salvar() { localStorage.setItem('donde_compro_db', JSON.stringify(db)); }
-    window.onload = () => { aplicarConfig(); actualizarSelects(); };
+    window.onload = () => { aplicarConfig(); actualizarSelects(); buscar(); };
 
     function abrirModal(id) { document.getElementById(id).style.display = 'flex'; }
     function cerrarModal(id) { document.getElementById(id).style.display = 'none'; }
@@ -178,62 +178,70 @@
         document.getElementById('reg-rubro').innerHTML = options;
     }
 
-    // --- BÚSQUEDA E INTEGRACIÓN DE MAPAS MEJORADA ---
+    // --- FUNCIÓN DE BÚSQUEDA INTEGRADA CON FILTRO DE RUBROS ---
     function buscar() {
         const q = document.getElementById('main-search').value.toLowerCase();
         const r = document.getElementById('search-rubro').value;
         const res = document.getElementById('results-area');
         res.innerHTML = "";
 
-        db.comercios.filter(c => c.estado === 'activo').forEach(c => {
-            const matchRubro = !r || c.rubro === r;
+        // 1. Filtrar comercios por rubro y estado activo
+        const comerciosFiltrados = db.comercios.filter(c => {
+            const coincideRubro = !r || c.rubro === r;
+            const coincideNombreTienda = c.nombre.toLowerCase().includes(q);
+            return c.estado === 'activo' && coincideRubro && (q === "" ? true : coincideNombreTienda);
+        });
 
-            // Lógica de destino infalible para internet (Rosario de la Frontera como base)
+        // 2. Renderizar Comercios
+        comerciosFiltrados.forEach(c => {
             const esCoordenada = /[0-9]/.test(c.dir) && c.dir.includes(",");
             const destinoFinal = esCoordenada ? c.dir : `${c.dir}, Rosario de la Frontera, Salta, Argentina`;
             const linkMapa = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destinoFinal)}`;
 
-            if ((c.nombre.toLowerCase().includes(q) || c.rubro.toLowerCase().includes(q) || q === '') && matchRubro) {
+            res.innerHTML += `
+            <div class="card">
+                <img class="card-img" src="${c.imgLocal || 'https://via.placeholder.com/400x200?text=Comercio'}">
+                <div class="card-content">
+                    <div class="card-title">${c.nombre} <small style="font-size:0.7rem; color:#999;">(${c.rubro})</small></div>
+                    <div class="card-info">📍 ${c.dir || 'Sin dirección'}</div>
+                    <div class="card-info">📞 ${c.tel || 'Sin WhatsApp'}</div>
+                    <div class="card-info">⏰ ${c.hor || 'Consultar horario'}</div>
+                    <br>
+                    <button class="btn btn-primary" style="width:100%" onclick="window.open('${linkMapa}')">🚀 TRAZAR RUTA</button>
+                </div>
+            </div>`;
+        });
+
+        // 3. Renderizar Productos (Si hay búsqueda de texto o se filtró por rubro)
+        db.comercios.filter(c => c.estado === 'activo' && (!r || c.rubro === r)).forEach(c => {
+            c.prods.filter(p => q === "" ? false : p.nom.toLowerCase().includes(q)).forEach(p => {
+                const esCoordenada = /[0-9]/.test(c.dir) && c.dir.includes(",");
+                const destinoFinal = esCoordenada ? c.dir : `${c.dir}, Rosario de la Frontera, Salta, Argentina`;
+                const linkMapa = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destinoFinal)}`;
+
                 res.innerHTML += `
-                <div class="card">
-                    <img class="card-img" src="${c.imgLocal || 'https://via.placeholder.com/400x200?text=Comercio'}">
+                <div class="card" style="border-top-color: var(--secondary);">
+                    <img class="card-img" src="${p.img || 'https://via.placeholder.com/400x200?text=Producto'}">
                     <div class="card-content">
-                        <div class="card-title">${c.nombre} <small style="font-size:0.7rem; color:#999;">(${c.rubro})</small></div>
-                        <div class="card-info">📍 ${c.dir || 'Sin dirección'}</div>
-                        <div class="card-info">📞 ${c.tel || 'Sin WhatsApp'}</div>
-                        <div class="card-info">⏰ ${c.hor || 'Consultar horario'}</div>
-                        <br>
-                        <button class="btn btn-primary" style="width:100%" onclick="window.open('${linkMapa}')">🚀 TRAZAR RUTA</button>
+                        <div class="card-title">${p.nom}</div>
+                        <div class="price-tag">$${p.pre}</div>
+                        <div style="background: #f1f1f1; padding: 10px; border-radius: 10px; margin-top: 10px;">
+                            <p style="font-size: 0.75rem; font-weight: 600;">🏪 ${c.nombre}</p>
+                            <p style="font-size: 0.7rem;">📍 ${c.dir || 'S/D'}</p>
+                        </div>
+                        <div style="display: flex; gap: 5px; margin-top: 15px;">
+                            <button class="btn btn-secondary" style="flex: 1;" onclick="window.open('https://wa.me/${c.tel.replace(/\D/g,'')}?text=Hola, consulto por ${p.nom}')">💬 WHATSAPP</button>
+                            <button class="btn btn-dark" style="flex: 1;" onclick="window.open('${linkMapa}')">📍 RUTA</button>
+                        </div>
                     </div>
                 </div>`;
-            }
-
-            if (q !== '') {
-                c.prods.filter(p => p.nom.toLowerCase().includes(q)).forEach(p => {
-                    res.innerHTML += `
-                    <div class="card" style="border-top-color: var(--secondary);">
-                        <img class="card-img" src="${p.img || 'https://via.placeholder.com/400x200?text=Producto'}">
-                        <div class="card-content">
-                            <div class="card-title">${p.nom}</div>
-                            <div class="price-tag">$${p.pre}</div>
-                            <div style="background: #f1f1f1; padding: 10px; border-radius: 10px; margin-top: 10px; border-left: 3px solid var(--primary);">
-                                <p style="font-size: 0.75rem; font-weight: 600; color: #333; margin-bottom: 5px;">🏪 TIENDA: ${c.nombre}</p>
-                                <div class="card-info" style="font-size: 0.7rem;">📍 <b>Dirección:</b> ${c.dir || 'S/D'}</div>
-                                <div class="card-info" style="font-size: 0.7rem;">📞 <b>WhatsApp:</b> ${c.tel || 'S/T'}</div>
-                            </div>
-                            <div style="display: flex; gap: 5px; margin-top: 15px;">
-                                <button class="btn btn-secondary" style="flex: 1; font-size: 0.8rem;" onclick="window.open('https://wa.me/${c.tel.replace(/\D/g,'')}?text=Hola, vi el producto ${p.nom} en la página. ¿Tienen stock?')">💬 CONSULTAR</button>
-                                <button class="btn btn-dark" style="flex: 1; font-size: 0.8rem;" onclick="window.open('${linkMapa}')">📍 RUTA</button>
-                            </div>
-                        </div>
-                    </div>`;
-                });
-            }
+            });
         });
+
         if (res.innerHTML === "") res.innerHTML = "<p style='grid-column: 1/-1; text-align:center; padding:50px;'>No se encontraron resultados.</p>";
     }
 
-    // --- GESTIÓN DE TIENDA ---
+    // --- SEGURIDAD Y REGISTRO ---
     function registrarTienda() {
         const n = document.getElementById('reg-nombre').value.trim();
         const r = document.getElementById('reg-rubro').value;
@@ -256,15 +264,16 @@
         renderProds(); cerrarModal('modal-login'); abrirModal('modal-panel-tienda');
     }
 
+    // --- PANEL TIENDA ---
     function obtenerGPS() {
         navigator.geolocation.getCurrentPosition(p => { 
             document.getElementById('t-dir').value = p.coords.latitude.toFixed(6) + ", " + p.coords.longitude.toFixed(6); 
-        }, () => alert("Activa el GPS en tu dispositivo"));
+        }, () => alert("Activa el GPS"));
     }
     function guardarPerfilTienda() {
         tActiva.tel = document.getElementById('t-tel').value; tActiva.dir = document.getElementById('t-dir').value;
         tActiva.imgLocal = document.getElementById('t-img').value; tActiva.hor = document.getElementById('t-hor').value;
-        salvar(); alert("Perfil guardado con éxito");
+        salvar(); alert("Perfil guardado");
     }
     function guardarProducto() {
         const nom = document.getElementById('p-nom').value; const pre = document.getElementById('p-pre').value;
@@ -303,7 +312,7 @@
         db.config.name = document.getElementById('adm-name').value;
         db.config.slogan = document.getElementById('adm-slogan').value;
         db.config.logo = document.getElementById('adm-logo').value;
-        salvar(); aplicarConfig(); alert("Cambios de identidad guardados");
+        salvar(); aplicarConfig(); alert("Ajustes guardados");
     }
     function agregarRubro() {
         const r = document.getElementById('adm-new-rubro').value;
@@ -327,9 +336,9 @@
     }
     function aprobarC(id) {
         const c = db.comercios.find(i => i.id === id);
-        if(c) { c.estado = 'activo'; salvar(); renderComerciosAdmin(); alert("El comercio ha sido aprobado exitosamente."); }
+        if(c) { c.estado = 'activo'; salvar(); renderComerciosAdmin(); alert("Aprobado."); }
     }
-    function borrarC(id) { if(confirm("¿Eliminar comercio definitivamente?")) { db.comercios = db.comercios.filter(i => i.id !== id); salvar(); renderComerciosAdmin(); } }
+    function borrarC(id) { if(confirm("¿Eliminar?")) { db.comercios = db.comercios.filter(i => i.id !== id); salvar(); renderComerciosAdmin(); } }
 </script>
 </body>
 </html>
