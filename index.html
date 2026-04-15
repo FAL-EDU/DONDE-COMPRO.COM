@@ -27,7 +27,7 @@
         .search-box input { flex: 3; }
         .search-box select { flex: 1; }
 
-        .results-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 25px; }
+        .results-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 25px; }
         
         .card { background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.08); display: flex; flex-direction: column; border-top: 5px solid var(--primary); transition: transform 0.2s; }
         .card:hover { transform: translateY(-5px); }
@@ -35,7 +35,7 @@
         .card-content { padding: 20px; flex-grow: 1; }
         .card-title { font-size: 1.2rem; font-weight: 600; margin-bottom: 10px; color: var(--primary); }
         .card-info { font-size: 0.85rem; color: #555; margin-bottom: 5px; display: flex; align-items: center; gap: 8px; }
-        .price-tag { font-size: 1.4rem; font-weight: 600; color: var(--secondary); margin: 10px 0; }
+        .price-tag { font-size: 1.4rem; font-weight: 600; color: var(--secondary); margin: 5px 0; }
         
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 2000; justify-content: center; align-items: center; padding: 20px; }
         .modal-content { background: white; padding: 30px; border-radius: 20px; width: 100%; max-width: 1000px; max-height: 90vh; overflow-y: auto; }
@@ -106,21 +106,21 @@
         <div class="grid-2">
             <div style="background:#f8f9fa; padding:20px; border-radius:15px;">
                 <h4>📍 Datos del Local</h4><br>
-                <label>WhatsApp:</label><input type="text" id="t-tel" placeholder="Ej: 3871234567">
-                <label>Dirección (o Coordenadas):</label>
-                <div style="display:flex; gap:5px;"><input type="text" id="t-dir"><button class="btn btn-dark" onclick="obtenerGPS()">📍</button></div>
-                <label>URL Foto Fachada:</label><input type="text" id="t-img">
-                <label>Horarios:</label><input type="text" id="t-hor" placeholder="Ej: 08:00 a 22:00">
-                <button class="btn btn-primary" style="width:100%" onclick="guardarPerfilTienda()">Actualizar Perfil</button>
+                <label>WhatsApp (Sin espacios):</label><input type="text" id="t-tel" placeholder="Ej: 5493871234567">
+                <label>Dirección:</label>
+                <div style="display:flex; gap:5px;"><input type="text" id="t-dir" placeholder="Calle o Coordenadas"><button class="btn btn-dark" onclick="obtenerGPS()">📍</button></div>
+                <label>URL Foto Local:</label><input type="text" id="t-img">
+                <label>Horarios:</label><input type="text" id="t-hor" placeholder="Ej: Lunes a Sábados 08:00 a 21:00">
+                <button class="btn btn-primary" style="width:100%" onclick="guardarPerfilTienda()">Guardar Perfil</button>
             </div>
             <div style="background:#fff; border:1px solid #eee; padding:20px; border-radius:15px;">
                 <h4>📦 Mis Productos</h4><br>
                 <div style="background:#eee; padding:15px; border-radius:10px; margin-bottom:20px;">
                     <input type="hidden" id="p-idx" value="-1">
-                    <input type="text" id="p-nom" placeholder="Producto">
+                    <input type="text" id="p-nom" placeholder="Nombre Producto">
                     <input type="number" id="p-pre" placeholder="Precio $">
-                    <input type="text" id="p-img" placeholder="URL Imagen">
-                    <button class="btn btn-secondary" style="width:100%" onclick="guardarProducto()">Guardar</button>
+                    <input type="text" id="p-img" placeholder="URL Foto Producto">
+                    <button class="btn btn-secondary" style="width:100%" onclick="guardarProducto()">Guardar Producto</button>
                 </div>
                 <div id="t-lista-prods" style="max-height: 300px; overflow-y: auto;"></div>
             </div>
@@ -130,11 +130,11 @@
 
 <div id="modal-admin" class="modal">
     <div class="modal-content">
-        <h2>Panel de Administración</h2>
+        <h2>Administración Central</h2>
         <div class="grid-2">
             <section style="background:#f9f9f9; padding:20px; border-radius:15px;">
                 <h4>🎨 Identidad</h4>
-                <label>Proyecto:</label><input type="text" id="adm-name">
+                <label>Nombre:</label><input type="text" id="adm-name">
                 <label>Slogan:</label><input type="text" id="adm-slogan">
                 <label>URL Logo:</label><input type="text" id="adm-logo">
                 <button class="btn btn-primary" onclick="guardarConfigSitio()">Guardar</button>
@@ -143,7 +143,7 @@
                 <div id="adm-rubros-list"></div>
             </section>
             <section style="background:#f9f9f9; padding:20px; border-radius:15px;">
-                <h4>🏪 Autorizaciones</h4>
+                <h4>🏪 Comercios Registrados</h4>
                 <div id="adm-comercios-list"></div>
             </section>
         </div>
@@ -178,7 +178,6 @@
         document.getElementById('reg-rubro').innerHTML = options;
     }
 
-    // BÚSQUEDA CON TARJETAS DETALLADAS (COMERCIOS Y PRODUCTOS)
     function buscar() {
         const q = document.getElementById('main-search').value.toLowerCase();
         const r = document.getElementById('search-rubro').value;
@@ -188,7 +187,6 @@
         db.comercios.filter(c => c.estado === 'activo').forEach(c => {
             const matchRubro = !r || c.rubro === r;
 
-            // Mostrar Tarjeta de Comercio si coincide el nombre, rubro o búsqueda vacía
             if ((c.nombre.toLowerCase().includes(q) || c.rubro.toLowerCase().includes(q) || q === '') && matchRubro) {
                 res.innerHTML += `
                 <div class="card">
@@ -197,14 +195,13 @@
                         <div class="card-title">${c.nombre} <small style="font-size:0.7rem; color:#999;">(${c.rubro})</small></div>
                         <div class="card-info">📍 ${c.dir || 'Sin dirección'}</div>
                         <div class="card-info">📞 ${c.tel || 'Sin WhatsApp'}</div>
-                        <div class="card-info">⏰ ${c.hor || 'Consultar horario'}</div>
+                        <div class="card-info">⏰ ${c.hor || 'Sin horario cargado'}</div>
                         <br>
                         <button class="btn btn-primary" style="width:100%" onclick="window.open('https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.dir)}')">📍 CÓMO LLEGAR</button>
                     </div>
                 </div>`;
             }
 
-            // Mostrar Tarjetas de Productos si coincide la búsqueda
             if (q !== '') {
                 c.prods.filter(p => p.nom.toLowerCase().includes(q)).forEach(p => {
                     res.innerHTML += `
@@ -213,12 +210,19 @@
                         <div class="card-content">
                             <div class="card-title">${p.nom}</div>
                             <div class="price-tag">$${p.pre}</div>
-                            <hr style="margin:10px 0; opacity:0.1;">
-                            <div class="card-info">🏪 <b>Tienda:</b> ${c.nombre}</div>
-                            <div class="card-info">📍 ${c.dir || 'S/D'}</div>
-                            <div class="card-info">📞 ${c.tel || 'S/T'}</div>
-                            <br>
-                            <button class="btn btn-secondary" style="width:100%" onclick="window.open('https://wa.me/${c.tel.replace(/\D/g,'')}?text=Hola, vi el producto ${p.nom} en DondeCompro.com. ¿Tienen stock?')">💬 CONSULTAR</button>
+                            
+                            <div style="background: #f1f1f1; padding: 10px; border-radius: 10px; margin-top: 10px; border-left: 3px solid var(--primary);">
+                                <p style="font-size: 0.75rem; font-weight: 600; color: #333; margin-bottom: 5px;">🏪 TIENDA: ${c.nombre}</p>
+                                <div class="card-info" style="font-size: 0.7rem;">🏷️ <b>Rubro:</b> ${c.rubro}</div>
+                                <div class="card-info" style="font-size: 0.7rem;">📍 <b>Dir:</b> ${c.dir || 'S/D'}</div>
+                                <div class="card-info" style="font-size: 0.7rem;">⏰ <b>Horario:</b> ${c.hor || 'S/H'}</div>
+                                <div class="card-info" style="font-size: 0.7rem;">📞 <b>WhatsApp:</b> ${c.tel || 'S/T'}</div>
+                            </div>
+                            
+                            <div style="display: flex; gap: 5px; margin-top: 15px;">
+                                <button class="btn btn-secondary" style="flex: 1; font-size: 0.8rem;" onclick="window.open('https://wa.me/${c.tel.replace(/\D/g,'')}?text=Hola, vi el producto ${p.nom} en DondeCompro.com. ¿Tienen stock?')">💬 CONSULTAR</button>
+                                <button class="btn btn-dark" style="flex: 1; font-size: 0.8rem;" onclick="window.open('https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.dir)}')">📍 LLEGAR</button>
+                            </div>
                         </div>
                     </div>`;
                 });
@@ -227,21 +231,20 @@
         if (res.innerHTML === "") res.innerHTML = "<p style='grid-column: 1/-1; text-align:center; padding:50px;'>No se encontraron resultados.</p>";
     }
 
-    // GESTIÓN COMERCIANTE CON CLAVE
     function registrarTienda() {
         const n = document.getElementById('reg-nombre').value.trim();
         const r = document.getElementById('reg-rubro').value;
         const p = document.getElementById('reg-pass').value;
-        if(!n || !p) return alert("Nombre y clave son obligatorios");
+        if(!n || !p) return alert("Nombre y Contraseña obligatorios");
         db.comercios.push({ id: Date.now(), nombre: n, rubro: r, pass: p, estado: 'pendiente', tel:'', dir:'', imgLocal:'', hor:'', prods:[] });
-        salvar(); alert("Solicitud enviada. Espera aprobación del administrador."); cerrarModal('modal-registro');
+        salvar(); alert("Solicitud enviada con éxito."); cerrarModal('modal-registro');
     }
 
     function accederTienda() {
         const n = document.getElementById('log-nombre').value.trim().toLowerCase();
         const p = document.getElementById('log-pass').value;
         const c = db.comercios.find(i => i.nombre.toLowerCase() === n && i.pass === p);
-        if(!c) return alert("Nombre o contraseña incorrectos");
+        if(!c) return alert("Datos incorrectos");
         if(c.estado !== 'activo') return alert("Tu tienda aún no ha sido aprobada.");
         tActiva = c;
         document.getElementById('lbl-nombre-tienda').innerText = "Panel: " + c.nombre;
@@ -253,26 +256,23 @@
     function obtenerGPS() {
         navigator.geolocation.getCurrentPosition(p => { 
             document.getElementById('t-dir').value = p.coords.latitude.toFixed(6) + ", " + p.coords.longitude.toFixed(6); 
-        }, () => alert("Activa el GPS de tu dispositivo"));
+        }, () => alert("Activa el GPS"));
     }
-
     function guardarPerfilTienda() {
         tActiva.tel = document.getElementById('t-tel').value; tActiva.dir = document.getElementById('t-dir').value;
         tActiva.imgLocal = document.getElementById('t-img').value; tActiva.hor = document.getElementById('t-hor').value;
-        salvar(); alert("Perfil actualizado correctamente");
+        salvar(); alert("Perfil actualizado");
     }
-
     function guardarProducto() {
         const nom = document.getElementById('p-nom').value; const pre = document.getElementById('p-pre').value;
         const img = document.getElementById('p-img').value; const idx = parseInt(document.getElementById('p-idx').value);
-        if(!nom || !pre) return alert("Faltan datos");
+        if(!nom || !pre) return alert("Faltan datos del producto");
         const prod = { nom, pre, img: img || 'https://via.placeholder.com/300?text=Producto' };
         if(idx === -1) tActiva.prods.push(prod); else tActiva.prods[idx] = prod;
         document.getElementById('p-nom').value = ''; document.getElementById('p-pre').value = '';
         document.getElementById('p-img').value = ''; document.getElementById('p-idx').value = '-1';
         salvar(); renderProds();
     }
-
     function renderProds() {
         document.getElementById('t-lista-prods').innerHTML = tActiva.prods.map((p, i) => `
         <div class="admin-prod-item">
@@ -282,55 +282,55 @@
             <button class="btn btn-danger" onclick="delP(${i})">✕</button>
         </div>`).join('');
     }
-
     function editP(i) {
         const p = tActiva.prods[i]; document.getElementById('p-nom').value = p.nom;
         document.getElementById('p-pre').value = p.pre; document.getElementById('p-img').value = p.img;
         document.getElementById('p-idx').value = i;
     }
+    function delP(i) { if(confirm("¿Borrar?")) { tActiva.prods.splice(i,1); salvar(); renderProds(); } }
 
-    function delP(i) { if(confirm("¿Borrar producto?")) { tActiva.prods.splice(i,1); salvar(); renderProds(); } }
-
-    // ADMIN
+    // --- ADMINISTRACIÓN ---
     function abrirAdmin() {
         document.getElementById('adm-name').value = db.config.name;
         document.getElementById('adm-slogan').value = db.config.slogan;
         document.getElementById('adm-logo').value = db.config.logo;
         renderRubrosAdmin(); renderComerciosAdmin(); abrirModal('modal-admin');
     }
-
     function guardarConfigSitio() {
         db.config.name = document.getElementById('adm-name').value;
         db.config.slogan = document.getElementById('adm-slogan').value;
         db.config.logo = document.getElementById('adm-logo').value;
-        salvar(); aplicarConfig(); alert("Ajustes del sitio guardados");
+        salvar(); aplicarConfig(); alert("Ajustes guardados");
     }
-
     function agregarRubro() {
         const r = document.getElementById('adm-new-rubro').value;
         if(r) { db.rubros.push(r); document.getElementById('adm-new-rubro').value = ''; salvar(); renderRubrosAdmin(); actualizarSelects(); }
     }
-
     function renderRubrosAdmin() {
-        document.getElementById('adm-rubros-list').innerHTML = db.rubros.map((r, i) => `
-        <div style="display:flex; justify-content:space-between; padding:5px; background:#fff; margin-bottom:5px; border-radius:5px;">
-        ${r} <span onclick="db.rubros.splice(${i},1); salvar(); renderRubrosAdmin(); actualizarSelects();" style="color:red; cursor:pointer;">✕</span>
-        </div>`).join('');
+        document.getElementById('adm-rubros-list').innerHTML = db.rubros.map((r, i) => `<div style="display:flex; justify-content:space-between; padding:5px; background:#fff; margin-bottom:5px; border-radius:5px;">${r} <span onclick="db.rubros.splice(${i},1); salvar(); renderRubrosAdmin(); actualizarSelects();" style="color:red; cursor:pointer;">✕</span></div>`).join('');
     }
-
     function renderComerciosAdmin() {
         document.getElementById('adm-comercios-list').innerHTML = db.comercios.map(c => `
-        <div style="padding:10px; background:#fff; margin-bottom:10px; border-radius:10px; font-size:0.8rem;">
-            <b>${c.nombre}</b> [${c.estado}]<br>
-            <button class="btn btn-secondary" style="padding:2px 10px; font-size:0.7rem;" onclick="aprobarC(${c.id})">Aprobar</button>
-            <button class="btn btn-danger" style="padding:2px 10px; font-size:0.7rem;" onclick="borrarC(${c.id})">Eliminar</button>
+        <div style="padding:10px; background:#fff; margin-bottom:10px; border-radius:10px; font-size:0.8rem; border:1px solid #ddd;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                    <b>${c.nombre}</b><br>
+                    <span>Rubro: ${c.rubro}</span><br>
+                    <span style="color:${c.estado === 'activo' ? 'green' : 'orange'}">Estado: ${c.estado.toUpperCase()}</span>
+                </div>
+                <div style="display:flex; gap:5px;">
+                    ${c.estado === 'pendiente' ? `<button class="btn btn-secondary" style="padding:5px 10px; font-size:0.7rem;" onclick="aprobarC(${c.id})">APROBAR</button>` : ''}
+                    <button class="btn btn-danger" style="padding:5px 10px; font-size:0.7rem;" onclick="borrarC(${c.id})">ELIMINAR</button>
+                </div>
+            </div>
         </div>`).join('');
     }
-
-    function aprobarC(id) { db.comercios.find(i => i.id === id).estado = 'activo'; salvar(); renderComerciosAdmin(); }
-    function borrarC(id) { if(confirm("¿Eliminar este comercio definitivamente?")) { db.comercios = db.comercios.filter(i => i.id !== id); salvar(); renderComerciosAdmin(); } }
+    function aprobarC(id) {
+        const c = db.comercios.find(i => i.id === id);
+        if(c) { c.estado = 'activo'; salvar(); renderComerciosAdmin(); alert("Comercio aprobado."); }
+    }
+    function borrarC(id) { if(confirm("¿Eliminar comercio?")) { db.comercios = db.comercios.filter(i => i.id !== id); salvar(); renderComerciosAdmin(); } }
 </script>
-
 </body>
 </html>
 
