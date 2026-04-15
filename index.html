@@ -47,9 +47,9 @@
         .admin-prod-item { display: flex; align-items: center; gap: 10px; padding: 10px; border: 1px solid #eee; border-radius: 10px; margin-bottom: 10px; }
         .admin-prod-item img { width: 50px; height: 50px; object-fit: cover; border-radius: 5px; }
     </style>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 </head>
 <body>
 
@@ -81,7 +81,7 @@
 <div id="modal-login" class="modal">
     <div class="modal-content" style="max-width: 400px; text-align: center;">
         <h3>Ingreso Comerciantes</h3><br>
-        <input type="text" id="log-nombre" placeholder="Nombre de tu comercio">
+        <input type="email" id="log-email" placeholder="Correo electrónico">
         <input type="password" id="log-pass" placeholder="Tu contraseña">
         <button class="btn btn-primary" style="width:100%" onclick="accederTienda()">INGRESAR</button>
         <hr style="margin:20px 0">
@@ -92,9 +92,10 @@
 <div id="modal-registro" class="modal">
     <div class="modal-content" style="max-width: 450px;">
         <h3>Solicitud de Registro</h3><br>
+        <label>Correo Electrónico:</label><input type="email" id="reg-email" placeholder="ejemplo@correo.com">
         <label>Nombre del Comercio:</label><input type="text" id="reg-nombre">
         <label>Rubro:</label><select id="reg-rubro"></select>
-        <label>Crea tu Contraseña:</label><input type="password" id="reg-pass" placeholder="Mínimo 4 caracteres">
+        <label>Crea tu Contraseña:</label><input type="password" id="reg-pass" placeholder="Mínimo 6 caracteres">
         <button class="btn btn-primary" style="width:100%" onclick="registrarTienda()">Enviar Solicitud</button>
         <button class="btn" style="width:100%; margin-top:10px" onclick="cerrarModal('modal-registro')">Volver</button>
     </div>
@@ -155,7 +156,6 @@
 </div>
 
 <script>
-// PEGA ESTO EN SU LUGAR:
 const firebaseConfig = {
     apiKey: "AIzaSyB3kBkd3pj-o8RPZxXJfOo7GTl64d7un7c",
     authDomain: "donde-compro-12345.firebaseapp.com",
@@ -166,75 +166,64 @@ const firebaseConfig = {
     measurementId: "G-NQZXDP6TS6"
 };
 
-// Inicializar Firebase
 firebase.initializeApp(firebaseConfig);
-const dbRef = firebase.database().ref(); // Esta es nuestra nueva referencia a la nube
+const dbRef = firebase.database().ref();
 const auth = firebase.auth();   
-    
-   window.onload = () => { 
-    // Mostramos un mensaje de carga inicial en el área de resultados
-    document.getElementById('results-area').innerHTML = `
-        <p style='grid-column: 1/-1; text-align:center; padding:50px; color:#666;'>
-            Conectando con la base de datos...
-        </p>`;
+let tActiva = null;
 
-    // Escuchar cambios en la base de datos en tiempo real
+window.onload = () => { 
+    document.getElementById('results-area').innerHTML = `<p style='grid-column: 1/-1; text-align:center; padding:50px; color:#666;'>Conectando con la base de datos...</p>`;
+
     dbRef.on('value', (snapshot) => {
-        const data = snapshot.val();
-        
-        if (data) {
-            // Guardamos los datos de la nube en la variable window.db
-            window.db = data; 
-            
-            // Actualizamos la interfaz con los datos nuevos
-            aplicarConfig(); 
-            actualizarSelects();
-            
-            // Si el buscador está vacío, mostramos el mensaje de bienvenida
-            // Si tiene algo, refrescamos la búsqueda automáticamente
-            if(document.getElementById('main-search').value === "") {
-                document.getElementById('results-area').innerHTML = `
-                    <p style='grid-column: 1/-1; text-align:center; padding:50px; color:#666;'>
-                        ¡Conexión exitosa! Busca un producto o selecciona un rubro.
-                    </p>`;
-            } else {
-                buscar(); 
-            }
+        const data = snapshot.val() || {};
+        window.db = {
+            config: data.config || { name: 'DÓNDE COMPRO.COM', slogan: 'Buscador de productos locales', logo: '' },
+            rubros: data.rubros || ['Farmacia', 'Ferretería', 'Almacén'],
+            comercios: data.comercios ? Object.values(data.comercios) : []
+        };
+        aplicarConfig(); 
+        actualizarSelects();
+        const busquedaActual = document.getElementById('main-search').value;
+        if(busquedaActual === "") {
+            document.getElementById('results-area').innerHTML = `<p style='grid-column: 1/-1; text-align:center; padding:50px; color:#666;'>¡Conexión exitosa! Busca un producto o selecciona un rubro.</p>`;
         } else {
-            // Si la base de datos está totalmente vacía (primera vez)
-            console.log("Base de datos de Firebase vacía.");
-            document.getElementById('results-area').innerHTML = `
-                <p style='grid-column: 1/-1; text-align:center; padding:50px; color:#999;'>
-                    No hay datos disponibles en la nube.
-                </p>`;
+            buscar(); 
         }
-    }, (error) => {
-        console.error("Error de Firebase:", error);
-        alert("Error al conectar con la base de datos. Revisa las reglas de seguridad.");
     });
 };
-    // --- BÚSQUEDA MEJORADA CON "VER TIENDA" Y LIMPIEZA ---
-    function buscar() {
+
+function abrirModal(id) { document.getElementById(id).style.display = 'flex'; }
+function cerrarModal(id) { document.getElementById(id).style.display = 'none'; }
+
+function aplicarConfig() {
+    document.getElementById('header-title').innerText = window.db.config.name;
+    document.getElementById('tab-title').innerText = window.db.config.name;
+    document.getElementById('hero-slogan').innerText = window.db.config.slogan;
+    if(window.db.config.logo) { 
+        document.getElementById('header-logo').src = window.db.config.logo; 
+        document.getElementById('header-logo').style.display = 'block'; 
+    }
+}
+
+function actualizarSelects() {
+    const opts = window.db.rubros.map(r => `<option value="${r}">${r}</option>`).join('');
+    document.getElementById('search-rubro').innerHTML = '<option value="">Todos los rubros</option>' + opts;
+    document.getElementById('reg-rubro').innerHTML = opts;
+}
+
+function buscar() {
     const q = document.getElementById('main-search').value.toLowerCase();
     const r = document.getElementById('search-rubro').value;
     const res = document.getElementById('results-area');
-    
-    // Seguridad: Si Firebase aún no envió datos, avisamos al usuario
-    if (!window.db || !window.db.comercios) {
-        res.innerHTML = "<p style='grid-column: 1/-1; text-align:center; padding:50px; color:#999;'>Cargando datos desde la nube...</p>";
-        return;
-    }
-
+    if (!window.db || !window.db.comercios) return;
     res.innerHTML = "";
 
-    // Usamos window.db (los datos que vienen de Firebase)
     window.db.comercios.filter(c => c.estado === 'activo').forEach(c => {
         const matchRubro = !r || c.rubro === r;
         const esCoordenada = /[0-9]/.test(c.dir) && c.dir.includes(",");
-        const destinoFinal = esCoordenada ? c.dir : `${c.dir}, Rosario de la Frontera, Salta, Argentina`;
-        const linkMapa = `https://www.google.com/maps/dir/?api=1&destination=$${encodeURIComponent(destinoFinal)}`;
+        const destino = esCoordenada ? c.dir : `${c.dir}, Rosario de la Frontera, Salta`;
+        const linkMapa = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destino)}`;
 
-        // 1. Mostrar Comercios
         if ((c.nombre.toLowerCase().includes(q) || c.rubro.toLowerCase().includes(q) || q === '') && matchRubro) {
             res.innerHTML += `
             <div class="card">
@@ -244,16 +233,14 @@ const auth = firebase.auth();
                     <div class="card-info">📍 ${c.dir || 'Sin dirección'}</div>
                     <div class="card-info">📞 ${c.tel || 'Sin WhatsApp'}</div>
                     <div class="card-info">⏰ ${c.hor || 'Consultar horario'}</div>
-                    <br>
-                    <button class="btn btn-primary" style="width:100%" onclick="window.open('${linkMapa}', '_blank')">🚀 TRAZAR RUTA</button>
+                    <br><button class="btn btn-primary" style="width:100%" onclick="window.open('${linkMapa}', '_blank')">🚀 TRAZAR RUTA</button>
                 </div>
             </div>`;
         }
 
-        // 2. Mostrar Productos
         if (q !== '') {
-            const productos = c.prods || []; // Evita error si la tienda no tiene productos
-            productos.filter(p => p.nom.toLowerCase().includes(q)).forEach(p => {
+            const prods = c.prods || [];
+            prods.filter(p => p.nom.toLowerCase().includes(q)).forEach(p => {
                 res.innerHTML += `
                 <div class="card" style="border-top-color: var(--secondary);">
                     <img class="card-img" src="${p.img || 'https://via.placeholder.com/400x200?text=Producto'}">
@@ -261,191 +248,184 @@ const auth = firebase.auth();
                         <div class="card-title">${p.nom}</div>
                         <div class="price-tag">$${p.pre}</div>
                         <div style="background: #f1f1f1; padding: 10px; border-radius: 10px; margin-top: 10px; border-left: 3px solid var(--primary);">
-                            <p style="font-size: 0.75rem; font-weight: 600; color: #333; margin-bottom: 5px;">🏪 TIENDA: ${c.nombre}</p>
+                            <p style="font-size: 0.75rem; font-weight: 600; color: #333;">🏪 TIENDA: ${c.nombre}</p>
                         </div>
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 15px;">
                             <button class="btn btn-secondary" style="font-size: 0.75rem;" onclick="window.open('https://wa.me/${c.tel.replace(/\D/g,'')}?text=Hola, vi ${p.nom} en la página')">💬 CONSULTAR</button>
                             <button class="btn btn-dark" style="font-size: 0.75rem;" onclick="verTienda('${c.nombre.replace(/'/g, "\\'")}')">🏪 VER TIENDA</button>
                         </div>
-                        <button class="btn btn-primary" style="width: 100%; margin-top: 5px; font-size: 0.8rem;" onclick="window.open('${linkMapa}', '_blank')">🚀 CÓMO LLEGAR</button>
+                        <button class="btn btn-primary" style="width: 100%; margin-top: 5px;" onclick="window.open('${linkMapa}', '_blank')">🚀 CÓMO LLEGAR</button>
                     </div>
                 </div>`;
             });
         }
     });
-    
     if (res.innerHTML === "") res.innerHTML = "<p style='grid-column: 1/-1; text-align:center; padding:50px; color:#999;'>No se encontraron resultados.</p>";
 }
-        
-        if (res.innerHTML === "") res.innerHTML = "<p style='grid-column: 1/-1; text-align:center; padding:50px; color:#999;'>No se encontraron resultados.</p>";
-    }
 
-    // Función para ver el perfil de una tienda específica desde un producto
-    function verTienda(nombreTienda) {
-        document.getElementById('main-search').value = nombreTienda;
-        document.getElementById('search-rubro').value = "";
-        buscar();
-        window.scrollTo({top: 0, behavior: 'smooth'});
-    }
+function verTienda(nombreTienda) {
+    document.getElementById('main-search').value = nombreTienda;
+    document.getElementById('search-rubro').value = "";
+    buscar();
+    window.scrollTo({top: 0, behavior: 'smooth'});
+}
 
-    // --- GESTIÓN DE TIENDA Y ADMIN (IGUAL QUE ANTES) ---
- function registrarTienda() {
-    const email = document.getElementById('reg-email').value.trim(); // Necesitas añadir este input en tu HTML
+function registrarTienda() {
+    const email = document.getElementById('reg-email').value.trim();
     const n = document.getElementById('reg-nombre').value.trim();
     const r = document.getElementById('reg-rubro').value;
     const p = document.getElementById('reg-pass').value;
+    if(!email || !n || p.length < 6) return alert("Completa todos los campos. Clave mín. 6 caracteres.");
 
-    if(!email || !n || !p) return alert("Por favor, completa todos los campos.");
-
-    // 1. Creamos el usuario en la sección de Autenticación de Firebase
-    auth.createUserWithEmailAndPassword(email, p)
-    .then((userCredential) => {
-        const user = userCredential.user;
-        
-        // 2. Guardamos los datos de la tienda en la Base de Datos vinculados a su UID
-        const nuevaTienda = {
-            id: user.uid,
-            nombre: n,
-            rubro: r,
-            estado: 'pendiente', // Sigue necesitando tu aprobación en el panel Admin
-            tel: '',
-            dir: '',
-            imgLocal: '',
-            hor: '',
-            prods: []
-        };
-
-        // Guardar en Firebase
-        firebase.database().ref('comercios/' + user.uid).set(nuevaTienda)
-        .then(() => {
-            alert("¡Solicitud enviada con éxito! Espera a que el administrador la apruebe.");
+    auth.createUserWithEmailAndPassword(email, p).then((userCredential) => {
+        const uid = userCredential.user.uid;
+        firebase.database().ref('comercios/' + uid).set({
+            id: uid, nombre: n, rubro: r, estado: 'pendiente', tel: '', dir: '', imgLocal: '', hor: '', prods: []
+        }).then(() => {
+            alert("Solicitud enviada con éxito.");
             cerrarModal('modal-registro');
         });
-    })
-    .catch((error) => {
-        alert("Error al registrar: " + error.message);
-    });
+    }).catch((e) => alert("Error: " + e.message));
 }
 
-    function accederTienda() {
-    const email = document.getElementById('log-email').value.trim(); // Cambia el input de nombre por email
+function accederTienda() {
+    const email = document.getElementById('log-email').value.trim();
     const p = document.getElementById('log-pass').value;
-
-    auth.signInWithEmailAndPassword(email, p)
-    .then((userCredential) => {
-        const user = userCredential.user;
-        
-        // Buscamos los datos de esa tienda específica en la base de datos
-        firebase.database().ref('comercios/' + user.uid).once('value')
-        .then((snapshot) => {
-            const c = snapshot.val();
-            
-            if(!c) return alert("No se encontraron datos de la tienda.");
-            if(c.estado !== 'activo') return alert("Tu tienda aún está pendiente de aprobación.");
-
-            tActiva = c; // Guardamos la tienda actual en memoria
-            
-            // Llenamos el panel con sus datos
+    auth.signInWithEmailAndPassword(email, p).then((userCredential) => {
+        firebase.database().ref('comercios/' + userCredential.user.uid).once('value').then((snap) => {
+            const c = snap.val();
+            if(!c || c.estado !== 'activo') return alert("Cuenta pendiente de aprobación.");
+            tActiva = c;
             document.getElementById('lbl-nombre-tienda').innerText = "Panel: " + c.nombre;
             document.getElementById('t-tel').value = c.tel || "";
             document.getElementById('t-dir').value = c.dir || "";
             document.getElementById('t-img').value = c.imgLocal || "";
             document.getElementById('t-hor').value = c.hor || "";
-            
-            renderProds();
-            cerrarModal('modal-login');
-            abrirModal('modal-panel-tienda');
+            renderProds(); cerrarModal('modal-login'); abrirModal('modal-panel-tienda');
         });
-    })
-    .catch((error) => {
-        alert("Acceso denegado: " + error.message);
+    }).catch((e) => alert("Acceso denegado."));
+}
+
+function guardarPerfilTienda() {
+    if(!tActiva) return;
+    const upd = { 
+        tel: document.getElementById('t-tel').value, 
+        dir: document.getElementById('t-dir').value,
+        imgLocal: document.getElementById('t-img').value, 
+        hor: document.getElementById('t-hor').value 
+    };
+    firebase.database().ref('comercios/' + tActiva.id).update(upd).then(() => alert("Perfil guardado"));
+}
+
+function guardarProducto() {
+    const nom = document.getElementById('p-nom').value;
+    const pre = document.getElementById('p-pre').value;
+    const img = document.getElementById('p-img').value;
+    const idx = parseInt(document.getElementById('p-idx').value);
+    if(!nom || !pre) return alert("Faltan datos");
+
+    let prods = tActiva.prods || [];
+    const prod = { nom, pre, img: img || 'https://via.placeholder.com/300?text=Producto' };
+    if(idx === -1) prods.push(prod); else prods[idx] = prod;
+
+    firebase.database().ref('comercios/' + tActiva.id + '/prods').set(prods).then(() => {
+        tActiva.prods = prods;
+        document.getElementById('p-nom').value = ''; document.getElementById('p-pre').value = '';
+        document.getElementById('p-img').value = ''; document.getElementById('p-idx').value = '-1';
+        renderProds();
     });
 }
 
-    function obtenerGPS() {
-        navigator.geolocation.getCurrentPosition(p => { 
-            document.getElementById('t-dir').value = p.coords.latitude.toFixed(6) + ", " + p.coords.longitude.toFixed(6); 
-        }, () => alert("Activa el GPS en tu dispositivo"));
+function renderProds() {
+    const pList = tActiva.prods || [];
+    document.getElementById('t-lista-prods').innerHTML = pList.map((p, i) => `
+    <div class="admin-prod-item">
+        <img src="${p.img}">
+        <div style="flex:1"><b>${p.nom}</b><br>$${p.pre}</div>
+        <button class="btn btn-secondary" onclick="editP(${i})">✏️</button>
+        <button class="btn btn-danger" onclick="delP(${i})">✕</button>
+    </div>`).join('');
+}
+
+function editP(i) {
+    const p = tActiva.prods[i];
+    document.getElementById('p-nom').value = p.nom; document.getElementById('p-pre').value = p.pre;
+    document.getElementById('p-img').value = p.img; document.getElementById('p-idx').value = i;
+}
+
+function delP(i) {
+    if(confirm("¿Borrar?")) {
+        tActiva.prods.splice(i,1);
+        firebase.database().ref('comercios/' + tActiva.id + '/prods').set(tActiva.prods).then(() => renderProds());
     }
+}
 
-    function guardarPerfilTienda() {
-        tActiva.tel = document.getElementById('t-tel').value; tActiva.dir = document.getElementById('t-dir').value;
-        tActiva.imgLocal = document.getElementById('t-img').value; tActiva.hor = document.getElementById('t-hor').value;
-        salvar(); alert("Perfil guardado con éxito");
+function obtenerGPS() {
+    navigator.geolocation.getCurrentPosition(p => { 
+        document.getElementById('t-dir').value = p.coords.latitude.toFixed(6) + ", " + p.coords.longitude.toFixed(6); 
+    }, () => alert("Activa el GPS"));
+}
+
+function abrirAdmin() {
+    document.getElementById('adm-name').value = window.db.config.name || "";
+    document.getElementById('adm-slogan').value = window.db.config.slogan || "";
+    document.getElementById('adm-logo').value = window.db.config.logo || "";
+    renderRubrosAdmin(); renderComerciosAdmin(); abrirModal('modal-admin');
+}
+
+function guardarConfigSitio() {
+    const conf = {
+        name: document.getElementById('adm-name').value,
+        slogan: document.getElementById('adm-slogan').value,
+        logo: document.getElementById('adm-logo').value
+    };
+    firebase.database().ref('config').set(conf).then(() => alert("Ajustes guardados"));
+}
+
+function agregarRubro() {
+    const r = document.getElementById('adm-new-rubro').value;
+    if(r) {
+        let rs = window.db.rubros; rs.push(r);
+        firebase.database().ref('rubros').set(rs).then(() => {
+            document.getElementById('adm-new-rubro').value = ''; renderRubrosAdmin();
+        });
     }
+}
 
-    function guardarProducto() {
-        const nom = document.getElementById('p-nom').value; const pre = document.getElementById('p-pre').value;
-        const img = document.getElementById('p-img').value; const idx = parseInt(document.getElementById('p-idx').value);
-        if(!nom || !pre) return alert("Faltan datos");
-        const prod = { nom, pre, img: img || 'https://via.placeholder.com/300?text=Producto' };
-        if(idx === -1) tActiva.prods.push(prod); else tActiva.prods[idx] = prod;
-        document.getElementById('p-nom').value = ''; document.getElementById('p-pre').value = '';
-        document.getElementById('p-img').value = ''; document.getElementById('p-idx').value = '-1';
-        salvar(); renderProds();
+function renderRubrosAdmin() {
+    document.getElementById('adm-rubros-list').innerHTML = window.db.rubros.map((r, i) => `
+    <div style="display:flex; justify-content:space-between; padding:5px; background:#fff; margin-bottom:5px; border-radius:5px;">
+        ${r} <span onclick="eliminarRubro(${i})" style="color:red; cursor:pointer;">✕</span>
+    </div>`).join('');
+}
+
+function eliminarRubro(i) {
+    window.db.rubros.splice(i,1);
+    firebase.database().ref('rubros').set(window.db.rubros).then(() => renderRubrosAdmin());
+}
+
+function renderComerciosAdmin() {
+    document.getElementById('adm-comercios-list').innerHTML = window.db.comercios.map(c => `
+    <div style="padding:10px; background:#fff; margin-bottom:10px; border-radius:10px; font-size:0.8rem; border:1px solid #ddd; display:flex; justify-content:space-between; align-items:center;">
+        <div><b>${c.nombre}</b> (${c.rubro})<br><span style="color:${c.estado==='activo'?'green':'orange'}">${c.estado.toUpperCase()}</span></div>
+        <div style="display:flex; gap:5px;">
+            ${c.estado === 'pendiente' ? `<button class="btn btn-secondary" style="padding:5px;" onclick="aprobarC('${c.id}')">APROBAR</button>` : ''}
+            <button class="btn btn-danger" style="padding:5px;" onclick="borrarC('${c.id}')">✕</button>
+        </div>
+    </div>`).join('');
+}
+
+function aprobarC(id) { 
+    firebase.database().ref('comercios/' + id).update({estado: 'activo'})
+    .then(() => alert("Comercio aprobado")); 
+}
+
+function borrarC(id) { 
+    if(confirm("¿Eliminar definitivamente?")) {
+        firebase.database().ref('comercios/' + id).remove()
+        .then(() => alert("Comercio eliminado"));
     }
-
-    function renderProds() {
-        document.getElementById('t-lista-prods').innerHTML = tActiva.prods.map((p, i) => `
-        <div class="admin-prod-item">
-            <img src="${p.img}">
-            <div style="flex:1"><b>${p.nom}</b><br>$${p.pre}</div>
-            <button class="btn btn-secondary" onclick="editP(${i})">✏️</button>
-            <button class="btn btn-danger" onclick="delP(${i})">✕</button>
-        </div>`).join('');
-    }
-
-    function editP(i) {
-        const p = tActiva.prods[i]; document.getElementById('p-nom').value = p.nom;
-        document.getElementById('p-pre').value = p.pre; document.getElementById('p-img').value = p.img;
-        document.getElementById('p-idx').value = i;
-    }
-
-    function delP(i) { if(confirm("¿Borrar?")) { tActiva.prods.splice(i,1); salvar(); renderProds(); } }
-
-    function abrirAdmin() {
-        document.getElementById('adm-name').value = db.config.name;
-        document.getElementById('adm-slogan').value = db.config.slogan;
-        document.getElementById('adm-logo').value = db.config.logo;
-        renderRubrosAdmin(); renderComerciosAdmin(); abrirModal('modal-admin');
-    }
-
-    function guardarConfigSitio() {
-        db.config.name = document.getElementById('adm-name').value;
-        db.config.slogan = document.getElementById('adm-slogan').value;
-        db.config.logo = document.getElementById('adm-logo').value;
-        salvar(); aplicarConfig(); alert("Ajustes guardados");
-    }
-
-    function agregarRubro() {
-        const r = document.getElementById('adm-new-rubro').value;
-        if(r) { db.rubros.push(r); document.getElementById('adm-new-rubro').value = ''; salvar(); renderRubrosAdmin(); actualizarSelects(); }
-    }
-
-    function renderRubrosAdmin() {
-        document.getElementById('adm-rubros-list').innerHTML = db.rubros.map((r, i) => `<div style="display:flex; justify-content:space-between; padding:5px; background:#fff; margin-bottom:5px; border-radius:5px;">${r} <span onclick="db.rubros.splice(${i},1); salvar(); renderRubrosAdmin(); actualizarSelects();" style="color:red; cursor:pointer;">✕</span></div>`).join('');
-    }
-
-    function renderComerciosAdmin() {
-        document.getElementById('adm-comercios-list').innerHTML = db.comercios.map(c => `
-        <div style="padding:10px; background:#fff; margin-bottom:10px; border-radius:10px; font-size:0.8rem; border:1px solid #ddd; display:flex; justify-content:space-between; align-items:center;">
-            <div>
-                <b>${c.nombre}</b> (${c.rubro})<br>
-                <span style="color:${c.estado==='activo'?'green':'orange'}">Estado: ${c.estado.toUpperCase()}</span>
-            </div>
-            <div style="display:flex; gap:5px;">
-                ${c.estado === 'pendiente' ? `<button class="btn btn-secondary" style="padding:5px;" onclick="aprobarC(${c.id})">APROBAR</button>` : ''}
-                <button class="btn btn-danger" style="padding:5px;" onclick="borrarC(${c.id})">✕</button>
-            </div>
-        </div>`).join('');
-    }
-
-    function aprobarC(id) {
-        const c = db.comercios.find(i => i.id === id);
-        if(c) { c.estado = 'activo'; salvar(); renderComerciosAdmin(); alert("Aprobado."); }
-    }
-
-    function borrarC(id) { if(confirm("¿Eliminar?")) { db.comercios = db.comercios.filter(i => i.id !== id); salvar(); renderComerciosAdmin(); } }
+}
 </script>
 </body>
 </html>
