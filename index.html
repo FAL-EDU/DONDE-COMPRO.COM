@@ -91,7 +91,7 @@
         <h3>Solicitud de Registro</h3><br>
         <label>Nombre del Comercio:</label><input type="text" id="reg-nombre">
         <label>Rubro:</label><select id="reg-rubro"></select>
-        <label>Crea tu Contraseña:</label><input type="password" id="reg-pass" placeholder="Mínimo 4 caracteres">
+        <label>Crea tu Contraseña:</label><input type="password" id="reg-pass">
         <button class="btn btn-primary" style="width:100%" onclick="registrarTienda()">Enviar Solicitud</button>
         <button class="btn" style="width:100%; margin-top:10px" onclick="cerrarModal('modal-registro')">Volver</button>
     </div>
@@ -164,8 +164,7 @@
     window.onload = () => { 
         aplicarConfig(); 
         actualizarSelects(); 
-        // Pantalla de inicio limpia e informativa
-        document.getElementById('results-area').innerHTML = "<p style='grid-column: 1/-1; text-align:center; padding:50px; color:#666;'>Selecciona un rubro o busca un producto para comenzar.</p>";
+        document.getElementById('results-area').innerHTML = "<p style='grid-column: 1/-1; text-align:center; padding:50px; color:#666;'>Busca un producto o selecciona un rubro.</p>";
     };
 
     function abrirModal(id) { document.getElementById(id).style.display = 'flex'; }
@@ -184,28 +183,27 @@
         document.getElementById('reg-rubro').innerHTML = options;
     }
 
-    // --- FUNCIÓN DE BÚSQUEDA CON LIMPIEZA TOTAL ---
+    // --- FUNCIÓN DE BÚSQUEDA INTEGRADA: LIMPIEZA + MAPAS ---
     function buscar() {
         const q = document.getElementById('main-search').value.toLowerCase();
         const r = document.getElementById('search-rubro').value;
         const res = document.getElementById('results-area');
         
-        // LIMPIEZA CRÍTICA: Vacía el panel antes de procesar nada
+        // 1. LIMPIEZA TOTAL: Vacía el panel al inicio
         res.innerHTML = "";
 
-        // 1. Filtrar comercios activos según Rubro y Nombre (si q tiene texto)
+        // 2. Filtrar comercios activos
         const comerciosFiltrados = db.comercios.filter(c => {
             const coincideRubro = !r || c.rubro === r;
-            // Si el buscador está vacío, mostramos todos los del rubro. Si tiene texto, filtramos por nombre de tienda.
             const coincideNombreTienda = q === "" ? true : c.nombre.toLowerCase().includes(q);
             return c.estado === 'activo' && coincideRubro && coincideNombreTienda;
         });
 
-        // 2. Renderizar Comercios que coinciden con el filtro
+        // 3. Renderizar Comercios
         comerciosFiltrados.forEach(c => {
             const esCoordenada = /[0-9]/.test(c.dir) && c.dir.includes(",");
-            const destinoFinal = esCoordenada ? c.dir : `${c.dir}, Rosario de la Frontera, Salta, Argentina`;
-            const linkMapa = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destinoFinal)}`;
+            const direccionFinal = esCoordenada ? c.dir : `${c.dir}, Rosario de la Frontera, Salta, Argentina`;
+            const linkMapa = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(direccionFinal)}`;
 
             res.innerHTML += `
             <div class="card">
@@ -215,18 +213,18 @@
                     <div class="card-info">📍 ${c.dir || 'Sin dirección'}</div>
                     <div class="card-info">⏰ ${c.hor || 'Consultar horario'}</div>
                     <br>
-                    <button class="btn btn-primary" style="width:100%" onclick="window.open('${linkMapa}')">🚀 TRAZAR RUTA</button>
+                    <button class="btn btn-primary" style="width:100%" onclick="window.open('${linkMapa}', '_blank')">🚀 TRAZAR RUTA</button>
                 </div>
             </div>`;
         });
 
-        // 3. Renderizar Productos (Solo si el usuario escribió algo en el buscador de texto)
+        // 4. Renderizar Productos
         if (q !== "") {
             db.comercios.filter(c => c.estado === 'activo' && (!r || c.rubro === r)).forEach(c => {
                 c.prods.filter(p => p.nom.toLowerCase().includes(q)).forEach(p => {
                     const esCoordenada = /[0-9]/.test(c.dir) && c.dir.includes(",");
-                    const destinoFinal = esCoordenada ? c.dir : `${c.dir}, Rosario de la Frontera, Salta, Argentina`;
-                    const linkMapa = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destinoFinal)}`;
+                    const direccionFinal = esCoordenada ? c.dir : `${c.dir}, Rosario de la Frontera, Salta, Argentina`;
+                    const linkMapa = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(direccionFinal)}`;
 
                     res.innerHTML += `
                     <div class="card" style="border-top-color: var(--secondary);">
@@ -236,11 +234,10 @@
                             <div class="price-tag">$${p.pre}</div>
                             <div style="background: #f1f1f1; padding: 10px; border-radius: 10px; margin-top: 10px;">
                                 <p style="font-size: 0.75rem; font-weight: 600;">🏪 ${c.nombre}</p>
-                                <p style="font-size: 0.7rem;">📍 ${c.dir || 'S/D'}</p>
                             </div>
                             <div style="display: flex; gap: 5px; margin-top: 15px;">
                                 <button class="btn btn-secondary" style="flex: 1;" onclick="window.open('https://wa.me/${c.tel.replace(/\D/g,'')}?text=Hola, consulto por ${p.nom}')">💬 WHATSAPP</button>
-                                <button class="btn btn-dark" style="flex: 1;" onclick="window.open('${linkMapa}')">📍 RUTA</button>
+                                <button class="btn btn-dark" style="flex: 1;" onclick="window.open('${linkMapa}', '_blank')">📍 RUTA</button>
                             </div>
                         </div>
                     </div>`;
@@ -248,13 +245,10 @@
             });
         }
 
-        // Si después de todo la pantalla sigue vacía, mostrar mensaje de error
-        if (res.innerHTML === "") {
-            res.innerHTML = "<p style='grid-column: 1/-1; text-align:center; padding:50px; color:#999;'>No se encontraron resultados para esta búsqueda o rubro.</p>";
-        }
+        if (res.innerHTML === "") res.innerHTML = "<p style='grid-column: 1/-1; text-align:center; padding:50px; color:#999;'>No hay resultados para esta búsqueda.</p>";
     }
 
-    // --- LÓGICA DE TIENDAS Y ADMIN (IGUAL A LA ANTERIOR) ---
+    // --- GESTIÓN GENERAL (REGISTRO, ACCESO, ADMIN) ---
     function registrarTienda() {
         const n = document.getElementById('reg-nombre').value.trim();
         const r = document.getElementById('reg-rubro').value;
