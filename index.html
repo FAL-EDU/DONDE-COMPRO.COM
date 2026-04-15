@@ -68,7 +68,7 @@
 
     <div class="search-box">
         <input type="text" id="main-search" placeholder="¿Qué buscas? (Ej: Pan, Coca Cola...)" onkeyup="if(event.key==='Enter') buscar()">
-        <select id="search-rubro"><option value="">Todos los rubros</option></select>
+        <select id="search-rubro" onchange="buscar()"><option value="">Todos los rubros</option></select>
         <button class="btn btn-secondary" onclick="buscar()">BUSCAR</button>
     </div>
 
@@ -160,7 +160,12 @@
     let tActiva = null;
 
     function salvar() { localStorage.setItem('donde_compro_db', JSON.stringify(db)); }
-    window.onload = () => { aplicarConfig(); actualizarSelects(); };
+    
+    window.onload = () => { 
+        aplicarConfig(); 
+        actualizarSelects(); 
+        document.getElementById('results-area').innerHTML = "<p style='grid-column: 1/-1; text-align:center; padding:50px; color:#666;'>Busca un producto o selecciona un rubro.</p>";
+    };
 
     function abrirModal(id) { document.getElementById(id).style.display = 'flex'; }
     function cerrarModal(id) { document.getElementById(id).style.display = 'none'; }
@@ -178,21 +183,22 @@
         document.getElementById('reg-rubro').innerHTML = options;
     }
 
-    // --- BÚSQUEDA E INTEGRACIÓN DE MAPAS MEJORADA ---
+    // --- BÚSQUEDA MEJORADA CON "VER TIENDA" Y LIMPIEZA ---
     function buscar() {
         const q = document.getElementById('main-search').value.toLowerCase();
         const r = document.getElementById('search-rubro').value;
         const res = document.getElementById('results-area');
+        
+        // Limpieza total del panel al iniciar búsqueda
         res.innerHTML = "";
 
         db.comercios.filter(c => c.estado === 'activo').forEach(c => {
             const matchRubro = !r || c.rubro === r;
-
-            // Lógica de destino infalible para internet (Rosario de la Frontera como base)
             const esCoordenada = /[0-9]/.test(c.dir) && c.dir.includes(",");
             const destinoFinal = esCoordenada ? c.dir : `${c.dir}, Rosario de la Frontera, Salta, Argentina`;
             const linkMapa = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destinoFinal)}`;
 
+            // 1. Mostrar la tarjeta del comercio si coincide con la búsqueda
             if ((c.nombre.toLowerCase().includes(q) || c.rubro.toLowerCase().includes(q) || q === '') && matchRubro) {
                 res.innerHTML += `
                 <div class="card">
@@ -203,11 +209,12 @@
                         <div class="card-info">📞 ${c.tel || 'Sin WhatsApp'}</div>
                         <div class="card-info">⏰ ${c.hor || 'Consultar horario'}</div>
                         <br>
-                        <button class="btn btn-primary" style="width:100%" onclick="window.open('${linkMapa}')">🚀 TRAZAR RUTA</button>
+                        <button class="btn btn-primary" style="width:100%" onclick="window.open('${linkMapa}', '_blank')">🚀 TRAZAR RUTA</button>
                     </div>
                 </div>`;
             }
 
+            // 2. Mostrar tarjetas de productos si coincide el texto
             if (q !== '') {
                 c.prods.filter(p => p.nom.toLowerCase().includes(q)).forEach(p => {
                     res.innerHTML += `
@@ -218,22 +225,30 @@
                             <div class="price-tag">$${p.pre}</div>
                             <div style="background: #f1f1f1; padding: 10px; border-radius: 10px; margin-top: 10px; border-left: 3px solid var(--primary);">
                                 <p style="font-size: 0.75rem; font-weight: 600; color: #333; margin-bottom: 5px;">🏪 TIENDA: ${c.nombre}</p>
-                                <div class="card-info" style="font-size: 0.7rem;">📍 <b>Dirección:</b> ${c.dir || 'S/D'}</div>
-                                <div class="card-info" style="font-size: 0.7rem;">📞 <b>WhatsApp:</b> ${c.tel || 'S/T'}</div>
                             </div>
-                            <div style="display: flex; gap: 5px; margin-top: 15px;">
-                                <button class="btn btn-secondary" style="flex: 1; font-size: 0.8rem;" onclick="window.open('https://wa.me/${c.tel.replace(/\D/g,'')}?text=Hola, vi el producto ${p.nom} en la página. ¿Tienen stock?')">💬 CONSULTAR</button>
-                                <button class="btn btn-dark" style="flex: 1; font-size: 0.8rem;" onclick="window.open('${linkMapa}')">📍 RUTA</button>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 15px;">
+                                <button class="btn btn-secondary" style="font-size: 0.75rem;" onclick="window.open('https://wa.me/${c.tel.replace(/\D/g,'')}?text=Hola, vi ${p.nom} en la página')">💬 CONSULTAR</button>
+                                <button class="btn btn-dark" style="font-size: 0.75rem;" onclick="verTienda('${c.nombre.replace(/'/g, "\\'")}')">🏪 VER TIENDA</button>
                             </div>
+                            <button class="btn btn-primary" style="width: 100%; margin-top: 5px; font-size: 0.8rem;" onclick="window.open('${linkMapa}', '_blank')">🚀 CÓMO LLEGAR</button>
                         </div>
                     </div>`;
                 });
             }
         });
-        if (res.innerHTML === "") res.innerHTML = "<p style='grid-column: 1/-1; text-align:center; padding:50px;'>No se encontraron resultados.</p>";
+        
+        if (res.innerHTML === "") res.innerHTML = "<p style='grid-column: 1/-1; text-align:center; padding:50px; color:#999;'>No se encontraron resultados.</p>";
     }
 
-    // --- GESTIÓN DE TIENDA ---
+    // Función para ver el perfil de una tienda específica desde un producto
+    function verTienda(nombreTienda) {
+        document.getElementById('main-search').value = nombreTienda;
+        document.getElementById('search-rubro').value = "";
+        buscar();
+        window.scrollTo({top: 0, behavior: 'smooth'});
+    }
+
+    // --- GESTIÓN DE TIENDA Y ADMIN (IGUAL QUE ANTES) ---
     function registrarTienda() {
         const n = document.getElementById('reg-nombre').value.trim();
         const r = document.getElementById('reg-rubro').value;
@@ -261,11 +276,13 @@
             document.getElementById('t-dir').value = p.coords.latitude.toFixed(6) + ", " + p.coords.longitude.toFixed(6); 
         }, () => alert("Activa el GPS en tu dispositivo"));
     }
+
     function guardarPerfilTienda() {
         tActiva.tel = document.getElementById('t-tel').value; tActiva.dir = document.getElementById('t-dir').value;
         tActiva.imgLocal = document.getElementById('t-img').value; tActiva.hor = document.getElementById('t-hor').value;
         salvar(); alert("Perfil guardado con éxito");
     }
+
     function guardarProducto() {
         const nom = document.getElementById('p-nom').value; const pre = document.getElementById('p-pre').value;
         const img = document.getElementById('p-img').value; const idx = parseInt(document.getElementById('p-idx').value);
@@ -276,6 +293,7 @@
         document.getElementById('p-img').value = ''; document.getElementById('p-idx').value = '-1';
         salvar(); renderProds();
     }
+
     function renderProds() {
         document.getElementById('t-lista-prods').innerHTML = tActiva.prods.map((p, i) => `
         <div class="admin-prod-item">
@@ -285,33 +303,38 @@
             <button class="btn btn-danger" onclick="delP(${i})">✕</button>
         </div>`).join('');
     }
+
     function editP(i) {
         const p = tActiva.prods[i]; document.getElementById('p-nom').value = p.nom;
         document.getElementById('p-pre').value = p.pre; document.getElementById('p-img').value = p.img;
         document.getElementById('p-idx').value = i;
     }
+
     function delP(i) { if(confirm("¿Borrar?")) { tActiva.prods.splice(i,1); salvar(); renderProds(); } }
 
-    // --- ADMIN CENTRAL ---
     function abrirAdmin() {
         document.getElementById('adm-name').value = db.config.name;
         document.getElementById('adm-slogan').value = db.config.slogan;
         document.getElementById('adm-logo').value = db.config.logo;
         renderRubrosAdmin(); renderComerciosAdmin(); abrirModal('modal-admin');
     }
+
     function guardarConfigSitio() {
         db.config.name = document.getElementById('adm-name').value;
         db.config.slogan = document.getElementById('adm-slogan').value;
         db.config.logo = document.getElementById('adm-logo').value;
-        salvar(); aplicarConfig(); alert("Cambios de identidad guardados");
+        salvar(); aplicarConfig(); alert("Ajustes guardados");
     }
+
     function agregarRubro() {
         const r = document.getElementById('adm-new-rubro').value;
         if(r) { db.rubros.push(r); document.getElementById('adm-new-rubro').value = ''; salvar(); renderRubrosAdmin(); actualizarSelects(); }
     }
+
     function renderRubrosAdmin() {
         document.getElementById('adm-rubros-list').innerHTML = db.rubros.map((r, i) => `<div style="display:flex; justify-content:space-between; padding:5px; background:#fff; margin-bottom:5px; border-radius:5px;">${r} <span onclick="db.rubros.splice(${i},1); salvar(); renderRubrosAdmin(); actualizarSelects();" style="color:red; cursor:pointer;">✕</span></div>`).join('');
     }
+
     function renderComerciosAdmin() {
         document.getElementById('adm-comercios-list').innerHTML = db.comercios.map(c => `
         <div style="padding:10px; background:#fff; margin-bottom:10px; border-radius:10px; font-size:0.8rem; border:1px solid #ddd; display:flex; justify-content:space-between; align-items:center;">
@@ -325,11 +348,13 @@
             </div>
         </div>`).join('');
     }
+
     function aprobarC(id) {
         const c = db.comercios.find(i => i.id === id);
-        if(c) { c.estado = 'activo'; salvar(); renderComerciosAdmin(); alert("El comercio ha sido aprobado exitosamente."); }
+        if(c) { c.estado = 'activo'; salvar(); renderComerciosAdmin(); alert("Aprobado."); }
     }
-    function borrarC(id) { if(confirm("¿Eliminar comercio definitivamente?")) { db.comercios = db.comercios.filter(i => i.id !== id); salvar(); renderComerciosAdmin(); } }
+
+    function borrarC(id) { if(confirm("¿Eliminar?")) { db.comercios = db.comercios.filter(i => i.id !== id); salvar(); renderComerciosAdmin(); } }
 </script>
 </body>
 </html>
