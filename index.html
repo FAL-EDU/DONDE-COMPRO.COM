@@ -1,94 +1,258 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="tab-title">DÓNDE COMPRO.COM</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary: #0056b3; --secondary: #28a745; --danger: #dc3545; --bg: #f8f9fa; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Poppins', sans-serif; background-color: var(--bg); color: #333; line-height: 1.6; }
+        header { background: #fff; padding: 15px 5%; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 1000; }
+        .logo-area { display: flex; align-items: center; gap: 10px; }
+        .logo-area img { height: 45px; border-radius: 5px; }
+        .btn { padding: 10px 18px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; transition: 0.2s; display: inline-flex; align-items: center; gap: 5px; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-secondary { background: var(--secondary); color: white; }
+        .btn-dark { background: #333; color: white; }
+        .btn-danger { background: var(--danger); color: white; }
+        .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
+        .search-box { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 5px 25px rgba(0,0,0,0.05); display: flex; gap: 10px; margin-bottom: 40px; }
+        .search-box input { flex: 3; padding: 12px; border: 1px solid #ddd; border-radius: 8px; }
+        .search-box select { flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 8px; }
+        .results-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
+        .shop-card { background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.08); border-top: 5px solid var(--primary); }
+        .shop-card-img { width: 100%; height: 150px; object-fit: cover; background: #eee; }
+        .shop-card-content { padding: 20px; }
+        .prod-item { display: flex; justify-content: space-between; font-size: 0.85rem; padding: 5px 0; border-bottom: 1px dashed #eee; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 2000; justify-content: center; align-items: center; padding: 20px; }
+        .modal-content { background: white; padding: 30px; border-radius: 20px; width: 100%; max-width: 1000px; max-height: 90vh; overflow-y: auto; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        input, select, textarea { width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 8px; font-family: inherit; }
+        label { font-size: 0.8rem; font-weight: 600; color: #666; display: block; margin-bottom: 5px; }
+        .admin-prod-item { display: flex; align-items: center; gap: 10px; padding: 10px; border: 1px solid #eee; border-radius: 10px; margin-bottom: 10px; }
+        .admin-prod-item img { width: 50px; height: 50px; object-fit: cover; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo-area">
+            <img id="header-logo" src="" style="display: none;">
+            <h1 id="header-title">DÓNDE COMPRO.COM</h1>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <button class="btn btn-dark" onclick="abrirAdmin()"> ⚙️ ADMIN</button>
+            <button class="btn btn-primary" onclick="abrirModal('modal-login')"> 🏪 MI TIENDA</button>
+        </div>
+    </header>
 
-<div id="modal-login" class="modal">
-    <div class="modal-content" style="max-width: 400px; text-align: center;">
-        <h3>Mi Tienda</h3><br>
-        <label>Nombre de la tienda:</label>
-        <input type="text" id="log-nombre" placeholder="Ej: Panadería El Sol">
-        <label>Contraseña:</label>
-        <input type="password" id="log-pass" placeholder="Tu clave de acceso">
-        <button class="btn btn-primary" style="width:100%" onclick="accederTienda()">INGRESAR</button>
-        <hr style="margin:20px 0">
-        <p>¿No estás registrado?</p>
-        <button class="btn btn-secondary" style="width:100%" onclick="cerrarModal('modal-login'); abrirModal('modal-registro')">Solicitar Registro</button>
+    <main class="container">
+        <div style="text-align: center; margin-bottom: 30px;">
+            <h2 id="hero-slogan" style="font-weight: 300;">Buscador de productos en comercios locales</h2>
+        </div>
+        <div class="search-box">
+            <input type="text" id="main-search" placeholder="¿Qué buscas hoy?" onkeyup="if(event.key==='Enter') buscar()">
+            <select id="search-rubro"><option value="">Todos los rubros</option></select>
+            <button class="btn btn-secondary" onclick="buscar()">BUSCAR</button>
+        </div>
+        <div id="results-area" class="results-grid"></div>
+    </main>
+
+    <div id="modal-admin" class="modal">
+        <div class="modal-content">
+            <h2>Panel de Administración</h2>
+            <div class="grid-2">
+                <section style="background:#f9f9f9; padding:20px; border-radius:15px;">
+                    <h4>🎨 Identidad</h4>
+                    <label>Proyecto:</label><input type="text" id="adm-name">
+                    <label>Slogan:</label><input type="text" id="adm-slogan">
+                    <label>Logo:</label><input type="text" id="adm-logo">
+                    <button class="btn btn-primary" onclick="guardarConfigSitio()">Guardar</button>
+                    <h4 style="margin-top:20px;">🏷️ Rubros</h4>
+                    <div style="display:flex; gap:5px;">
+                        <input type="text" id="adm-new-rubro"><button class="btn btn-secondary" onclick="agregarRubro()">+</button>
+                    </div>
+                    <div id="adm-rubros-list"></div>
+                </section>
+                <section style="background:#f9f9f9; padding:20px; border-radius:15px;">
+                    <h4>🏪 Autorizaciones</h4>
+                    <div id="adm-comercios-list"></div>
+                </section>
+            </div>
+            <button class="btn btn-dark" style="width:100%; margin-top:20px;" onclick="cerrarModal('modal-admin')">Cerrar</button>
+        </div>
     </div>
-</div>
 
-<div id="modal-registro" class="modal">
-    <div class="modal-content" style="max-width: 450px;">
-        <h3>Registro de Nuevo Comercio</h3><br>
-        <label>Nombre del Local:</label>
-        <input type="text" id="reg-nombre" placeholder="Ej: Panadería El Sol">
-        <label>Rubro:</label>
-        <select id="reg-rubro"></select>
-        <label>Crea tu Clave de Acceso:</label>
-        <input type="password" id="reg-pass" placeholder="Mínimo 4 caracteres">
-        
-        <button class="btn btn-primary" style="width:100%" onclick="registrarTienda()">Enviar Solicitud</button>
-        <button class="btn" style="width:100%; margin-top:10px" onclick="cerrarModal('modal-registro')">Volver</button>
+    <div id="modal-login" class="modal">
+        <div class="modal-content" style="max-width: 400px; text-align: center;">
+            <h3>Mi Tienda</h3><br>
+            <input type="text" id="log-nombre" placeholder="Nombre de tu comercio">
+            <input type="password" id="log-pass" placeholder="Tu contraseña">
+            <button class="btn btn-primary" style="width:100%" onclick="accederTienda()">INGRESAR</button>
+            <hr style="margin:20px 0"><p>¿No estás registrado?</p>
+            <button class="btn btn-secondary" style="width:100%" onclick="cerrarModal('modal-login'); abrirModal('modal-registro')">Solicitar Registro</button>
+        </div>
     </div>
-</div>
 
-<script>
-// --- BUSCA Y REEMPLAZA ESTAS FUNCIONES EN TU <SCRIPT> ---
+    <div id="modal-registro" class="modal">
+        <div class="modal-content" style="max-width: 450px;">
+            <h3>Registro de Nuevo Comercio</h3><br>
+            <label>Nombre Local:</label><input type="text" id="reg-nombre">
+            <label>Rubro:</label><select id="reg-rubro"></select>
+            <label>Crea tu Contraseña:</label><input type="password" id="reg-pass" placeholder="Mínimo 4 caracteres">
+            <button class="btn btn-primary" style="width:100%" onclick="registrarTienda()">Enviar Solicitud</button>
+            <button class="btn" style="width:100%; margin-top:10px" onclick="cerrarModal('modal-registro')">Volver</button>
+        </div>
+    </div>
 
-function registrarTienda() {
-    const n = document.getElementById('reg-nombre').value.trim();
-    const r = document.getElementById('reg-rubro').value;
-    const p = document.getElementById('reg-pass').value; // Captura la clave [cite: 110]
+    <div id="modal-panel-tienda" class="modal">
+        <div class="modal-content">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #eee; padding-bottom:10px; margin-bottom:20px;">
+                <h2 id="lbl-nombre-tienda">Panel de Gestión</h2>
+                <button class="btn btn-dark" onclick="cerrarModal('modal-panel-tienda')">Cerrar Sesión</button>
+            </div>
+            <div class="grid-2">
+                <div style="background:#f8f9fa; padding:20px; border-radius:15px;">
+                    <h4>📍 Datos del Local</h4><br>
+                    <label>WhatsApp:</label><input type="text" id="t-tel">
+                    <label>Dirección:</label>
+                    <div style="display:flex; gap:5px;"><input type="text" id="t-dir"><button class="btn btn-dark" onclick="obtenerGPS()">📍</button></div>
+                    <label>URL Imagen Local:</label><input type="text" id="t-img">
+                    <label>Horarios:</label><input type="text" id="t-hor">
+                    <button class="btn btn-primary" style="width:100%" onclick="guardarPerfilTienda()">Guardar Perfil</button>
+                </div>
+                <div style="background:#fff; border:1px solid #eee; padding:20px; border-radius:15px;">
+                    <h4>📦 Inventario</h4><br>
+                    <div style="background:#eee; padding:15px; border-radius:10px; margin-bottom:20px;">
+                        <input type="hidden" id="p-idx" value="-1">
+                        <input type="text" id="p-nom" placeholder="Producto">
+                        <input type="number" id="p-pre" placeholder="Precio $">
+                        <input type="text" id="p-img" placeholder="URL Imagen">
+                        <button class="btn btn-secondary" style="width:100%" onclick="guardarProducto()">Guardar Producto</button>
+                    </div>
+                    <div id="t-lista-prods" style="max-height: 300px; overflow-y: auto;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    if(!n || !p) return alert("El nombre y la contraseña son obligatorios");
-    if(p.length < 4) return alert("La contraseña debe tener al menos 4 caracteres");
+    <script>
+        let db = JSON.parse(localStorage.getItem('donde_compro_db')) || {
+            config: { name: 'DÓNDE COMPRO.COM', slogan: 'Buscador local', logo: '' },
+            rubros: ['Farmacia', 'Ferretería', 'Almacén'],
+            comercios: []
+        };
+        let tActiva = null;
+        function salvar() { localStorage.setItem('donde_compro_db', JSON.stringify(db)); }
+        window.onload = () => { aplicarConfig(); actualizarSelects(); };
 
-    // Guardamos la clave en el objeto del comercio [cite: 255]
-    db.comercios.push({ 
-        id: Date.now(), 
-        nombre: n, 
-        rubro: r, 
-        pass: p, // Se almacena aquí
-        estado: 'pendiente', 
-        tel:'', 
-        dir:'', 
-        imgLocal:'', 
-        hor:'', 
-        prods:[] 
-    });
-    
-    salvar(); 
-    alert("Solicitud enviada. Podrás ingresar cuando el administrador te autorice."); 
-    cerrarModal('modal-registro');
-    // Limpiamos campos
-    document.getElementById('reg-nombre').value = "";
-    document.getElementById('reg-pass').value = "";
-}
+        function abrirModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function cerrarModal(id) { document.getElementById(id).style.display = 'none'; }
 
-function accederTienda() {
-    const n = document.getElementById('log-nombre').value.trim().toLowerCase();
-    const p = document.getElementById('log-pass').value; // Captura la clave ingresada [cite: 100]
-    
-    // Buscamos el comercio por nombre [cite: 260]
-    const c = db.comercios.find(i => i.nombre.toLowerCase() === n);
+        // ADMIN FUNCTIONS
+        function abrirAdmin() {
+            document.getElementById('adm-name').value = db.config.name;
+            document.getElementById('adm-slogan').value = db.config.slogan;
+            document.getElementById('adm-logo').value = db.config.logo;
+            renderRubrosAdmin(); renderComerciosAdmin(); abrirModal('modal-admin');
+        }
+        function guardarConfigSitio() {
+            db.config.name = document.getElementById('adm-name').value;
+            db.config.slogan = document.getElementById('adm-slogan').value;
+            db.config.logo = document.getElementById('adm-logo').value;
+            salvar(); aplicarConfig(); alert("Sitio actualizado");
+        }
+        function aplicarConfig() {
+            document.getElementById('header-title').innerText = db.config.name;
+            document.getElementById('tab-title').innerText = db.config.name;
+            document.getElementById('hero-slogan').innerText = db.config.slogan;
+            if(db.config.logo) { document.getElementById('header-logo').src = db.config.logo; document.getElementById('header-logo').style.display = 'block'; }
+        }
+        function agregarRubro() {
+            const r = document.getElementById('adm-new-rubro').value;
+            if(r) { db.rubros.push(r); document.getElementById('adm-new-rubro').value = ''; salvar(); renderRubrosAdmin(); actualizarSelects(); }
+        }
+        function renderRubrosAdmin() {
+            document.getElementById('adm-rubros-list').innerHTML = db.rubros.map((r, i) => `<div style="display:flex; justify-content:space-between; padding:5px; background:#fff; margin-bottom:5px; border-radius:5px;">${r} <span onclick="db.rubros.splice(${i},1); salvar(); renderRubrosAdmin(); actualizarSelects();" style="color:red; cursor:pointer;">✕</span></div>`).join('');
+        }
+        function renderComerciosAdmin() {
+            document.getElementById('adm-comercios-list').innerHTML = db.comercios.map(c => `<div style="padding:10px; background:#fff; margin-bottom:10px; border-radius:10px; font-size:0.8rem;"><b>${c.nombre}</b> (${c.estado})<br><button onclick="aprobarC(${c.id})">Aprobar</button> <button onclick="borrarC(${c.id})" style="color:red">Borrar</button></div>`).join('');
+        }
+        function aprobarC(id) { db.comercios.find(i => i.id === id).estado = 'activo'; salvar(); renderComerciosAdmin(); }
+        function borrarC(id) { db.comercios = db.comercios.filter(i => i.id !== id); salvar(); renderComerciosAdmin(); }
+        function actualizarSelects() {
+            const options = db.rubros.map(r => `<option value="${r}">${r}</option>`).join('');
+            document.getElementById('search-rubro').innerHTML = '<option value="">Todos los rubros</option>' + options;
+            document.getElementById('reg-rubro').innerHTML = options;
+        }
 
-    if(!c) return alert("Comercio no encontrado.");
-    
-    // Verificamos si está activo [cite: 261]
-    if(c.estado !== 'activo') return alert("Tu tienda aún está pendiente de autorización.");
+        // BUSCADOR
+        function buscar() {
+            const q = document.getElementById('main-search').value.toLowerCase();
+            const r = document.getElementById('search-rubro').value;
+            const res = document.getElementById('results-area');
+            res.innerHTML = "";
+            db.comercios.filter(c => c.estado === 'activo').forEach(c => {
+                const matchQ = c.nombre.toLowerCase().includes(q) || c.prods.some(p => p.nom.toLowerCase().includes(q));
+                const matchR = !r || c.rubro === r;
+                if(matchQ && matchR) {
+                    res.innerHTML += `<div class="shop-card"><img class="shop-card-img" src="${c.imgLocal || 'https://via.placeholder.com/400x200?text=Comercio'}"><div class="shop-card-content"><h3>${c.nombre}</h3><p style="font-size:0.75rem; color:#666;">📞 ${c.tel || 'S/T'}</p><div style="margin:15px 0;">${c.prods.filter(p => p.nom.toLowerCase().includes(q) || q === '').slice(0,3).map(p => `<div class="prod-item"><span>${p.nom}</span> <b>$${p.pre}</b></div>`).join('')}</div><button class="btn btn-primary" style="width:100%" onclick="window.open('https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.dir)}')">CÓMO LLEGAR</button></div></div>`;
+                }
+            });
+        }
 
-    // VALIDACIÓN DE CONTRASEÑA
-    if(c.pass === p) {
-        tActiva = c; [cite: 262]
-        document.getElementById('lbl-nombre-tienda').innerText = "Panel: " + c.nombre; [cite: 263]
-        document.getElementById('t-tel').value = c.tel;
-        document.getElementById('t-dir').value = c.dir;
-        document.getElementById('t-img').value = c.imgLocal;
-        document.getElementById('t-hor').value = c.hor;
-        renderProds(); [cite: 268]
-        cerrarModal('modal-login'); [cite: 269]
-        abrirModal('modal-panel-tienda'); [cite: 270]
-        // Limpiamos el campo de pass por seguridad
-        document.getElementById('log-pass').value = "";
-    } else {
-        alert("Contraseña incorrecta.");
-    }
-}
-</script>
+        // COMERCIANTE CON SEGURIDAD
+        function registrarTienda() {
+            const n = document.getElementById('reg-nombre').value.trim();
+            const r = document.getElementById('reg-rubro').value;
+            const p = document.getElementById('reg-pass').value;
+            if(!n || !p) return alert("Faltan datos obligatorios");
+            db.comercios.push({ id: Date.now(), nombre: n, rubro: r, pass: p, estado: 'pendiente', tel:'', dir:'', imgLocal:'', hor:'', prods:[] });
+            salvar(); alert("Solicitud enviada"); cerrarModal('modal-registro');
+        }
+
+        function accederTienda() {
+            const n = document.getElementById('log-nombre').value.trim().toLowerCase();
+            const p = document.getElementById('log-pass').value;
+            const c = db.comercios.find(i => i.nombre.toLowerCase() === n && i.pass === p);
+            if(!c) return alert("Credenciales incorrectas.");
+            if(c.estado !== 'activo') return alert("Tienda no autorizada aún.");
+            tActiva = c;
+            document.getElementById('lbl-nombre-tienda').innerText = "Panel: " + c.nombre;
+            document.getElementById('t-tel').value = c.tel; document.getElementById('t-dir').value = c.dir;
+            document.getElementById('t-img').value = c.imgLocal; document.getElementById('t-hor').value = c.hor;
+            renderProds(); cerrarModal('modal-login'); abrirModal('modal-panel-tienda');
+        }
+
+        function obtenerGPS() {
+            navigator.geolocation.getCurrentPosition(p => { document.getElementById('t-dir').value = p.coords.latitude.toFixed(6) + ", " + p.coords.longitude.toFixed(6); }, () => alert("GPS no disponible"));
+        }
+        function guardarPerfilTienda() {
+            tActiva.tel = document.getElementById('t-tel').value; tActiva.dir = document.getElementById('t-dir').value;
+            tActiva.imgLocal = document.getElementById('t-img').value; tActiva.hor = document.getElementById('t-hor').value;
+            salvar(); alert("Perfil guardado");
+        }
+        function guardarProducto() {
+            const nom = document.getElementById('p-nom').value; const pre = document.getElementById('p-pre').value;
+            const img = document.getElementById('p-img').value; const idx = parseInt(document.getElementById('p-idx').value);
+            if(!nom || !pre) return alert("Faltan datos");
+            const prod = { nom, pre, img: img || 'https://via.placeholder.com/50' };
+            if(idx === -1) tActiva.prods.push(prod); else tActiva.prods[idx] = prod;
+            document.getElementById('p-nom').value = ''; document.getElementById('p-pre').value = '';
+            document.getElementById('p-idx').value = '-1'; salvar(); renderProds();
+        }
+        function renderProds() {
+            document.getElementById('t-lista-prods').innerHTML = tActiva.prods.map((p, i) => `<div class="admin-prod-item"><img src="${p.img}"><div style="flex:1"><b>${p.nom}</b><br>$${p.pre}</div><button class="btn btn-secondary" onclick="editP(${i})">✏️</button><button class="btn btn-danger" onclick="delP(${i})">✕</button></div>`).join('');
+        }
+        function editP(i) {
+            const p = tActiva.prods[i]; document.getElementById('p-nom').value = p.nom;
+            document.getElementById('p-pre').value = p.pre; document.getElementById('p-img').value = p.img;
+            document.getElementById('p-idx').value = i;
+        }
+        function delP(i) { if(confirm("¿Borrar?")) { tActiva.prods.splice(i,1); salvar(); renderProds(); } }
+    </script>
+</body>
+</html>
+
 
