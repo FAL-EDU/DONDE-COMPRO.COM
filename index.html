@@ -47,6 +47,9 @@
         .admin-prod-item { display: flex; align-items: center; gap: 10px; padding: 10px; border: 1px solid #eee; border-radius: 10px; margin-bottom: 10px; }
         .admin-prod-item img { width: 50px; height: 50px; object-fit: cover; border-radius: 5px; }
     </style>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 </head>
 <body>
 
@@ -152,90 +155,127 @@
 </div>
 
 <script>
-    let db = JSON.parse(localStorage.getItem('donde_compro_db')) || {
-        config: { name: 'DÓNDE COMPRO.COM', slogan: 'Buscador de productos locales', logo: '' },
-        rubros: ['Farmacia', 'Ferretería', 'Almacén'],
-        comercios: []
-    };
-    let tActiva = null;
+// PEGA ESTO EN SU LUGAR:
+const firebaseConfig = {
+    apiKey: "AIzaSyB3kBkd3pj-o8RPZxXJfOo7GTl64d7un7c",
+    authDomain: "donde-compro-12345.firebaseapp.com",
+    projectId: "donde-compro-12345",
+    storageBucket: "donde-compro-12345.firebasestorage.app",
+    messagingSenderId: "769310157775",
+    appId: "1:769310157775:web:ab9db00bc911fb3abdc0ba",
+    measurementId: "G-NQZXDP6TS6"
+};
 
-    function salvar() { localStorage.setItem('donde_compro_db', JSON.stringify(db)); }
+// Inicializar Firebase
+firebase.initializeApp(firebaseConfig);
+const dbRef = firebase.database().ref(); // Esta es nuestra nueva referencia a la nube
+const auth = firebase.auth();   
     
-    window.onload = () => { 
-        aplicarConfig(); 
-        actualizarSelects(); 
-        document.getElementById('results-area').innerHTML = "<p style='grid-column: 1/-1; text-align:center; padding:50px; color:#666;'>Busca un producto o selecciona un rubro.</p>";
-    };
+   window.onload = () => { 
+    // Mostramos un mensaje de carga inicial en el área de resultados
+    document.getElementById('results-area').innerHTML = `
+        <p style='grid-column: 1/-1; text-align:center; padding:50px; color:#666;'>
+            Conectando con la base de datos...
+        </p>`;
 
-    function abrirModal(id) { document.getElementById(id).style.display = 'flex'; }
-    function cerrarModal(id) { document.getElementById(id).style.display = 'none'; }
-
-    function aplicarConfig() {
-        document.getElementById('header-title').innerText = db.config.name;
-        document.getElementById('tab-title').innerText = db.config.name;
-        document.getElementById('hero-slogan').innerText = db.config.slogan;
-        if(db.config.logo) { document.getElementById('header-logo').src = db.config.logo; document.getElementById('header-logo').style.display = 'block'; }
-    }
-
-    function actualizarSelects() {
-        const options = db.rubros.map(r => `<option value="${r}">${r}</option>`).join('');
-        document.getElementById('search-rubro').innerHTML = '<option value="">Todos los rubros</option>' + options;
-        document.getElementById('reg-rubro').innerHTML = options;
-    }
-
+    // Escuchar cambios en la base de datos en tiempo real
+    dbRef.on('value', (snapshot) => {
+        const data = snapshot.val();
+        
+        if (data) {
+            // Guardamos los datos de la nube en la variable window.db
+            window.db = data; 
+            
+            // Actualizamos la interfaz con los datos nuevos
+            aplicarConfig(); 
+            actualizarSelects();
+            
+            // Si el buscador está vacío, mostramos el mensaje de bienvenida
+            // Si tiene algo, refrescamos la búsqueda automáticamente
+            if(document.getElementById('main-search').value === "") {
+                document.getElementById('results-area').innerHTML = `
+                    <p style='grid-column: 1/-1; text-align:center; padding:50px; color:#666;'>
+                        ¡Conexión exitosa! Busca un producto o selecciona un rubro.
+                    </p>`;
+            } else {
+                buscar(); 
+            }
+        } else {
+            // Si la base de datos está totalmente vacía (primera vez)
+            console.log("Base de datos de Firebase vacía.");
+            document.getElementById('results-area').innerHTML = `
+                <p style='grid-column: 1/-1; text-align:center; padding:50px; color:#999;'>
+                    No hay datos disponibles en la nube.
+                </p>`;
+        }
+    }, (error) => {
+        console.error("Error de Firebase:", error);
+        alert("Error al conectar con la base de datos. Revisa las reglas de seguridad.");
+    });
+};
     // --- BÚSQUEDA MEJORADA CON "VER TIENDA" Y LIMPIEZA ---
     function buscar() {
-        const q = document.getElementById('main-search').value.toLowerCase();
-        const r = document.getElementById('search-rubro').value;
-        const res = document.getElementById('results-area');
-        
-        // Limpieza total del panel al iniciar búsqueda
-        res.innerHTML = "";
+    const q = document.getElementById('main-search').value.toLowerCase();
+    const r = document.getElementById('search-rubro').value;
+    const res = document.getElementById('results-area');
+    
+    // Seguridad: Si Firebase aún no envió datos, avisamos al usuario
+    if (!window.db || !window.db.comercios) {
+        res.innerHTML = "<p style='grid-column: 1/-1; text-align:center; padding:50px; color:#999;'>Cargando datos desde la nube...</p>";
+        return;
+    }
 
-        db.comercios.filter(c => c.estado === 'activo').forEach(c => {
-            const matchRubro = !r || c.rubro === r;
-            const esCoordenada = /[0-9]/.test(c.dir) && c.dir.includes(",");
-            const destinoFinal = esCoordenada ? c.dir : `${c.dir}, Rosario de la Frontera, Salta, Argentina`;
-            const linkMapa = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destinoFinal)}`;
+    res.innerHTML = "";
 
-            // 1. Mostrar la tarjeta del comercio si coincide con la búsqueda
-            if ((c.nombre.toLowerCase().includes(q) || c.rubro.toLowerCase().includes(q) || q === '') && matchRubro) {
+    // Usamos window.db (los datos que vienen de Firebase)
+    window.db.comercios.filter(c => c.estado === 'activo').forEach(c => {
+        const matchRubro = !r || c.rubro === r;
+        const esCoordenada = /[0-9]/.test(c.dir) && c.dir.includes(",");
+        const destinoFinal = esCoordenada ? c.dir : `${c.dir}, Rosario de la Frontera, Salta, Argentina`;
+        const linkMapa = `https://www.google.com/maps/dir/?api=1&destination=$${encodeURIComponent(destinoFinal)}`;
+
+        // 1. Mostrar Comercios
+        if ((c.nombre.toLowerCase().includes(q) || c.rubro.toLowerCase().includes(q) || q === '') && matchRubro) {
+            res.innerHTML += `
+            <div class="card">
+                <img class="card-img" src="${c.imgLocal || 'https://via.placeholder.com/400x200?text=Comercio'}">
+                <div class="card-content">
+                    <div class="card-title">${c.nombre} <small style="font-size:0.7rem; color:#999;">(${c.rubro})</small></div>
+                    <div class="card-info">📍 ${c.dir || 'Sin dirección'}</div>
+                    <div class="card-info">📞 ${c.tel || 'Sin WhatsApp'}</div>
+                    <div class="card-info">⏰ ${c.hor || 'Consultar horario'}</div>
+                    <br>
+                    <button class="btn btn-primary" style="width:100%" onclick="window.open('${linkMapa}', '_blank')">🚀 TRAZAR RUTA</button>
+                </div>
+            </div>`;
+        }
+
+        // 2. Mostrar Productos
+        if (q !== '') {
+            const productos = c.prods || []; // Evita error si la tienda no tiene productos
+            productos.filter(p => p.nom.toLowerCase().includes(q)).forEach(p => {
                 res.innerHTML += `
-                <div class="card">
-                    <img class="card-img" src="${c.imgLocal || 'https://via.placeholder.com/400x200?text=Comercio'}">
+                <div class="card" style="border-top-color: var(--secondary);">
+                    <img class="card-img" src="${p.img || 'https://via.placeholder.com/400x200?text=Producto'}">
                     <div class="card-content">
-                        <div class="card-title">${c.nombre} <small style="font-size:0.7rem; color:#999;">(${c.rubro})</small></div>
-                        <div class="card-info">📍 ${c.dir || 'Sin dirección'}</div>
-                        <div class="card-info">📞 ${c.tel || 'Sin WhatsApp'}</div>
-                        <div class="card-info">⏰ ${c.hor || 'Consultar horario'}</div>
-                        <br>
-                        <button class="btn btn-primary" style="width:100%" onclick="window.open('${linkMapa}', '_blank')">🚀 TRAZAR RUTA</button>
+                        <div class="card-title">${p.nom}</div>
+                        <div class="price-tag">$${p.pre}</div>
+                        <div style="background: #f1f1f1; padding: 10px; border-radius: 10px; margin-top: 10px; border-left: 3px solid var(--primary);">
+                            <p style="font-size: 0.75rem; font-weight: 600; color: #333; margin-bottom: 5px;">🏪 TIENDA: ${c.nombre}</p>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 15px;">
+                            <button class="btn btn-secondary" style="font-size: 0.75rem;" onclick="window.open('https://wa.me/${c.tel.replace(/\D/g,'')}?text=Hola, vi ${p.nom} en la página')">💬 CONSULTAR</button>
+                            <button class="btn btn-dark" style="font-size: 0.75rem;" onclick="verTienda('${c.nombre.replace(/'/g, "\\'")}')">🏪 VER TIENDA</button>
+                        </div>
+                        <button class="btn btn-primary" style="width: 100%; margin-top: 5px; font-size: 0.8rem;" onclick="window.open('${linkMapa}', '_blank')">🚀 CÓMO LLEGAR</button>
                     </div>
                 </div>`;
-            }
-
-            // 2. Mostrar tarjetas de productos si coincide el texto
-            if (q !== '') {
-                c.prods.filter(p => p.nom.toLowerCase().includes(q)).forEach(p => {
-                    res.innerHTML += `
-                    <div class="card" style="border-top-color: var(--secondary);">
-                        <img class="card-img" src="${p.img || 'https://via.placeholder.com/400x200?text=Producto'}">
-                        <div class="card-content">
-                            <div class="card-title">${p.nom}</div>
-                            <div class="price-tag">$${p.pre}</div>
-                            <div style="background: #f1f1f1; padding: 10px; border-radius: 10px; margin-top: 10px; border-left: 3px solid var(--primary);">
-                                <p style="font-size: 0.75rem; font-weight: 600; color: #333; margin-bottom: 5px;">🏪 TIENDA: ${c.nombre}</p>
-                            </div>
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 15px;">
-                                <button class="btn btn-secondary" style="font-size: 0.75rem;" onclick="window.open('https://wa.me/${c.tel.replace(/\D/g,'')}?text=Hola, vi ${p.nom} en la página')">💬 CONSULTAR</button>
-                                <button class="btn btn-dark" style="font-size: 0.75rem;" onclick="verTienda('${c.nombre.replace(/'/g, "\\'")}')">🏪 VER TIENDA</button>
-                            </div>
-                            <button class="btn btn-primary" style="width: 100%; margin-top: 5px; font-size: 0.8rem;" onclick="window.open('${linkMapa}', '_blank')">🚀 CÓMO LLEGAR</button>
-                        </div>
-                    </div>`;
-                });
-            }
-        });
+            });
+        }
+    });
+    
+    if (res.innerHTML === "") res.innerHTML = "<p style='grid-column: 1/-1; text-align:center; padding:50px; color:#999;'>No se encontraron resultados.</p>";
+}
         
         if (res.innerHTML === "") res.innerHTML = "<p style='grid-column: 1/-1; text-align:center; padding:50px; color:#999;'>No se encontraron resultados.</p>";
     }
@@ -249,27 +289,78 @@
     }
 
     // --- GESTIÓN DE TIENDA Y ADMIN (IGUAL QUE ANTES) ---
-    function registrarTienda() {
-        const n = document.getElementById('reg-nombre').value.trim();
-        const r = document.getElementById('reg-rubro').value;
-        const p = document.getElementById('reg-pass').value;
-        if(!n || !p) return alert("Faltan datos");
-        db.comercios.push({ id: Date.now(), nombre: n, rubro: r, pass: p, estado: 'pendiente', tel:'', dir:'', imgLocal:'', hor:'', prods:[] });
-        salvar(); alert("Solicitud enviada."); cerrarModal('modal-registro');
-    }
+ function registrarTienda() {
+    const email = document.getElementById('reg-email').value.trim(); // Necesitas añadir este input en tu HTML
+    const n = document.getElementById('reg-nombre').value.trim();
+    const r = document.getElementById('reg-rubro').value;
+    const p = document.getElementById('reg-pass').value;
+
+    if(!email || !n || !p) return alert("Por favor, completa todos los campos.");
+
+    // 1. Creamos el usuario en la sección de Autenticación de Firebase
+    auth.createUserWithEmailAndPassword(email, p)
+    .then((userCredential) => {
+        const user = userCredential.user;
+        
+        // 2. Guardamos los datos de la tienda en la Base de Datos vinculados a su UID
+        const nuevaTienda = {
+            id: user.uid,
+            nombre: n,
+            rubro: r,
+            estado: 'pendiente', // Sigue necesitando tu aprobación en el panel Admin
+            tel: '',
+            dir: '',
+            imgLocal: '',
+            hor: '',
+            prods: []
+        };
+
+        // Guardar en Firebase
+        firebase.database().ref('comercios/' + user.uid).set(nuevaTienda)
+        .then(() => {
+            alert("¡Solicitud enviada con éxito! Espera a que el administrador la apruebe.");
+            cerrarModal('modal-registro');
+        });
+    })
+    .catch((error) => {
+        alert("Error al registrar: " + error.message);
+    });
+}
 
     function accederTienda() {
-        const n = document.getElementById('log-nombre').value.trim().toLowerCase();
-        const p = document.getElementById('log-pass').value;
-        const c = db.comercios.find(i => i.nombre.toLowerCase() === n && i.pass === p);
-        if(!c) return alert("Datos incorrectos");
-        if(c.estado !== 'activo') return alert("Tu tienda está pendiente de aprobación.");
-        tActiva = c;
-        document.getElementById('lbl-nombre-tienda').innerText = "Panel: " + c.nombre;
-        document.getElementById('t-tel').value = c.tel; document.getElementById('t-dir').value = c.dir;
-        document.getElementById('t-img').value = c.imgLocal; document.getElementById('t-hor').value = c.hor;
-        renderProds(); cerrarModal('modal-login'); abrirModal('modal-panel-tienda');
-    }
+    const email = document.getElementById('log-email').value.trim(); // Cambia el input de nombre por email
+    const p = document.getElementById('log-pass').value;
+
+    auth.signInWithEmailAndPassword(email, p)
+    .then((userCredential) => {
+        const user = userCredential.user;
+        
+        // Buscamos los datos de esa tienda específica en la base de datos
+        firebase.database().ref('comercios/' + user.uid).once('value')
+        .then((snapshot) => {
+            const c = snapshot.val();
+            
+            if(!c) return alert("No se encontraron datos de la tienda.");
+            if(c.estado !== 'activo') return alert("Tu tienda aún está pendiente de aprobación.");
+
+            tActiva = c; // Guardamos la tienda actual en memoria
+            
+            // Llenamos el panel con sus datos
+            document.getElementById('lbl-nombre-tienda').innerText = "Panel: " + c.nombre;
+            document.getElementById('t-tel').value = c.tel || "";
+            document.getElementById('t-dir').value = c.dir || "";
+            document.getElementById('t-img').value = c.imgLocal || "";
+            document.getElementById('t-hor').value = c.hor || "";
+            
+            renderProds();
+            cerrarModal('modal-login');
+            abrirModal('modal-panel-tienda');
+        });
+    })
+    .catch((error) => {
+        alert("Acceso denegado: " + error.message);
+    });
+}
 
     function obtenerGPS() {
         navigator.geolocation.getCurrentPosition(p => { 
