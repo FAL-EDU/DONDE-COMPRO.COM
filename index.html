@@ -67,7 +67,7 @@
     </div>
 
     <div class="search-box">
-        <input type="text" id="main-search" placeholder="¿Qué buscas? (Ej: Pan, Coca Cola, Farmacia...)" onkeyup="if(event.key==='Enter') buscar()">
+        <input type="text" id="main-search" placeholder="¿Qué buscas? (Ej: Pan, Coca Cola...)" onkeyup="if(event.key==='Enter') buscar()">
         <select id="search-rubro"><option value="">Todos los rubros</option></select>
         <button class="btn btn-secondary" onclick="buscar()">BUSCAR</button>
     </div>
@@ -107,7 +107,7 @@
             <div style="background:#f8f9fa; padding:20px; border-radius:15px;">
                 <h4>📍 Datos del Local</h4><br>
                 <label>WhatsApp (Sin espacios):</label><input type="text" id="t-tel" placeholder="Ej: 5493871234567">
-                <label>Dirección:</label>
+                <label>Dirección o Coordenadas:</label>
                 <div style="display:flex; gap:5px;"><input type="text" id="t-dir" placeholder="Calle o Coordenadas"><button class="btn btn-dark" onclick="obtenerGPS()">📍</button></div>
                 <label>URL Foto Local:</label><input type="text" id="t-img">
                 <label>Horarios:</label><input type="text" id="t-hor" placeholder="Ej: Lunes a Sábados 08:00 a 21:00">
@@ -143,7 +143,7 @@
                 <div id="adm-rubros-list"></div>
             </section>
             <section style="background:#f9f9f9; padding:20px; border-radius:15px;">
-                <h4>🏪 Comercios Registrados</h4>
+                <h4>🏪 Gestión de Comercios</h4>
                 <div id="adm-comercios-list"></div>
             </section>
         </div>
@@ -178,6 +178,7 @@
         document.getElementById('reg-rubro').innerHTML = options;
     }
 
+    // --- BÚSQUEDA CON RUTA INTEGRADA ---
     function buscar() {
         const q = document.getElementById('main-search').value.toLowerCase();
         const r = document.getElementById('search-rubro').value;
@@ -186,6 +187,7 @@
 
         db.comercios.filter(c => c.estado === 'activo').forEach(c => {
             const matchRubro = !r || c.rubro === r;
+            const linkMapa = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(c.dir)}`;
 
             if ((c.nombre.toLowerCase().includes(q) || c.rubro.toLowerCase().includes(q) || q === '') && matchRubro) {
                 res.innerHTML += `
@@ -195,9 +197,9 @@
                         <div class="card-title">${c.nombre} <small style="font-size:0.7rem; color:#999;">(${c.rubro})</small></div>
                         <div class="card-info">📍 ${c.dir || 'Sin dirección'}</div>
                         <div class="card-info">📞 ${c.tel || 'Sin WhatsApp'}</div>
-                        <div class="card-info">⏰ ${c.hor || 'Sin horario cargado'}</div>
+                        <div class="card-info">⏰ ${c.hor || 'Consultar horario'}</div>
                         <br>
-                        <button class="btn btn-primary" style="width:100%" onclick="window.open('https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.dir)}')">📍 CÓMO LLEGAR</button>
+                        <button class="btn btn-primary" style="width:100%" onclick="window.open('${linkMapa}')">🚀 CÓMO LLEGAR (RUTA)</button>
                     </div>
                 </div>`;
             }
@@ -210,18 +212,15 @@
                         <div class="card-content">
                             <div class="card-title">${p.nom}</div>
                             <div class="price-tag">$${p.pre}</div>
-                            
                             <div style="background: #f1f1f1; padding: 10px; border-radius: 10px; margin-top: 10px; border-left: 3px solid var(--primary);">
                                 <p style="font-size: 0.75rem; font-weight: 600; color: #333; margin-bottom: 5px;">🏪 TIENDA: ${c.nombre}</p>
-                                <div class="card-info" style="font-size: 0.7rem;">🏷️ <b>Rubro:</b> ${c.rubro}</div>
                                 <div class="card-info" style="font-size: 0.7rem;">📍 <b>Dir:</b> ${c.dir || 'S/D'}</div>
                                 <div class="card-info" style="font-size: 0.7rem;">⏰ <b>Horario:</b> ${c.hor || 'S/H'}</div>
-                                <div class="card-info" style="font-size: 0.7rem;">📞 <b>WhatsApp:</b> ${c.tel || 'S/T'}</div>
+                                <div class="card-info" style="font-size: 0.7rem;">📞 <b>Tel:</b> ${c.tel || 'S/T'}</div>
                             </div>
-                            
                             <div style="display: flex; gap: 5px; margin-top: 15px;">
-                                <button class="btn btn-secondary" style="flex: 1; font-size: 0.8rem;" onclick="window.open('https://wa.me/${c.tel.replace(/\D/g,'')}?text=Hola, vi el producto ${p.nom} en DondeCompro.com. ¿Tienen stock?')">💬 CONSULTAR</button>
-                                <button class="btn btn-dark" style="flex: 1; font-size: 0.8rem;" onclick="window.open('https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.dir)}')">📍 LLEGAR</button>
+                                <button class="btn btn-secondary" style="flex: 1; font-size: 0.8rem;" onclick="window.open('https://wa.me/${c.tel.replace(/\D/g,'')}?text=Hola, vi el producto ${p.nom}. ¿Tienen stock?')">💬 WHATSAPP</button>
+                                <button class="btn btn-dark" style="flex: 1; font-size: 0.8rem;" onclick="window.open('${linkMapa}')">📍 RUTA</button>
                             </div>
                         </div>
                     </div>`;
@@ -231,13 +230,14 @@
         if (res.innerHTML === "") res.innerHTML = "<p style='grid-column: 1/-1; text-align:center; padding:50px;'>No se encontraron resultados.</p>";
     }
 
+    // --- SEGURIDAD Y REGISTRO ---
     function registrarTienda() {
         const n = document.getElementById('reg-nombre').value.trim();
         const r = document.getElementById('reg-rubro').value;
         const p = document.getElementById('reg-pass').value;
-        if(!n || !p) return alert("Nombre y Contraseña obligatorios");
+        if(!n || !p) return alert("Faltan datos");
         db.comercios.push({ id: Date.now(), nombre: n, rubro: r, pass: p, estado: 'pendiente', tel:'', dir:'', imgLocal:'', hor:'', prods:[] });
-        salvar(); alert("Solicitud enviada con éxito."); cerrarModal('modal-registro');
+        salvar(); alert("Solicitud enviada."); cerrarModal('modal-registro');
     }
 
     function accederTienda() {
@@ -245,7 +245,7 @@
         const p = document.getElementById('log-pass').value;
         const c = db.comercios.find(i => i.nombre.toLowerCase() === n && i.pass === p);
         if(!c) return alert("Datos incorrectos");
-        if(c.estado !== 'activo') return alert("Tu tienda aún no ha sido aprobada.");
+        if(c.estado !== 'activo') return alert("Tu tienda está pendiente de aprobación.");
         tActiva = c;
         document.getElementById('lbl-nombre-tienda').innerText = "Panel: " + c.nombre;
         document.getElementById('t-tel').value = c.tel; document.getElementById('t-dir').value = c.dir;
@@ -253,6 +253,7 @@
         renderProds(); cerrarModal('modal-login'); abrirModal('modal-panel-tienda');
     }
 
+    // --- PANEL TIENDA ---
     function obtenerGPS() {
         navigator.geolocation.getCurrentPosition(p => { 
             document.getElementById('t-dir').value = p.coords.latitude.toFixed(6) + ", " + p.coords.longitude.toFixed(6); 
@@ -261,12 +262,12 @@
     function guardarPerfilTienda() {
         tActiva.tel = document.getElementById('t-tel').value; tActiva.dir = document.getElementById('t-dir').value;
         tActiva.imgLocal = document.getElementById('t-img').value; tActiva.hor = document.getElementById('t-hor').value;
-        salvar(); alert("Perfil actualizado");
+        salvar(); alert("Perfil guardado");
     }
     function guardarProducto() {
         const nom = document.getElementById('p-nom').value; const pre = document.getElementById('p-pre').value;
         const img = document.getElementById('p-img').value; const idx = parseInt(document.getElementById('p-idx').value);
-        if(!nom || !pre) return alert("Faltan datos del producto");
+        if(!nom || !pre) return alert("Faltan datos");
         const prod = { nom, pre, img: img || 'https://via.placeholder.com/300?text=Producto' };
         if(idx === -1) tActiva.prods.push(prod); else tActiva.prods[idx] = prod;
         document.getElementById('p-nom').value = ''; document.getElementById('p-pre').value = '';
@@ -289,7 +290,7 @@
     }
     function delP(i) { if(confirm("¿Borrar?")) { tActiva.prods.splice(i,1); salvar(); renderProds(); } }
 
-    // --- ADMINISTRACIÓN ---
+    // --- ADMIN CENTRAL (CON BOTÓN APROBAR FUNCIONAL) ---
     function abrirAdmin() {
         document.getElementById('adm-name').value = db.config.name;
         document.getElementById('adm-slogan').value = db.config.slogan;
@@ -311,17 +312,14 @@
     }
     function renderComerciosAdmin() {
         document.getElementById('adm-comercios-list').innerHTML = db.comercios.map(c => `
-        <div style="padding:10px; background:#fff; margin-bottom:10px; border-radius:10px; font-size:0.8rem; border:1px solid #ddd;">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <div>
-                    <b>${c.nombre}</b><br>
-                    <span>Rubro: ${c.rubro}</span><br>
-                    <span style="color:${c.estado === 'activo' ? 'green' : 'orange'}">Estado: ${c.estado.toUpperCase()}</span>
-                </div>
-                <div style="display:flex; gap:5px;">
-                    ${c.estado === 'pendiente' ? `<button class="btn btn-secondary" style="padding:5px 10px; font-size:0.7rem;" onclick="aprobarC(${c.id})">APROBAR</button>` : ''}
-                    <button class="btn btn-danger" style="padding:5px 10px; font-size:0.7rem;" onclick="borrarC(${c.id})">ELIMINAR</button>
-                </div>
+        <div style="padding:10px; background:#fff; margin-bottom:10px; border-radius:10px; font-size:0.8rem; border:1px solid #ddd; display:flex; justify-content:space-between; align-items:center;">
+            <div>
+                <b>${c.nombre}</b> (${c.rubro})<br>
+                <span style="color:${c.estado==='activo'?'green':'orange'}">Estado: ${c.estado.toUpperCase()}</span>
+            </div>
+            <div style="display:flex; gap:5px;">
+                ${c.estado === 'pendiente' ? `<button class="btn btn-secondary" style="padding:5px;" onclick="aprobarC(${c.id})">APROBAR</button>` : ''}
+                <button class="btn btn-danger" style="padding:5px;" onclick="borrarC(${c.id})">✕</button>
             </div>
         </div>`).join('');
     }
@@ -329,7 +327,7 @@
         const c = db.comercios.find(i => i.id === id);
         if(c) { c.estado = 'activo'; salvar(); renderComerciosAdmin(); alert("Comercio aprobado."); }
     }
-    function borrarC(id) { if(confirm("¿Eliminar comercio?")) { db.comercios = db.comercios.filter(i => i.id !== id); salvar(); renderComerciosAdmin(); } }
+    function borrarC(id) { if(confirm("¿Eliminar?")) { db.comercios = db.comercios.filter(i => i.id !== id); salvar(); renderComerciosAdmin(); } }
 </script>
 </body>
 </html>
