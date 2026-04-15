@@ -68,7 +68,7 @@
 
     <div class="search-box">
         <input type="text" id="main-search" placeholder="¿Qué buscas? (Ej: Pan, Coca Cola...)" onkeyup="if(event.key==='Enter') buscar()">
-        <select id="search-rubro" onchange="buscar()"><option value="">Todos los rubros</option></select>
+        <select id="search-rubro"><option value="">Todos los rubros</option></select>
         <button class="btn btn-secondary" onclick="buscar()">BUSCAR</button>
     </div>
 
@@ -91,7 +91,7 @@
         <h3>Solicitud de Registro</h3><br>
         <label>Nombre del Comercio:</label><input type="text" id="reg-nombre">
         <label>Rubro:</label><select id="reg-rubro"></select>
-        <label>Crea tu Contraseña:</label><input type="password" id="reg-pass">
+        <label>Crea tu Contraseña:</label><input type="password" id="reg-pass" placeholder="Mínimo 4 caracteres">
         <button class="btn btn-primary" style="width:100%" onclick="registrarTienda()">Enviar Solicitud</button>
         <button class="btn" style="width:100%; margin-top:10px" onclick="cerrarModal('modal-registro')">Volver</button>
     </div>
@@ -106,21 +106,21 @@
         <div class="grid-2">
             <div style="background:#f8f9fa; padding:20px; border-radius:15px;">
                 <h4>📍 Datos del Local</h4><br>
-                <label>WhatsApp:</label><input type="text" id="t-tel">
-                <label>Dirección/Coordenadas:</label>
-                <div style="display:flex; gap:5px;"><input type="text" id="t-dir"><button class="btn btn-dark" onclick="obtenerGPS()">📍</button></div>
+                <label>WhatsApp (Sin espacios):</label><input type="text" id="t-tel" placeholder="Ej: 5493871234567">
+                <label>Dirección o Coordenadas:</label>
+                <div style="display:flex; gap:5px;"><input type="text" id="t-dir" placeholder="Calle o Coordenadas"><button class="btn btn-dark" onclick="obtenerGPS()">📍</button></div>
                 <label>URL Foto Local:</label><input type="text" id="t-img">
-                <label>Horarios:</label><input type="text" id="t-hor">
+                <label>Horarios:</label><input type="text" id="t-hor" placeholder="Ej: Lunes a Sábados 08:00 a 21:00">
                 <button class="btn btn-primary" style="width:100%" onclick="guardarPerfilTienda()">Guardar Perfil</button>
             </div>
             <div style="background:#fff; border:1px solid #eee; padding:20px; border-radius:15px;">
                 <h4>📦 Mis Productos</h4><br>
                 <div style="background:#eee; padding:15px; border-radius:10px; margin-bottom:20px;">
                     <input type="hidden" id="p-idx" value="-1">
-                    <input type="text" id="p-nom" placeholder="Producto">
+                    <input type="text" id="p-nom" placeholder="Nombre Producto">
                     <input type="number" id="p-pre" placeholder="Precio $">
-                    <input type="text" id="p-img" placeholder="URL Foto">
-                    <button class="btn btn-secondary" style="width:100%" onclick="guardarProducto()">Guardar</button>
+                    <input type="text" id="p-img" placeholder="URL Foto Producto">
+                    <button class="btn btn-secondary" style="width:100%" onclick="guardarProducto()">Guardar Producto</button>
                 </div>
                 <div id="t-lista-prods" style="max-height: 300px; overflow-y: auto;"></div>
             </div>
@@ -143,7 +143,7 @@
                 <div id="adm-rubros-list"></div>
             </section>
             <section style="background:#f9f9f9; padding:20px; border-radius:15px;">
-                <h4>🏪 Gestión Comercios</h4>
+                <h4>🏪 Gestión de Comercios</h4>
                 <div id="adm-comercios-list"></div>
             </section>
         </div>
@@ -160,12 +160,7 @@
     let tActiva = null;
 
     function salvar() { localStorage.setItem('donde_compro_db', JSON.stringify(db)); }
-    
-    window.onload = () => { 
-        aplicarConfig(); 
-        actualizarSelects(); 
-        document.getElementById('results-area').innerHTML = "<p style='grid-column: 1/-1; text-align:center; padding:50px; color:#666;'>Busca un producto o selecciona un rubro.</p>";
-    };
+    window.onload = () => { aplicarConfig(); actualizarSelects(); };
 
     function abrirModal(id) { document.getElementById(id).style.display = 'flex'; }
     function cerrarModal(id) { document.getElementById(id).style.display = 'none'; }
@@ -183,72 +178,62 @@
         document.getElementById('reg-rubro').innerHTML = options;
     }
 
-    // --- FUNCIÓN DE BÚSQUEDA INTEGRADA: LIMPIEZA + MAPAS ---
+    // --- BÚSQUEDA E INTEGRACIÓN DE MAPAS MEJORADA ---
     function buscar() {
         const q = document.getElementById('main-search').value.toLowerCase();
         const r = document.getElementById('search-rubro').value;
         const res = document.getElementById('results-area');
-        
-        // 1. LIMPIEZA TOTAL: Vacía el panel al inicio
         res.innerHTML = "";
 
-        // 2. Filtrar comercios activos
-        const comerciosFiltrados = db.comercios.filter(c => {
-            const coincideRubro = !r || c.rubro === r;
-            const coincideNombreTienda = q === "" ? true : c.nombre.toLowerCase().includes(q);
-            return c.estado === 'activo' && coincideRubro && coincideNombreTienda;
-        });
+        db.comercios.filter(c => c.estado === 'activo').forEach(c => {
+            const matchRubro = !r || c.rubro === r;
 
-        // 3. Renderizar Comercios
-        comerciosFiltrados.forEach(c => {
+            // Lógica de destino infalible para internet (Rosario de la Frontera como base)
             const esCoordenada = /[0-9]/.test(c.dir) && c.dir.includes(",");
-            const direccionFinal = esCoordenada ? c.dir : `${c.dir}, Rosario de la Frontera, Salta, Argentina`;
-            const linkMapa = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(direccionFinal)}`;
+            const destinoFinal = esCoordenada ? c.dir : `${c.dir}, Rosario de la Frontera, Salta, Argentina`;
+            const linkMapa = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destinoFinal)}`;
 
-            res.innerHTML += `
-            <div class="card">
-                <img class="card-img" src="${c.imgLocal || 'https://via.placeholder.com/400x200?text=Comercio'}">
-                <div class="card-content">
-                    <div class="card-title">${c.nombre} <small style="font-size:0.7rem; color:#999;">(${c.rubro})</small></div>
-                    <div class="card-info">📍 ${c.dir || 'Sin dirección'}</div>
-                    <div class="card-info">⏰ ${c.hor || 'Consultar horario'}</div>
-                    <br>
-                    <button class="btn btn-primary" style="width:100%" onclick="window.open('${linkMapa}', '_blank')">🚀 TRAZAR RUTA</button>
-                </div>
-            </div>`;
-        });
+            if ((c.nombre.toLowerCase().includes(q) || c.rubro.toLowerCase().includes(q) || q === '') && matchRubro) {
+                res.innerHTML += `
+                <div class="card">
+                    <img class="card-img" src="${c.imgLocal || 'https://via.placeholder.com/400x200?text=Comercio'}">
+                    <div class="card-content">
+                        <div class="card-title">${c.nombre} <small style="font-size:0.7rem; color:#999;">(${c.rubro})</small></div>
+                        <div class="card-info">📍 ${c.dir || 'Sin dirección'}</div>
+                        <div class="card-info">📞 ${c.tel || 'Sin WhatsApp'}</div>
+                        <div class="card-info">⏰ ${c.hor || 'Consultar horario'}</div>
+                        <br>
+                        <button class="btn btn-primary" style="width:100%" onclick="window.open('${linkMapa}')">🚀 TRAZAR RUTA</button>
+                    </div>
+                </div>`;
+            }
 
-        // 4. Renderizar Productos
-        if (q !== "") {
-            db.comercios.filter(c => c.estado === 'activo' && (!r || c.rubro === r)).forEach(c => {
+            if (q !== '') {
                 c.prods.filter(p => p.nom.toLowerCase().includes(q)).forEach(p => {
-                    const esCoordenada = /[0-9]/.test(c.dir) && c.dir.includes(",");
-                    const direccionFinal = esCoordenada ? c.dir : `${c.dir}, Rosario de la Frontera, Salta, Argentina`;
-                    const linkMapa = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(direccionFinal)}`;
-
                     res.innerHTML += `
                     <div class="card" style="border-top-color: var(--secondary);">
                         <img class="card-img" src="${p.img || 'https://via.placeholder.com/400x200?text=Producto'}">
                         <div class="card-content">
                             <div class="card-title">${p.nom}</div>
                             <div class="price-tag">$${p.pre}</div>
-                            <div style="background: #f1f1f1; padding: 10px; border-radius: 10px; margin-top: 10px;">
-                                <p style="font-size: 0.75rem; font-weight: 600;">🏪 ${c.nombre}</p>
+                            <div style="background: #f1f1f1; padding: 10px; border-radius: 10px; margin-top: 10px; border-left: 3px solid var(--primary);">
+                                <p style="font-size: 0.75rem; font-weight: 600; color: #333; margin-bottom: 5px;">🏪 TIENDA: ${c.nombre}</p>
+                                <div class="card-info" style="font-size: 0.7rem;">📍 <b>Dirección:</b> ${c.dir || 'S/D'}</div>
+                                <div class="card-info" style="font-size: 0.7rem;">📞 <b>WhatsApp:</b> ${c.tel || 'S/T'}</div>
                             </div>
                             <div style="display: flex; gap: 5px; margin-top: 15px;">
-                                <button class="btn btn-secondary" style="flex: 1;" onclick="window.open('https://wa.me/${c.tel.replace(/\D/g,'')}?text=Hola, consulto por ${p.nom}')">💬 WHATSAPP</button>
-                                <button class="btn btn-dark" style="flex: 1;" onclick="window.open('${linkMapa}', '_blank')">📍 RUTA</button>
+                                <button class="btn btn-secondary" style="flex: 1; font-size: 0.8rem;" onclick="window.open('https://wa.me/${c.tel.replace(/\D/g,'')}?text=Hola, vi el producto ${p.nom} en la página. ¿Tienen stock?')">💬 CONSULTAR</button>
+                                <button class="btn btn-dark" style="flex: 1; font-size: 0.8rem;" onclick="window.open('${linkMapa}')">📍 RUTA</button>
                             </div>
                         </div>
                     </div>`;
                 });
-            });
-        }
-
-        if (res.innerHTML === "") res.innerHTML = "<p style='grid-column: 1/-1; text-align:center; padding:50px; color:#999;'>No hay resultados para esta búsqueda.</p>";
+            }
+        });
+        if (res.innerHTML === "") res.innerHTML = "<p style='grid-column: 1/-1; text-align:center; padding:50px;'>No se encontraron resultados.</p>";
     }
 
-    // --- GESTIÓN GENERAL (REGISTRO, ACCESO, ADMIN) ---
+    // --- GESTIÓN DE TIENDA ---
     function registrarTienda() {
         const n = document.getElementById('reg-nombre').value.trim();
         const r = document.getElementById('reg-rubro').value;
@@ -263,7 +248,7 @@
         const p = document.getElementById('log-pass').value;
         const c = db.comercios.find(i => i.nombre.toLowerCase() === n && i.pass === p);
         if(!c) return alert("Datos incorrectos");
-        if(c.estado !== 'activo') return alert("Tienda pendiente de aprobación.");
+        if(c.estado !== 'activo') return alert("Tu tienda está pendiente de aprobación.");
         tActiva = c;
         document.getElementById('lbl-nombre-tienda').innerText = "Panel: " + c.nombre;
         document.getElementById('t-tel').value = c.tel; document.getElementById('t-dir').value = c.dir;
@@ -274,15 +259,13 @@
     function obtenerGPS() {
         navigator.geolocation.getCurrentPosition(p => { 
             document.getElementById('t-dir').value = p.coords.latitude.toFixed(6) + ", " + p.coords.longitude.toFixed(6); 
-        }, () => alert("Activa el GPS"));
+        }, () => alert("Activa el GPS en tu dispositivo"));
     }
-
     function guardarPerfilTienda() {
         tActiva.tel = document.getElementById('t-tel').value; tActiva.dir = document.getElementById('t-dir').value;
         tActiva.imgLocal = document.getElementById('t-img').value; tActiva.hor = document.getElementById('t-hor').value;
-        salvar(); alert("Perfil guardado");
+        salvar(); alert("Perfil guardado con éxito");
     }
-
     function guardarProducto() {
         const nom = document.getElementById('p-nom').value; const pre = document.getElementById('p-pre').value;
         const img = document.getElementById('p-img').value; const idx = parseInt(document.getElementById('p-idx').value);
@@ -293,7 +276,6 @@
         document.getElementById('p-img').value = ''; document.getElementById('p-idx').value = '-1';
         salvar(); renderProds();
     }
-
     function renderProds() {
         document.getElementById('t-lista-prods').innerHTML = tActiva.prods.map((p, i) => `
         <div class="admin-prod-item">
@@ -303,38 +285,33 @@
             <button class="btn btn-danger" onclick="delP(${i})">✕</button>
         </div>`).join('');
     }
-
     function editP(i) {
         const p = tActiva.prods[i]; document.getElementById('p-nom').value = p.nom;
         document.getElementById('p-pre').value = p.pre; document.getElementById('p-img').value = p.img;
         document.getElementById('p-idx').value = i;
     }
-
     function delP(i) { if(confirm("¿Borrar?")) { tActiva.prods.splice(i,1); salvar(); renderProds(); } }
 
+    // --- ADMIN CENTRAL ---
     function abrirAdmin() {
         document.getElementById('adm-name').value = db.config.name;
         document.getElementById('adm-slogan').value = db.config.slogan;
         document.getElementById('adm-logo').value = db.config.logo;
         renderRubrosAdmin(); renderComerciosAdmin(); abrirModal('modal-admin');
     }
-
     function guardarConfigSitio() {
         db.config.name = document.getElementById('adm-name').value;
         db.config.slogan = document.getElementById('adm-slogan').value;
         db.config.logo = document.getElementById('adm-logo').value;
-        salvar(); aplicarConfig(); alert("Ajustes guardados");
+        salvar(); aplicarConfig(); alert("Cambios de identidad guardados");
     }
-
     function agregarRubro() {
         const r = document.getElementById('adm-new-rubro').value;
         if(r) { db.rubros.push(r); document.getElementById('adm-new-rubro').value = ''; salvar(); renderRubrosAdmin(); actualizarSelects(); }
     }
-
     function renderRubrosAdmin() {
         document.getElementById('adm-rubros-list').innerHTML = db.rubros.map((r, i) => `<div style="display:flex; justify-content:space-between; padding:5px; background:#fff; margin-bottom:5px; border-radius:5px;">${r} <span onclick="db.rubros.splice(${i},1); salvar(); renderRubrosAdmin(); actualizarSelects();" style="color:red; cursor:pointer;">✕</span></div>`).join('');
     }
-
     function renderComerciosAdmin() {
         document.getElementById('adm-comercios-list').innerHTML = db.comercios.map(c => `
         <div style="padding:10px; background:#fff; margin-bottom:10px; border-radius:10px; font-size:0.8rem; border:1px solid #ddd; display:flex; justify-content:space-between; align-items:center;">
@@ -348,14 +325,11 @@
             </div>
         </div>`).join('');
     }
-
     function aprobarC(id) {
         const c = db.comercios.find(i => i.id === id);
-        if(c) { c.estado = 'activo'; salvar(); renderComerciosAdmin(); alert("Aprobado."); }
+        if(c) { c.estado = 'activo'; salvar(); renderComerciosAdmin(); alert("El comercio ha sido aprobado exitosamente."); }
     }
-
-    function borrarC(id) { if(confirm("¿Eliminar?")) { db.comercios = db.comercios.filter(i => i.id !== id); salvar(); renderComerciosAdmin(); } }
+    function borrarC(id) { if(confirm("¿Eliminar comercio definitivamente?")) { db.comercios = db.comercios.filter(i => i.id !== id); salvar(); renderComerciosAdmin(); } }
 </script>
 </body>
 </html>
-
