@@ -11,206 +11,200 @@
         body { font-family: 'Poppins', sans-serif; background-color: var(--bg); color: #333; line-height: 1.6; }
         header { background: #fff; padding: 15px 5%; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 1000; }
         .logo-area { display: flex; align-items: center; gap: 10px; }
-        .logo-area img { height: 45px; border-radius: 5px; }
-        .btn { padding: 8px 15px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: 0.3s; font-size: 0.9rem; }
-        .btn-primary { background: var(--primary); color: #fff; }
-        .btn-secondary { background: var(--secondary); color: #fff; }
-        .btn-danger { background: var(--danger); color: #fff; }
-        .container { max-width: 1000px; margin: 20px auto; padding: 0 20px; }
-        .hero { text-align: center; padding: 40px 20px; background: linear-gradient(135deg, #0056b3, #00aaff); color: white; border-radius: 20px; margin-bottom: 30px; }
-        .search-box { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); display: flex; flex-wrap: wrap; gap: 10px; }
-        input, select { flex: 1; min-width: 200px; padding: 12px; border: 1px solid #ddd; border-radius: 8px; }
-        #results { margin-top: 20px; display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
-        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); border-left: 5px solid var(--primary); }
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; align-items: center; justify-content: center; overflow-y: auto; }
-        .modal-content { background: white; padding: 30px; border-radius: 20px; width: 90%; max-width: 500px; }
-        .admin-panel { display: none; background: #fff; border: 2px solid var(--primary); padding: 20px; border-radius: 20px; margin-top: 20px; }
+        .btn { padding: 10px 18px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; transition: 0.2s; display: inline-flex; align-items: center; gap: 5px; text-decoration: none; justify-content: center; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-secondary { background: var(--secondary); color: white; }
+        .btn-dark { background: #333; color: white; }
+        .btn-danger { background: var(--danger); color: white; }
+        .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
+        .search-box { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 5px 25px rgba(0,0,0,0.05); display: flex; gap: 10px; margin-bottom: 40px; flex-wrap: wrap; }
+        .search-box input { flex: 3; min-width: 250px; padding: 12px; border: 1px solid #ddd; border-radius: 8px; }
+        .search-box select { flex: 1; min-width: 150px; padding: 12px; border: 1px solid #ddd; border-radius: 8px; }
+        .results-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 25px; }
+        .card { background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.08); border-top: 5px solid var(--primary); transition: 0.2s; }
+        .card:hover { transform: translateY(-5px); }
+        .card-content { padding: 20px; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 2000; justify-content: center; align-items: center; padding: 20px; }
+        .modal-content { background: white; padding: 30px; border-radius: 20px; width: 100%; max-width: 900px; max-height: 90vh; overflow-y: auto; }
+        input, select { width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 8px; }
+        .admin-panel { display: none; margin-top: 20px; border: 2px solid var(--primary); padding: 20px; border-radius: 15px; background: white; }
     </style>
 </head>
 <body>
 
 <header>
     <div class="logo-area">
-        <img id="header-logo" src="https://via.placeholder.com/45" alt="Logo">
-        <h2 id="header-title">DONDECOMPRO.COM</h2>
+        <h1 id="header-title">DÓNDE COMPRO.COM</h1>
     </div>
-    <div style="display:flex; gap:10px;">
-        <button class="btn btn-secondary" onclick="abrirAdmin()">⚙️ ADMIN</button>
-        <button class="btn btn-primary" onclick="abrirModal('modal-registro')">REGISTRAR MI TIENDA</button>
+    <div style="display: flex; gap: 10px;">
+        <button class="btn btn-dark" onclick="abrirAdmin()"> ⚙️ ADMIN</button>
+        <button class="btn btn-primary" onclick="abrirModal('modal-registro')"> 🏪 REGISTRAR TIENDA</button>
     </div>
 </header>
 
-<div class="container">
-    <div class="hero">
-        <h1 id="hero-title">¿Qué buscas hoy?</h1>
-        <p id="hero-slogan">Encuentra los mejores comercios cerca de ti</p>
-    </div>
-
+<main class="container">
     <div class="search-box">
-        <input type="text" id="search-query" placeholder="Ej: Panadería, Ferretería...">
-        <select id="search-rubro"><option value="">Cargando rubros...</option></select>
-        <button class="btn btn-primary" onclick="buscar()" style="width: 100%;">BUSCAR AHORA</button>
+        <input type="text" id="main-search" placeholder="¿Qué buscas? (Ej: Pan, Ferretería...)" onkeyup="if(event.key==='Enter') buscar()">
+        <select id="search-rubro"><option value="">Todos los rubros</option></select>
+        <button class="btn btn-secondary" onclick="buscar()">BUSCAR</button>
     </div>
-
-    <div id="results"></div>
+    <div id="results-area" class="results-grid"></div>
 
     <div id="admin-panel" class="admin-panel">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-            <h3>Panel de Control Especial</h3>
+        <div style="display:flex; justify-content:space-between;">
+            <h3>Panel de Control</h3>
             <button class="btn btn-danger" onclick="cerrarAdmin()">Cerrar</button>
-        </div>
-        <h4>Gestión de Rubros</h4>
-        <div style="display:flex; gap:10px; margin-bottom:15px;">
-            <input type="text" id="nuevo-rubro" placeholder="Nombre del rubro...">
-            <button class="btn btn-primary" onclick="agregarRubro()">Añadir</button>
-        </div>
-        <div id="adm-rubros-list" style="margin-bottom:20px;"></div>
-        <h4>Comercios Registrados</h4>
+        </div><br>
+        <h4>Rubros</h4>
+        <div style="display:flex; gap:5px;"><input type="text" id="new-rubro"><button class="btn btn-primary" onclick="addRubro()">+</button></div>
+        <div id="adm-rubros-list" style="margin: 10px 0;"></div>
+        <hr><br>
+        <h4>Comercios Pendientes/Activos</h4>
         <div id="adm-comercios-list"></div>
     </div>
-</div>
+</main>
 
 <div id="modal-registro" class="modal">
-    <div class="modal-content">
-        <h3>Únete a DondeCompro.com</h3><br>
-        <input type="email" id="reg-email" placeholder="Email" style="width:100%; margin-bottom:10px;">
-        <input type="password" id="reg-pass" placeholder="Contraseña" style="width:100%; margin-bottom:10px;">
-        <hr><br>
-        <input type="text" id="reg-nombre" placeholder="Nombre del Comercio" style="width:100%; margin-bottom:10px;">
-        <select id="reg-rubro" style="width:100%; margin-bottom:10px;"></select>
-        <div style="display:flex; gap:5px; margin-bottom:10px;">
+    <div class="modal-content" style="max-width: 450px;">
+        <h3>Registro de Comercio</h3><br>
+        <input type="email" id="reg-email" placeholder="Email">
+        <input type="password" id="reg-pass" placeholder="Contraseña (mín. 6 caracteres)">
+        <input type="text" id="reg-nombre" placeholder="Nombre del Comercio">
+        <select id="reg-rubro-select"></select>
+        <div style="display:flex; gap:5px;">
             <input type="text" id="reg-lat" placeholder="Latitud" readonly>
             <input type="text" id="reg-lon" placeholder="Longitud" readonly>
-            <button class="btn btn-secondary" onclick="obtenerGPS()">📍</button>
+            <button class="btn btn-dark" onclick="obtenerGPS()">📍</button>
         </div>
-        <button class="btn btn-primary" onclick="registrarComercio()" style="width:100%;">ENVIAR REGISTRO</button>
-        <button class="btn btn-danger" onclick="cerrarModal('modal-registro')" style="width:100%; margin-top:10px;">CANCELAR</button>
+        <button class="btn btn-primary" style="width:100%" onclick="registrarComercio()">ENVIAR SOLICITUD</button>
+        <button class="btn" style="width:100%; margin-top:10px" onclick="cerrarModal('modal-registro')">CANCELAR</button>
     </div>
 </div>
 
-<script src="https://www.gstatic.com/firebasejs/9.1.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.1.1/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.1.1/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 
 <script>
-    // --- REEMPLAZA ESTO CON TUS CREDENCIALES ---
-    const firebaseConfig = {
-        apiKey: "TU_API_KEY",
-        authDomain: "TU_PROYECTO.firebaseapp.com",
-        databaseURL: "https://TU_PROYECTO.firebaseio.com",
-        projectId: "TU_PROYECTO",
-        storageBucket: "TU_PROYECTO.appspot.com",
-        messagingSenderId: "TU_SENDER_ID",
-        appId: "TU_APP_ID"
-    };
+const firebaseConfig = {
+  apiKey: "AIzaSyB3kBkd3pj-o8RPZxXJfOo7GTl64d7un7c",
+  authDomain: "donde-compro-12345.firebaseapp.com",
+  projectId: "donde-compro-12345",
+  storageBucket: "donde-compro-12345.firebasestorage.app",
+  messagingSenderId: "769310157775",
+  appId: "1:769310157775:web:ab9db00bc911fb3abdc0ba",
+  measurementId: "G-NQZXDP6TS6",
+  databaseURL: "https://donde-compro-12345-default-rtdb.firebaseio.com/"
+};
 
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.database();
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+const auth = firebase.auth();
 
-    window.db = { rubros: [], comercios: [] };
+window.dbLocal = { rubros: [], comercios: [] };
 
-    // --- FUNCIONES DE NAVEGACIÓN ---
-    window.abrirModal = (id) => document.getElementById(id).style.display = 'flex';
-    window.cerrarModal = (id) => document.getElementById(id).style.display = 'none';
+// --- CARGA INICIAL ---
+db.ref('/').on('value', snap => {
+    const data = snap.val() || {};
+    window.dbLocal.rubros = data.rubros || ['Almacén', 'Farmacia'];
+    window.dbLocal.comercios = data.comercios ? Object.values(data.comercios) : [];
     
-    window.abrirAdmin = () => {
-        const p = prompt("Clave de acceso:");
-        if(p === "1234") {
-            document.getElementById('admin-panel').style.display = 'block';
-            window.scrollTo(0, document.body.scrollHeight);
-        } else { alert("Error de clave"); }
-    };
-    window.cerrarAdmin = () => document.getElementById('admin-panel').style.display = 'none';
+    // Actualizar Selects
+    const html = window.dbLocal.rubros.map(r => `<option value="${r}">${r}</option>`).join('');
+    document.getElementById('search-rubro').innerHTML = '<option value="">Todos los rubros</option>' + html;
+    document.getElementById('reg-rubro-select').innerHTML = html;
+    
+    if(document.getElementById('admin-panel').style.display === 'block') {
+        renderAdmin();
+    }
+});
 
-    // --- ESCUCHADORES FIREBASE ---
-    db.ref('rubros').on('value', snap => {
-        window.db.rubros = snap.val() || [];
-        const selects = ['reg-rubro', 'search-rubro'];
-        selects.forEach(id => {
-            const el = document.getElementById(id);
-            if(el) el.innerHTML = '<option value="">Seleccionar rubro...</option>' + 
-                window.db.rubros.map(r => `<option value="${r}">${r}</option>`).join('');
+// --- FUNCIONES ---
+window.abrirModal = (id) => document.getElementById(id).style.display = 'flex';
+window.cerrarModal = (id) => document.getElementById(id).style.display = 'none';
+
+window.obtenerGPS = () => {
+    navigator.geolocation.getCurrentPosition(p => {
+        document.getElementById('reg-lat').value = p.coords.latitude;
+        document.getElementById('reg-lon').value = p.coords.longitude;
+    }, () => alert("Error al obtener GPS"));
+};
+
+window.registrarComercio = () => {
+    const email = document.getElementById('reg-email').value;
+    const pass = document.getElementById('reg-pass').value;
+    const nombre = document.getElementById('reg-nombre').value;
+    const rubro = document.getElementById('reg-rubro-select').value;
+    const lat = document.getElementById('reg-lat').value;
+    const lon = document.getElementById('reg-lon').value;
+
+    if(!email || !pass || !nombre || !lat) return alert("Completa todos los campos");
+
+    auth.createUserWithEmailAndPassword(email, pass).then(cred => {
+        const nuevo = { id: cred.user.uid, nombre, rubro, lat, lon, estado: 'pendiente' };
+        db.ref('comercios/' + cred.user.uid).set(nuevo).then(() => {
+            alert("Solicitud enviada con éxito.");
+            cerrarModal('modal-registro');
         });
-        renderRubrosAdmin();
-    });
+    }).catch(e => alert(e.message));
+};
 
-    db.ref('comercios').on('value', snap => {
-        const data = snap.val();
-        window.db.comercios = data ? Object.values(data) : [];
-        renderComerciosAdmin();
-    });
+window.buscar = () => {
+    const q = document.getElementById('main-search').value.toLowerCase();
+    const r = document.getElementById('search-rubro').value;
+    const res = document.getElementById('results-area');
+    
+    const filtrados = window.dbLocal.comercios.filter(c => 
+        c.estado === 'activo' && 
+        (c.nombre.toLowerCase().includes(q) || c.rubro.toLowerCase().includes(q)) &&
+        (r === "" || c.rubro === r)
+    );
 
-    // --- ACCIONES ---
-    window.obtenerGPS = () => {
-        navigator.geolocation.getCurrentPosition(p => {
-            document.getElementById('reg-lat').value = p.coords.latitude;
-            document.getElementById('reg-lon').value = p.coords.longitude;
-        }, () => alert("Activa el GPS"));
-    };
-
-    window.registrarComercio = () => {
-        const email = document.getElementById('reg-email').value;
-        const pass = document.getElementById('reg-pass').value;
-        const nombre = document.getElementById('reg-nombre').value;
-        const rubro = document.getElementById('reg-rubro').value;
-        const lat = document.getElementById('reg-lat').value;
-        const lon = document.getElementById('reg-lon').value;
-
-        if(!email || !nombre || !lat) return alert("Faltan datos");
-
-        auth.createUserWithEmailAndPassword(email, pass).then(cred => {
-            const data = { id: cred.user.uid, nombre, rubro, lat: parseFloat(lat), lon: parseFloat(lon), estado: 'pendiente' };
-            db.ref('comercios/' + cred.user.uid).set(data).then(() => {
-                alert("Registrado. Espere aprobación.");
-                cerrarModal('modal-registro');
-            });
-        }).catch(e => alert(e.message));
-    };
-
-    window.buscar = () => {
-        const q = document.getElementById('search-query').value.toLowerCase();
-        const r = document.getElementById('search-rubro').value;
-        const res = window.db.comercios.filter(c => 
-            c.estado === 'activo' && 
-            (c.nombre.toLowerCase().includes(q) || c.rubro.toLowerCase().includes(q)) &&
-            (r === "" || c.rubro === r)
-        );
-        document.getElementById('results').innerHTML = res.map(c => `
-            <div class="card">
+    res.innerHTML = filtrados.map(c => `
+        <div class="card">
+            <div class="card-content">
                 <h3>${c.nombre}</h3>
-                <p>📍 ${c.rubro}</p>
-                <button class="btn btn-primary" style="width:100%; margin-top:10px;" 
-                onclick="window.open('https://www.google.com/maps/dir/?api=1&destination=${c.lat},${c.lon}')">COMO LLEGAR</button>
-            </div>`).join('') || '<p>No hay resultados.</p>';
-    };
+                <p>🏷️ ${c.rubro}</p><br>
+                <button class="btn btn-primary" style="width:100%" 
+                onclick="window.open('https://www.google.com/maps?q=${c.lat},${c.lon}')">🚀 CÓMO LLEGAR</button>
+            </div>
+        </div>
+    `).join('') || '<p>No se encontraron comercios activos.</p>';
+};
 
-    // --- ADMIN RENDER ---
-    function renderRubrosAdmin() {
-        document.getElementById('adm-rubros-list').innerHTML = window.db.rubros.map((r,i) => `
-            <span style="background:#ddd; padding:5px 10px; border-radius:15px; margin:3px; display:inline-block;">
-                ${r} <b onclick="eliminarRubro(${i})" style="color:red; cursor:pointer;">✕</b>
-            </span>`).join('');
+// --- ADMIN ---
+window.abrirAdmin = () => {
+    if(prompt("Clave de Admin:") === "1234") {
+        document.getElementById('admin-panel').style.display = 'block';
+        renderAdmin();
     }
+};
+window.cerrarAdmin = () => document.getElementById('admin-panel').style.display = 'none';
 
-    window.agregarRubro = () => {
-        const n = document.getElementById('nuevo-rubro').value;
-        if(n) { window.db.rubros.push(n); db.ref('rubros').set(window.db.rubros); }
-    };
-    window.eliminarRubro = (i) => { window.db.rubros.splice(i,1); db.ref('rubros').set(window.db.rubros); };
+function renderAdmin() {
+    document.getElementById('adm-rubros-list').innerHTML = window.dbLocal.rubros.map((r, i) => `
+        <span style="background:#eee; padding:5px; border-radius:5px; margin:2px; display:inline-block;">
+            ${r} <b style="color:red; cursor:pointer" onclick="delRubro(${i})">x</b>
+        </span>`).join('');
 
-    function renderComerciosAdmin() {
-        document.getElementById('adm-comercios-list').innerHTML = window.db.comercios.map(c => `
-            <div style="padding:10px; border-bottom:1px solid #eee; display:flex; justify-content:space-between;">
-                <span>${c.nombre} (${c.estado})</span>
-                <div>
-                    ${c.estado==='pendiente' ? `<button onclick="aprobar('${c.id}')">✔️</button>` : ''}
-                    <button onclick="borrar('${c.id}')">🗑️</button>
-                </div>
-            </div>`).join('');
-    }
-    window.aprobar = (id) => db.ref('comercios/'+id).update({estado:'activo'});
-    window.borrar = (id) => { if(confirm("¿Borrar?")) db.ref('comercios/'+id).remove(); };
+    document.getElementById('adm-comercios-list').innerHTML = window.dbLocal.comercios.map(c => `
+        <div style="border-bottom:1px solid #ddd; padding:10px; display:flex; justify-content:space-between;">
+            <span>${c.nombre} (${c.estado})</span>
+            <div>
+                ${c.estado === 'pendiente' ? `<button onclick="aprobar('${c.id}')">✔️</button>` : ''}
+                <button onclick="borrar('${c.id}')">🗑️</button>
+            </div>
+        </div>`).join('');
+}
+
+window.addRubro = () => {
+    const n = document.getElementById('new-rubro').value;
+    if(n) { window.dbLocal.rubros.push(n); db.ref('rubros').set(window.dbLocal.rubros); }
+};
+window.delRubro = (i) => { window.dbLocal.rubros.splice(i,1); db.ref('rubros').set(window.dbLocal.rubros); };
+window.aprobar = (id) => db.ref('comercios/' + id).update({ estado: 'activo' });
+window.borrar = (id) => { if(confirm("¿Borrar comercio?")) db.ref('comercios/' + id).remove(); };
+
 </script>
 </body>
 </html>
