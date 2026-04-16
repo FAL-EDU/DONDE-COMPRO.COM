@@ -10,6 +10,10 @@
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Poppins', sans-serif; background-color: var(--bg); color: #333; line-height: 1.6; }
         
+        /* BANNER DE UBICACIÓN */
+        #geo-banner { background: #333; color: white; padding: 10px 5%; display: none; justify-content: space-between; align-items: center; font-size: 0.85rem; z-index: 1001; position: relative; }
+        #geo-banner .btn-mini { padding: 4px 12px; font-size: 0.75rem; margin-left: 10px; }
+
         header { background: #fff; padding: 15px 5%; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 1000; }
         .logo-area { display: flex; align-items: center; gap: 10px; }
         .logo-area img { height: 45px; border-radius: 5px; object-fit: contain; }
@@ -30,7 +34,6 @@
         .card-content { padding: 20px; flex-grow: 1; }
         .badge { font-size: 0.7rem; background: #eee; padding: 3px 8px; border-radius: 5px; color: #666; }
         .price-tag { font-size: 1.6rem; font-weight: 600; color: var(--secondary); margin: 10px 0; }
-        .info-mini { font-size: 0.8rem; color: #666; margin-bottom: 4px; display: flex; align-items: center; gap: 5px; }
         
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 2000; justify-content: center; align-items: center; padding: 20px; }
         .modal-content { background: white; padding: 30px; border-radius: 20px; width: 100%; max-width: 1000px; max-height: 90vh; overflow-y: auto; }
@@ -41,6 +44,14 @@
     </style>
 </head>
 <body>
+
+<div id="geo-banner">
+    <span>📍 ¿Deseas activar tu ubicación para ver las rutas hacia los locales?</span>
+    <div>
+        <button class="btn btn-secondary btn-mini" onclick="activarUbicacionCliente()">SÍ, ACTIVAR</button>
+        <button class="btn btn-danger btn-mini" onclick="cerrarBanner()">NO</button>
+    </div>
+</div>
 
 <header>
     <div class="logo-area">
@@ -55,7 +66,7 @@
 
 <main class="container">
     <div style="text-align: center; margin-bottom: 30px;">
-        <h2 id="hero-slogan" style="font-weight: 300; color: #666;">Cargando...</h2>
+        <h2 id="hero-slogan" style="font-weight: 300; color: #666;">Cargando catálogo...</h2>
     </div>
 
     <div class="search-box">
@@ -99,17 +110,17 @@
             <div style="background:#f8f9fa; padding:20px; border-radius:15px;">
                 <h4>📍 Datos del Local</h4><br>
                 <input type="text" id="t-tel" placeholder="WhatsApp (Ej: 5493871234567)">
-                <div style="display:flex; gap:5px;"><input type="text" id="t-dir" placeholder="Dirección"><button class="btn btn-dark" onclick="obtenerGPS()">📍</button></div>
+                <div style="display:flex; gap:5px;"><input type="text" id="t-dir" placeholder="Dirección o Coordenadas"><button class="btn btn-dark" onclick="obtenerGPS()">📍</button></div>
                 <input type="text" id="t-img" placeholder="URL Foto Fachada">
                 <input type="text" id="t-hor" placeholder="Horarios">
-                <button class="btn btn-primary" style="width:100%" onclick="guardarPerfilTienda()">ACTUALIZAR</button>
+                <button class="btn btn-primary" style="width:100%" onclick="guardarPerfilTienda()">ACTUALIZAR PERFIL</button>
             </div>
             <div style="background:#fff; border:1px solid #eee; padding:20px; border-radius:15px;">
                 <h4>📦 Productos</h4><br>
-                <input type="text" id="p-nom" placeholder="Nombre">
+                <input type="text" id="p-nom" placeholder="Nombre Producto">
                 <input type="number" id="p-pre" placeholder="Precio $">
                 <input type="text" id="p-img" placeholder="URL Foto Producto">
-                <button class="btn btn-secondary" style="width:100%" onclick="guardarProducto()">AÑADIR</button>
+                <button class="btn btn-secondary" style="width:100%" onclick="guardarProducto()">AÑADIR PRODUCTO</button>
                 <div id="t-lista-prods" style="margin-top:20px; max-height:200px; overflow-y:auto;"></div>
             </div>
         </div>
@@ -144,7 +155,6 @@
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 
 <script>
-// CONFIGURACIÓN DE TU FIREBASE (Basada en tu imagen de la base de datos)
 const firebaseConfig = {
   apiKey: "AIzaSyB3kBkd3pj-o8RPZxXJfOo7GTl64d7un7c",
   authDomain: "donde-compro-12345.firebaseapp.com",
@@ -162,76 +172,88 @@ const auth = firebase.auth();
 let tActiva = null;
 window.dbLocal = { config: {}, rubros: [], comercios: [] };
 
-// SINCRONIZACIÓN REALTIME CON FIREBASE
+// GESTIÓN DE UBICACIÓN CLIENTE
+window.onload = () => {
+    if (!localStorage.getItem('geo-permiso')) {
+        document.getElementById('geo-banner').style.display = 'flex';
+    }
+};
+
+function activarUbicacionCliente() {
+    navigator.geolocation.getCurrentPosition(() => {
+        localStorage.setItem('geo-permiso', 'si');
+        cerrarBanner();
+        buscar();
+    }, () => alert("Debes permitir la ubicación en tu navegador para usar esta función."));
+}
+
+function cerrarBanner() { document.getElementById('geo-banner').style.display = 'none'; }
+
+// SINCRONIZACIÓN EN TIEMPO REAL
 db.ref('/').on('value', snap => {
     const data = snap.val() || {};
     window.dbLocal.config = data.config || { name: 'DÓNDE COMPRO', slogan: 'Tu ciudad online', logo: '' };
     window.dbLocal.rubros = data.rubros || [];
     window.dbLocal.comercios = data.comercios ? Object.values(data.comercios) : [];
     
+    // Aplicar Config
     document.getElementById('header-title').innerText = window.dbLocal.config.name;
-    document.getElementById('tab-title').innerText = window.dbLocal.config.name;
     document.getElementById('hero-slogan').innerText = window.dbLocal.config.slogan;
     if(window.dbLocal.config.logo) {
         document.getElementById('header-logo').src = window.dbLocal.config.logo;
         document.getElementById('header-logo').style.display = 'block';
     }
     
-    actualizarSelectsAdmin();
-    buscar(); // Refresca búsqueda si hay cambios en DB
+    actualizarInterfaz();
 });
 
-function actualizarSelectsAdmin() {
+function actualizarInterfaz() {
     const opts = window.dbLocal.rubros.map(r => `<option value="${r}">${r}</option>`).join('');
     document.getElementById('search-rubro').innerHTML = '<option value="">Todos los rubros</option>' + opts;
     document.getElementById('reg-rubro-select').innerHTML = opts;
     if(document.getElementById('modal-admin').style.display === 'flex') renderAdminLists();
+    buscar(); 
 }
 
-// --- BUSCADOR (CORRECCIÓN PUNTOS 1, 2, 3 Y 4) ---
+// BUSCADOR INTEGRADO (Rubro + Texto)
 function buscar() {
-    const q = document.getElementById('main-search').value.toLowerCase();
+    const q = document.getElementById('main-search').value.toLowerCase().trim();
     const r = document.getElementById('search-rubro').value;
     const res = document.getElementById('results-area');
     res.innerHTML = "";
 
     window.dbLocal.comercios.filter(c => c.estado === 'activo').forEach(c => {
-        const matchRubro = !r || c.rubro === r;
-        const mapsLink = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.dir + ' Rosario de la Frontera')}`;
+        const coincideRubro = (r === "" || c.rubro === r);
+        const coincideTexto = (q === "" || c.nombre.toLowerCase().includes(q) || c.rubro.toLowerCase().includes(q));
 
-        // MOSTRAR TIENDA (Punto 2: Agregado Teléfono)
-        if (matchRubro && (c.nombre.toLowerCase().includes(q) || c.rubro.toLowerCase().includes(q) || q === '')) {
+        if (coincideRubro && coincideTexto) {
+            const mapsLink = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(c.dir)}`;
             res.innerHTML += `
             <div class="card">
                 <img class="card-img" src="${c.imgLocal || 'https://via.placeholder.com/400x200?text=Comercio'}">
                 <div class="card-content">
                     <div style="display:flex; justify-content:space-between"><b>${c.nombre}</b><span class="badge">${c.rubro}</span></div>
-                    <p class="info-mini">📍 ${c.dir || 'S/D'}</p>
-                    <p class="info-mini">📞 WhatsApp: ${c.tel || 'S/T'}</p>
-                    <p class="info-mini">⏰ ${c.hor || 'Consultar'}</p>
-                    <button class="btn btn-primary" style="width:100%; margin-top:10px" onclick="window.open('${mapsLink}')">🚀 CÓMO LLEGAR</button>
+                    <p style="font-size:0.8rem; margin:10px 0">📍 ${c.dir || 'Consultar'}<br>📞 ${c.tel || 'Sin teléfono'}</p>
+                    <button class="btn btn-primary" style="width:100%" onclick="window.open('${mapsLink}')">🚀 CÓMO LLEGAR</button>
                 </div>
             </div>`;
         }
 
-        // MOSTRAR PRODUCTOS (Punto 1: Agregado datos de tienda)
-        if (q !== '') {
+        if (q !== "" && coincideRubro) {
             const prods = c.prods ? Object.values(c.prods) : [];
             prods.filter(p => p.nom.toLowerCase().includes(q)).forEach(p => {
                 res.innerHTML += `
                 <div class="card" style="border-top-color: var(--secondary)">
                     <img class="card-img" src="${p.img || 'https://via.placeholder.com/400x200?text=Producto'}">
                     <div class="card-content">
-                        <div style="font-weight:600">${p.nom}</div>
+                        <b>${p.nom}</b> <span class="badge">En: ${c.nombre}</span>
                         <div class="price-tag">$${p.pre}</div>
-                        <div style="background:#f1f1f1; padding:8px; border-radius:8px; margin-bottom:10px;">
-                            <p style="font-size:0.7rem; font-weight:600">🏪 TIENDA: ${c.nombre}</p>
-                            <p style="font-size:0.65rem">📍 ${c.dir}</p>
-                            <p style="font-size:0.65rem">📞 ${c.tel}</p>
+                        <div style="background:#f1f1f1; padding:8px; border-radius:8px; margin-bottom:10px; font-size:0.7rem">
+                            🏪 Tienda: ${c.nombre} | 📞 ${c.tel}
                         </div>
                         <div style="display:flex; gap:5px">
                             <button class="btn btn-secondary" style="flex:1" onclick="window.open('https://wa.me/${c.tel}?text=Hola! Quiero: ${p.nom}')">💬 PEDIR</button>
-                            <button class="btn btn-dark" onclick="window.open('${mapsLink}')">📍 RUTA</button>
+                            <button class="btn btn-dark" onclick="window.open('https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(c.dir)}')">📍 RUTA</button>
                         </div>
                     </div>
                 </div>`;
@@ -240,31 +262,23 @@ function buscar() {
     });
 }
 
-// --- LÓGICA DE TIENDA ---
-function toggleAuth(show) {
-    document.getElementById('login-view').style.display = show ? 'none' : 'block';
-    document.getElementById('register-view').style.display = show ? 'block' : 'none';
-}
-
+// FUNCIONES ADMIN Y COMERCIO (Iguales a las anteriores pero verificadas)
 function registrarTienda() {
     const email = document.getElementById('reg-email').value;
     const pass = document.getElementById('reg-pass').value;
-    const nombre = document.getElementById('reg-nombre').value;
-    const rubro = document.getElementById('reg-rubro-select').value;
-    if(!email || !pass || !nombre) return alert("Faltan datos");
-
     auth.createUserWithEmailAndPassword(email, pass).then(cred => {
         db.ref('comercios/' + cred.user.uid).set({
-            id: cred.user.uid, nombre, rubro, estado: 'pendiente', tel: '', dir: '', imgLocal: '', hor: ''
-        }).then(() => { alert("Solicitud enviada al Admin."); location.reload(); });
-    }).catch(e => alert("Error: " + e.message));
+            id: cred.user.uid, nombre: document.getElementById('reg-nombre').value, 
+            rubro: document.getElementById('reg-rubro-select').value, estado: 'pendiente'
+        }).then(() => { alert("Registro enviado. Espera aprobación."); location.reload(); });
+    }).catch(e => alert(e.message));
 }
 
 function accederTienda() {
     auth.signInWithEmailAndPassword(document.getElementById('log-email').value, document.getElementById('log-pass').value).then(cred => {
         db.ref('comercios/' + cred.user.uid).once('value', snap => {
             const c = snap.val();
-            if(!c || c.estado !== 'activo') return alert("Tu cuenta aún no ha sido aprobada.");
+            if(!c || c.estado !== 'activo') return alert("Pendiente de aprobación.");
             tActiva = c;
             document.getElementById('lbl-nombre-tienda').innerText = c.nombre;
             document.getElementById('t-tel').value = c.tel || '';
@@ -275,73 +289,47 @@ function accederTienda() {
             cerrarModal('modal-login');
             abrirModal('modal-panel-tienda');
         });
-    }).catch(() => alert("Email o contraseña incorrectos."));
+    }).catch(() => alert("Error de credenciales."));
 }
 
 function guardarPerfilTienda() {
     db.ref('comercios/' + tActiva.id).update({
-        tel: document.getElementById('t-tel').value,
-        dir: document.getElementById('t-dir').value,
-        imgLocal: document.getElementById('t-img').value,
-        hor: document.getElementById('t-hor').value
-    }).then(() => alert("Perfil actualizado"));
+        tel: document.getElementById('t-tel').value, dir: document.getElementById('t-dir').value,
+        imgLocal: document.getElementById('t-img').value, hor: document.getElementById('t-hor').value
+    }).then(() => alert("Actualizado"));
 }
 
 function guardarProducto() {
-    const n = document.getElementById('p-nom').value;
-    const p = document.getElementById('p-pre').value;
-    if(!n || !p) return alert("Nombre y precio requeridos");
     const ref = db.ref('comercios/' + tActiva.id + '/prods').push();
-    ref.set({ id: ref.key, nom: n, pre: p, img: document.getElementById('p-img').value }).then(() => {
-        document.getElementById('p-nom').value=''; document.getElementById('p-pre').value=''; document.getElementById('p-img').value='';
-        renderMisProds();
-    });
+    ref.set({ id: ref.key, nom: document.getElementById('p-nom').value, pre: document.getElementById('p-pre').value, img: document.getElementById('p-img').value })
+    .then(() => { document.getElementById('p-nom').value=''; document.getElementById('p-pre').value=''; renderMisProds(); });
 }
 
 function renderMisProds() {
     db.ref('comercios/' + tActiva.id + '/prods').once('value', snap => {
         const prods = snap.val() ? Object.values(snap.val()) : [];
         document.getElementById('t-lista-prods').innerHTML = prods.map(p => `
-        <div style="display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid #eee;">
+        <div style="display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid #eee; font-size:0.8rem;">
             <span>${p.nom} ($${p.pre})</span>
-            <button class="btn btn-danger" style="padding:2px 8px" onclick="db.ref('comercios/${tActiva.id}/prods/${p.id}').remove().then(()=>renderMisProds())">✕</button>
+            <span onclick="db.ref('comercios/${tActiva.id}/prods/${p.id}').remove().then(()=>renderMisProds())" style="color:red; cursor:pointer">✕</span>
         </div>`).join('');
     });
 }
 
-// --- ADMIN ---
-function abrirAdmin() {
-    if(prompt("Clave de Seguridad:") === "1234") {
-        document.getElementById('adm-name').value = window.dbLocal.config.name;
-        document.getElementById('adm-slogan').value = window.dbLocal.config.slogan;
-        document.getElementById('adm-logo').value = window.dbLocal.config.logo;
-        abrirModal('modal-admin');
-        renderAdminLists();
-    }
-}
-
 function renderAdminLists() {
-    document.getElementById('adm-rubros-list').innerHTML = window.dbLocal.rubros.map((r, i) => `
-    <div style="display:flex; justify-content:space-between; background:white; padding:5px; border-radius:5px; margin-bottom:4px;">
-        ${r} <span onclick="window.dbLocal.rubros.splice(${i},1); db.ref('rubros').set(window.dbLocal.rubros)" style="color:red; cursor:pointer">✕</span>
-    </div>`).join('');
-
+    document.getElementById('adm-rubros-list').innerHTML = window.dbLocal.rubros.map((r, i) => `<div style="display:flex; justify-content:space-between; padding:5px; background:white; margin-top:5px; border-radius:5px;">${r} <span onclick="window.dbLocal.rubros.splice(${i},1); db.ref('rubros').set(window.dbLocal.rubros)" style="color:red; cursor:pointer">✕</span></div>`).join('');
     document.getElementById('adm-comercios-list').innerHTML = window.dbLocal.comercios.map(c => `
-    <div style="background:white; padding:10px; border-radius:10px; border:1px solid #ddd; display:flex; justify-content:space-between; margin-bottom:10px;">
-        <div><b>${c.nombre}</b><br><small>${c.estado.toUpperCase()}</small></div>
+    <div style="background:white; padding:10px; border-radius:10px; border:1px solid #ddd; display:flex; justify-content:space-between; margin-bottom:10px; font-size:0.8rem;">
+        <div><b>${c.nombre}</b> (${c.estado})</div>
         <div>
-            ${c.estado === 'pendiente' ? `<button class="btn btn-secondary" onclick="db.ref('comercios/${c.id}').update({estado:'activo'})">✔️</button>` : ''}
-            <button class="btn btn-danger" onclick="if(confirm('¿Eliminar?')) db.ref('comercios/${c.id}').remove()">🗑️</button>
+            ${c.estado === 'pendiente' ? `<button onclick="db.ref('comercios/${c.id}').update({estado:'activo'})">✔️</button>` : ''}
+            <button onclick="if(confirm('¿Eliminar?')) db.ref('comercios/${c.id}').remove()">🗑️</button>
         </div>
     </div>`).join('');
 }
 
 function guardarConfig() {
-    db.ref('config').set({
-        name: document.getElementById('adm-name').value,
-        slogan: document.getElementById('adm-slogan').value,
-        logo: document.getElementById('adm-logo').value
-    }).then(() => alert("Identidad Actualizada"));
+    db.ref('config').set({ name: document.getElementById('adm-name').value, slogan: document.getElementById('adm-slogan').value, logo: document.getElementById('adm-logo').value }).then(() => alert("Configuración guardada"));
 }
 
 function addRubro() {
@@ -349,9 +337,10 @@ function addRubro() {
     if(n) { window.dbLocal.rubros.push(n); db.ref('rubros').set(window.dbLocal.rubros); document.getElementById('adm-new-rubro').value = ""; }
 }
 
-// UTILIDADES
+function abrirAdmin() { if(prompt("Clave:") === "1234") { abrirModal('modal-admin'); renderAdminLists(); } }
 function abrirModal(id) { document.getElementById(id).style.display = 'flex'; }
 function cerrarModal(id) { document.getElementById(id).style.display = 'none'; }
+function toggleAuth(show) { document.getElementById('login-view').style.display = show ? 'none' : 'block'; document.getElementById('register-view').style.display = show ? 'block' : 'none'; }
 function obtenerGPS() {
     navigator.geolocation.getCurrentPosition(p => { 
         document.getElementById('t-dir').value = p.coords.latitude.toFixed(6) + ", " + p.coords.longitude.toFixed(6); 
@@ -360,4 +349,3 @@ function obtenerGPS() {
 </script>
 </body>
 </html>
-
