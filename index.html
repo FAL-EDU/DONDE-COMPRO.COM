@@ -66,7 +66,7 @@
 
 <main class="container">
     <div style="text-align: center; margin-bottom: 30px;">
-        <h2 id="hero-slogan" style="font-weight: 300; color: #666;">Cargando catálogo...</h2>
+        <h2 id="hero-slogan" style="font-weight: 300; color: #666;">Cargando...</h2>
     </div>
 
     <div class="search-box">
@@ -112,15 +112,15 @@
                 <input type="text" id="t-tel" placeholder="WhatsApp (Ej: 5493871234567)">
                 <div style="display:flex; gap:5px;"><input type="text" id="t-dir" placeholder="Dirección o Coordenadas"><button class="btn btn-dark" onclick="obtenerGPS()">📍</button></div>
                 <input type="text" id="t-img" placeholder="URL Foto Fachada">
-                <input type="text" id="t-hor" placeholder="Horarios">
+                <input type="text" id="t-hor" placeholder="Horario de Atención">
                 <button class="btn btn-primary" style="width:100%" onclick="guardarPerfilTienda()">ACTUALIZAR PERFIL</button>
             </div>
             <div style="background:#fff; border:1px solid #eee; padding:20px; border-radius:15px;">
                 <h4>📦 Productos</h4><br>
-                <input type="text" id="p-nom" placeholder="Nombre Producto">
+                <input type="text" id="p-nom" placeholder="Nombre">
                 <input type="number" id="p-pre" placeholder="Precio $">
                 <input type="text" id="p-img" placeholder="URL Foto Producto">
-                <button class="btn btn-secondary" style="width:100%" onclick="guardarProducto()">AÑADIR PRODUCTO</button>
+                <button class="btn btn-secondary" style="width:100%" onclick="guardarProducto()">AÑADIR</button>
                 <div id="t-lista-prods" style="margin-top:20px; max-height:200px; overflow-y:auto;"></div>
             </div>
         </div>
@@ -155,6 +155,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 
 <script>
+// CONFIGURACIÓN DE FIREBASE
 const firebaseConfig = {
   apiKey: "AIzaSyB3kBkd3pj-o8RPZxXJfOo7GTl64d7un7c",
   authDomain: "donde-compro-12345.firebaseapp.com",
@@ -172,7 +173,7 @@ const auth = firebase.auth();
 let tActiva = null;
 window.dbLocal = { config: {}, rubros: [], comercios: [] };
 
-// GESTIÓN DE UBICACIÓN CLIENTE
+// UBICACIÓN
 window.onload = () => {
     if (!localStorage.getItem('geo-permiso')) {
         document.getElementById('geo-banner').style.display = 'flex';
@@ -184,19 +185,18 @@ function activarUbicacionCliente() {
         localStorage.setItem('geo-permiso', 'si');
         cerrarBanner();
         buscar();
-    }, () => alert("Debes permitir la ubicación en tu navegador para usar esta función."));
+    }, () => alert("Activa el GPS en tu navegador"));
 }
 
 function cerrarBanner() { document.getElementById('geo-banner').style.display = 'none'; }
 
-// SINCRONIZACIÓN EN TIEMPO REAL
+// SYNC FIREBASE
 db.ref('/').on('value', snap => {
     const data = snap.val() || {};
     window.dbLocal.config = data.config || { name: 'DÓNDE COMPRO', slogan: 'Tu ciudad online', logo: '' };
     window.dbLocal.rubros = data.rubros || [];
     window.dbLocal.comercios = data.comercios ? Object.values(data.comercios) : [];
     
-    // Aplicar Config
     document.getElementById('header-title').innerText = window.dbLocal.config.name;
     document.getElementById('hero-slogan').innerText = window.dbLocal.config.slogan;
     if(window.dbLocal.config.logo) {
@@ -204,18 +204,18 @@ db.ref('/').on('value', snap => {
         document.getElementById('header-logo').style.display = 'block';
     }
     
-    actualizarInterfaz();
+    actualizarSelects();
+    buscar();
 });
 
-function actualizarInterfaz() {
+function actualizarSelects() {
     const opts = window.dbLocal.rubros.map(r => `<option value="${r}">${r}</option>`).join('');
     document.getElementById('search-rubro').innerHTML = '<option value="">Todos los rubros</option>' + opts;
     document.getElementById('reg-rubro-select').innerHTML = opts;
     if(document.getElementById('modal-admin').style.display === 'flex') renderAdminLists();
-    buscar(); 
 }
 
-// BUSCADOR INTEGRADO (Rubro + Texto)
+// BUSCADOR INTEGRADO (Soluciona Rubros, Domicilios y Mapas)
 function buscar() {
     const q = document.getElementById('main-search').value.toLowerCase().trim();
     const r = document.getElementById('search-rubro').value;
@@ -226,19 +226,26 @@ function buscar() {
         const coincideRubro = (r === "" || c.rubro === r);
         const coincideTexto = (q === "" || c.nombre.toLowerCase().includes(q) || c.rubro.toLowerCase().includes(q));
 
+        // Optimización de Mapa
+        const direccionFinal = c.dir.includes(",") ? c.dir : `${c.dir}, Rosario de la Frontera`;
+        const linkMapa = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(direccionFinal)}`;
+
+        // 1. Mostrar Comercio
         if (coincideRubro && coincideTexto) {
-            const mapsLink = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(c.dir)}`;
             res.innerHTML += `
             <div class="card">
                 <img class="card-img" src="${c.imgLocal || 'https://via.placeholder.com/400x200?text=Comercio'}">
                 <div class="card-content">
                     <div style="display:flex; justify-content:space-between"><b>${c.nombre}</b><span class="badge">${c.rubro}</span></div>
-                    <p style="font-size:0.8rem; margin:10px 0">📍 ${c.dir || 'Consultar'}<br>📞 ${c.tel || 'Sin teléfono'}</p>
-                    <button class="btn btn-primary" style="width:100%" onclick="window.open('${mapsLink}')">🚀 CÓMO LLEGAR</button>
+                    <p style="font-size:0.8rem; margin-top:10px">📍 ${c.dir || 'Consultar'}</p>
+                    <p style="font-size:0.8rem">📞 WhatsApp: ${c.tel || 'S/D'}</p>
+                    <p style="font-size:0.8rem; color:#666">⏰ Horario: ${c.hor || 'Consultar'}</p>
+                    <button class="btn btn-primary" style="width:100%; margin-top:10px" onclick="window.open('${linkMapa}')">🚀 CÓMO LLEGAR</button>
                 </div>
             </div>`;
         }
 
+        // 2. Mostrar Productos (Solo si se busca texto o rubro específico)
         if (q !== "" && coincideRubro) {
             const prods = c.prods ? Object.values(c.prods) : [];
             prods.filter(p => p.nom.toLowerCase().includes(q)).forEach(p => {
@@ -246,23 +253,27 @@ function buscar() {
                 <div class="card" style="border-top-color: var(--secondary)">
                     <img class="card-img" src="${p.img || 'https://via.placeholder.com/400x200?text=Producto'}">
                     <div class="card-content">
-                        <b>${p.nom}</b> <span class="badge">En: ${c.nombre}</span>
+                        <b>${p.nom}</b> <span class="badge">De: ${c.nombre}</span>
                         <div class="price-tag">$${p.pre}</div>
-                        <div style="background:#f1f1f1; padding:8px; border-radius:8px; margin-bottom:10px; font-size:0.7rem">
-                            🏪 Tienda: ${c.nombre} | 📞 ${c.tel}
+                        <div style="background:#f1f1f1; padding:10px; border-radius:8px; margin-bottom:10px; font-size:0.7rem">
+                            <p>🏪 <b>${c.nombre}</b></p>
+                            <p>📍 ${c.dir || 'S/D'}</p>
+                            <p>📞 WhatsApp: ${c.tel}</p>
                         </div>
                         <div style="display:flex; gap:5px">
                             <button class="btn btn-secondary" style="flex:1" onclick="window.open('https://wa.me/${c.tel}?text=Hola! Quiero: ${p.nom}')">💬 PEDIR</button>
-                            <button class="btn btn-dark" onclick="window.open('https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(c.dir)}')">📍 RUTA</button>
+                            <button class="btn btn-dark" onclick="window.open('${linkMapa}')">📍 RUTA</button>
                         </div>
                     </div>
                 </div>`;
             });
         }
     });
+
+    if (res.innerHTML === "") res.innerHTML = `<p style="grid-column:1/-1; text-align:center; padding:40px; color:#666">No hay resultados...</p>`;
 }
 
-// FUNCIONES ADMIN Y COMERCIO (Iguales a las anteriores pero verificadas)
+// LÓGICA DE TIENDA Y ADMIN
 function registrarTienda() {
     const email = document.getElementById('reg-email').value;
     const pass = document.getElementById('reg-pass').value;
@@ -270,7 +281,7 @@ function registrarTienda() {
         db.ref('comercios/' + cred.user.uid).set({
             id: cred.user.uid, nombre: document.getElementById('reg-nombre').value, 
             rubro: document.getElementById('reg-rubro-select').value, estado: 'pendiente'
-        }).then(() => { alert("Registro enviado. Espera aprobación."); location.reload(); });
+        }).then(() => { alert("Enviado. Espera aprobación."); location.reload(); });
     }).catch(e => alert(e.message));
 }
 
@@ -289,14 +300,14 @@ function accederTienda() {
             cerrarModal('modal-login');
             abrirModal('modal-panel-tienda');
         });
-    }).catch(() => alert("Error de credenciales."));
+    }).catch(() => alert("Error de acceso"));
 }
 
 function guardarPerfilTienda() {
     db.ref('comercios/' + tActiva.id).update({
         tel: document.getElementById('t-tel').value, dir: document.getElementById('t-dir').value,
         imgLocal: document.getElementById('t-img').value, hor: document.getElementById('t-hor').value
-    }).then(() => alert("Actualizado"));
+    }).then(() => alert("Actualizado con éxito"));
 }
 
 function guardarProducto() {
@@ -316,6 +327,8 @@ function renderMisProds() {
     });
 }
 
+function abrirAdmin() { if(prompt("Clave:") === "1234") { abrirModal('modal-admin'); renderAdminLists(); } }
+
 function renderAdminLists() {
     document.getElementById('adm-rubros-list').innerHTML = window.dbLocal.rubros.map((r, i) => `<div style="display:flex; justify-content:space-between; padding:5px; background:white; margin-top:5px; border-radius:5px;">${r} <span onclick="window.dbLocal.rubros.splice(${i},1); db.ref('rubros').set(window.dbLocal.rubros)" style="color:red; cursor:pointer">✕</span></div>`).join('');
     document.getElementById('adm-comercios-list').innerHTML = window.dbLocal.comercios.map(c => `
@@ -329,7 +342,7 @@ function renderAdminLists() {
 }
 
 function guardarConfig() {
-    db.ref('config').set({ name: document.getElementById('adm-name').value, slogan: document.getElementById('adm-slogan').value, logo: document.getElementById('adm-logo').value }).then(() => alert("Configuración guardada"));
+    db.ref('config').set({ name: document.getElementById('adm-name').value, slogan: document.getElementById('adm-slogan').value, logo: document.getElementById('adm-logo').value }).then(() => alert("Guardado"));
 }
 
 function addRubro() {
@@ -337,7 +350,6 @@ function addRubro() {
     if(n) { window.dbLocal.rubros.push(n); db.ref('rubros').set(window.dbLocal.rubros); document.getElementById('adm-new-rubro').value = ""; }
 }
 
-function abrirAdmin() { if(prompt("Clave:") === "1234") { abrirModal('modal-admin'); renderAdminLists(); } }
 function abrirModal(id) { document.getElementById(id).style.display = 'flex'; }
 function cerrarModal(id) { document.getElementById(id).style.display = 'none'; }
 function toggleAuth(show) { document.getElementById('login-view').style.display = show ? 'none' : 'block'; document.getElementById('register-view').style.display = show ? 'block' : 'none'; }
