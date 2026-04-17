@@ -1,81 +1,63 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="tab-title">DÓNDE COMPRO.COM</title>
+    <title>DÓNDE COMPRO.COM</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
-        :root { --primary: #28a745; --dark: #333; --bg: #f8f9fa; --secondary: #28a745; }
+        /* Visual Verde Recuperada */
+        :root { --primary: #28a745; --dark: #333; --bg: #f8f9fa; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Poppins', sans-serif; background-color: var(--bg); color: #333; }
+        body { font-family: 'Poppins', sans-serif; background-color: var(--bg); }
         
-        header { background: #fff; padding: 15px 5%; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 1000; }
-        .btn { padding: 10px 18px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; text-decoration: none; justify-content: center; }
+        header { background: #fff; padding: 15px 5%; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); sticky; top: 0; z-index: 1000; }
+        .btn { padding: 10px 18px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; }
         .btn-primary { background: var(--primary); color: white; }
         .btn-dark { background: var(--dark); color: white; }
         
         .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
-        .search-box { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 5px 25px rgba(0,0,0,0.05); display: flex; gap: 10px; margin-bottom: 30px; }
+        .search-box { background: white; padding: 25px; border-radius: 15px; display: flex; gap: 10px; box-shadow: 0 5px 25px rgba(0,0,0,0.05); }
         input, select { padding: 12px; border: 1px solid #ddd; border-radius: 8px; width: 100%; }
 
+        /* Estilo de Tarjetas de tu captura */
         .results-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
-        .card { background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.08); display: flex; flex-direction: column; transition: 0.2s; }
+        .card { background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.08); border: 1px solid #eee; }
         .card-img { width: 100%; height: 200px; object-fit: cover; }
-        .card-content { padding: 20px; }
-        .price-tag { font-size: 1.8rem; font-weight: 600; color: var(--primary); margin: 10px 0; }
+        .card-body { padding: 20px; }
+        .price { font-size: 1.8rem; font-weight: 600; color: var(--primary); margin: 10px 0; }
         
+        /* Modales */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; justify-content: center; align-items: center; }
-        .modal-content { background: white; padding: 30px; border-radius: 20px; width: 95%; max-width: 900px; max-height: 90vh; overflow-y: auto; }
+        .modal-content { background: white; padding: 30px; border-radius: 20px; width: 90%; max-width: 500px; }
     </style>
 </head>
 <body>
 
 <header>
-    <div class="logo-area" style="display:flex; align-items:center; gap:10px;">
-        <img id="header-logo" src="" style="height:45px; display:none;">
-        <h1 id="header-title" style="font-size:1.2rem; color:var(--primary);">DÓNDE COMPRO.COM</h1>
-    </div>
+    <h1 style="color:var(--primary); font-size:1.4rem;">DÓNDE COMPRO.COM</h1>
     <div style="display: flex; gap: 10px;">
         <button class="btn btn-dark" onclick="abrirAdmin()">⚙️</button>
         <button class="btn btn-primary" onclick="abrirModal('modal-login')">🏪 MI TIENDA</button>
     </div>
 </header>
 
-<main class="container">
+<div class="container">
     <div class="search-box">
         <input type="text" id="main-search" placeholder="¿Qué buscas? (Ej: Pañales...)" onkeyup="buscar()">
-        <select id="search-rubro" style="max-width:200px;" onchange="buscar()"><option value="">Rubros</option></select>
+        <select id="search-rubro" style="max-width:150px;" onchange="buscar()"><option value="">Rubros</option></select>
         <button class="btn btn-primary" onclick="buscar()">BUSCAR</button>
     </div>
+    <div id="results-area" class="results-grid" style="margin-top:30px;"></div>
+</div>
 
-    <div id="results-area" class="results-grid"></div>
-</main>
-
-<div id="modal-panel-tienda" class="modal">
+<div id="modal-login" class="modal">
     <div class="modal-content">
-        <h2 id="lbl-nombre-tienda" style="margin-bottom:20px;">Panel de Gestión</h2>
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
-            <div style="background:#f9f9f9; padding:20px; border-radius:15px;">
-                <h4>📍 Perfil del Local</h4><br>
-                <label>WhatsApp:</label><input type="text" id="t-tel">
-                <label>Dirección:</label><input type="text" id="t-dir">
-                <button class="btn btn-primary" style="width:100%" onclick="guardarPerfilTienda()">ACTUALIZAR PERFIL</button>
-            </div>
-            <div style="background:white; border:1px solid #eee; padding:20px; border-radius:15px;">
-                <h4>📦 Inventario</h4><br>
-                <div style="background:#eee; padding:15px; border-radius:10px; margin-bottom:15px;">
-                    <input type="hidden" id="p-idx" value="-1">
-                    <input type="text" id="p-nom" placeholder="Producto">
-                    <input type="number" id="p-pre" placeholder="Precio $">
-                    <input type="text" id="p-img" placeholder="URL Imagen">
-                    <button id="btn-save-prod" class="btn btn-primary" style="width:100%" onclick="guardarProducto()">CARGAR</button>
-                </div>
-                <div id="t-lista-prods"></div>
-            </div>
-        </div>
-        <button class="btn btn-dark" style="width:100%; margin-top:20px;" onclick="location.reload()">CERRAR SESIÓN</button>
+        <h3>Ingreso Comerciante</h3><br>
+        <input type="email" id="log-email" placeholder="Email">
+        <input type="password" id="log-pass" placeholder="Contraseña" style="margin-top:10px;">
+        <button class="btn btn-primary" style="width:100%; margin-top:20px;" onclick="accederTienda()">INGRESAR</button>
+        <button class="btn" style="width:100%; margin-top:10px;" onclick="cerrarModal('modal-login')">Cancelar</button>
     </div>
 </div>
 
@@ -84,7 +66,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 
 <script>
-// USANDO TUS CREDENCIALES ACTUALES
+// Configuración desde tu archivo index.html
 const firebaseConfig = {
   apiKey: "AIzaSyB3kBkd3pj-o8RPZxXJfOo7GTl64d7un7c",
   authDomain: "donde-compro-12345.firebaseapp.com",
@@ -96,81 +78,64 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 const auth = firebase.auth();
 
-let tActiva = null;
-window.dbLocal = { config: {}, rubros: [], comercios: [] };
+// Funciones de control de interfaz
+function abrirModal(id) { document.getElementById(id).style.display = 'flex'; }
+function cerrarModal(id) { document.getElementById(id).style.display = 'none'; }
 
-// Sincronización Realtime
-db.ref('/').on('value', snap => {
-    const data = snap.val() || {};
-    window.dbLocal.config = data.config || {};
-    window.dbLocal.rubros = data.rubros || [];
-    window.dbLocal.comercios = data.comercios ? Object.values(data.comercios) : [];
-    actualizarVista();
-});
+function abrirAdmin() {
+    const pass = prompt("Clave de Administrador:");
+    if(pass === "1234") { // Clave por defecto de tu código anterior
+        alert("Accediendo al Panel Central...");
+        // Aquí puedes llamar a tu modal de admin
+    }
+}
 
+function accederTienda() {
+    const email = document.getElementById('log-email').value;
+    const pass = document.getElementById('log-pass').value;
+    
+    auth.signInWithEmailAndPassword(email, pass)
+        .then(cred => {
+            alert("Sesión iniciada correctamente");
+            cerrarModal('modal-login');
+            // Redirigir al panel de gestión de la tienda
+        })
+        .catch(err => alert("Error: " + err.message));
+}
+
+// Búsqueda en tiempo real desde Firebase
 function buscar() {
     const q = document.getElementById('main-search').value.toLowerCase();
     const res = document.getElementById('results-area');
     res.innerHTML = "";
 
-    window.dbLocal.comercios.filter(c => c.estado === 'activo').forEach(c => {
-        const prods = c.prods ? Object.values(c.prods) : [];
-        prods.filter(p => p.nom.toLowerCase().includes(q) || q === '').forEach(p => {
-            res.innerHTML += `
-            <div class="card">
-                <img class="card-img" src="${p.img}">
-                <div class="card-content">
-                    <span style="background:#eee; padding:2px 8px; border-radius:4px; font-size:0.7rem;">De: ${c.nombre}</span>
-                    <h3 style="margin-top:10px;">${p.nom}</h3>
-                    <div class="price-tag">$${p.pre}</div>
-                    <p style="font-size:0.8rem; color:#666; margin-bottom:15px;">📍 ${c.dir}</p>
-                    <div style="display:flex; gap:5px;">
-                        <button class="btn btn-primary" style="flex:2" onclick="window.open('https://wa.me/${c.tel}')">💬 PEDIR</button>
-                        <button class="btn btn-dark" style="flex:1" onclick="window.open('https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(c.dir)}')">📍 RUTA</button>
+    db.ref('comercios').once('value', snap => {
+        const comercios = snap.val() || {};
+        Object.values(comercios).forEach(c => {
+            if(c.estado !== 'activo') return;
+            const prods = c.prods ? Object.values(c.prods) : [];
+            prods.filter(p => p.nom.toLowerCase().includes(q) || q === '').forEach(p => {
+                res.innerHTML += `
+                <div class="card">
+                    <img src="${p.img}" class="card-img">
+                    <div class="card-body">
+                        <span style="font-size:0.7rem; color:#999;">De: ${c.nombre}</span>
+                        <h3>${p.nom}</h3>
+                        <div class="price">$${p.pre}</div>
+                        <p style="font-size:0.8rem; margin-bottom:15px;">📍 ${c.dir}</p>
+                        <div style="display:flex; gap:5px;">
+                            <button class="btn btn-primary" style="flex:2" onclick="window.open('https://wa.me/${c.tel}')">💬 PEDIR</button>
+                            <button class="btn btn-dark" style="flex:1" onclick="window.open('https://www.google.com/maps/search/${encodeURIComponent(c.dir)}')">📍 RUTA</button>
+                        </div>
                     </div>
-                </div>
-            </div>`;
+                </div>`;
+            });
         });
     });
 }
 
-// Función para EDITAR productos (lo que faltaba)
-function prepararEdicion(id, nom, pre, img) {
-    document.getElementById('p-idx').value = id;
-    document.getElementById('p-nom').value = nom;
-    document.getElementById('p-pre').value = pre;
-    document.getElementById('p-img').value = img;
-    document.getElementById('btn-save-prod').innerText = "ACTUALIZAR";
-}
-
-function guardarProducto() {
-    const id = document.getElementById('p-idx').value;
-    const datos = {
-        nom: document.getElementById('p-nom').value,
-        pre: document.getElementById('p-pre').value,
-        img: document.getElementById('p-img').value || 'https://via.placeholder.com/300'
-    };
-
-    if(id === "-1") {
-        const newRef = db.ref('comercios/' + tActiva.id + '/prods').push();
-        newRef.set({ ...datos, id: newRef.key });
-    } else {
-        db.ref('comercios/' + tActiva.id + '/prods/' + id).update(datos);
-    }
-    
-    // Reset campos
-    document.getElementById('p-idx').value = "-1";
-    document.getElementById('p-nom').value = "";
-    document.getElementById('p-pre').value = "";
-    document.getElementById('p-img').value = "";
-    document.getElementById('btn-save-prod').innerText = "CARGAR";
-    renderProds();
-}
-
-// Resto de funciones (login, modales, etc) similares a tu archivo original
-function abrirModal(id) { document.getElementById(id).style.display = 'flex'; }
-function cerrarModal(id) { document.getElementById(id).style.display = 'none'; }
-function actualizarVista() { buscar(); }
+// Carga inicial
+buscar();
 </script>
 </body>
 </html>
