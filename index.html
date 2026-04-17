@@ -8,46 +8,33 @@
     <style>
         :root { --primary: #28a745; --dark: #333; --bg: #f8f9fa; --danger: #dc3545; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Poppins', sans-serif; background-color: var(--bg); color: #333; line-height: 1.6; }
+        body { font-family: 'Poppins', sans-serif; background-color: var(--bg); color: #333; }
         
-        /* HEADER */
         header { background: #fff; padding: 15px 5%; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 1000; }
-        .logo-area { display: flex; align-items: center; gap: 10px; }
-        .logo-area img { height: 45px; border-radius: 5px; }
-
-        .btn { padding: 10px 18px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; transition: 0.3s; font-size: 0.9rem; }
+        .btn { padding: 10px 18px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; transition: 0.3s; }
         .btn-primary { background: var(--primary); color: white; }
         .btn-dark { background: var(--dark); color: white; }
-        .btn-danger { background: var(--danger); color: white; }
 
-        /* BUSCADOR */
         .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
         .search-box { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 5px 25px rgba(0,0,0,0.05); display: flex; gap: 10px; margin-bottom: 30px; }
         input, select { padding: 12px; border: 1px solid #ddd; border-radius: 8px; width: 100%; font-family: inherit; }
 
-        /* TARJETAS */
         .results-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
-        .card { background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.08); display: flex; flex-direction: column; border: 1px solid #eee; }
-        .card-img { width: 100%; height: 200px; object-fit: cover; background: #eee; }
+        .card { background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.08); border: 1px solid #eee; }
+        .card-img { width: 100%; height: 200px; object-fit: cover; }
         .card-body { padding: 20px; }
         .price-tag { font-size: 1.8rem; font-weight: 600; color: var(--primary); margin: 10px 0; }
-        .store-badge { background: #f0f2f5; color: #666; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
-
-        /* MODALES */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; justify-content: center; align-items: center; padding: 15px; }
-        .modal-content { background: white; padding: 30px; border-radius: 20px; width: 100%; max-width: 800px; max-height: 90vh; overflow-y: auto; }
-        .close-modal { float: right; cursor: pointer; font-size: 1.5rem; font-weight: bold; }
         
-        .panel-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
-        .panel-item { background: #f9f9f9; padding: 15px; border-radius: 12px; border: 1px solid #eee; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; justify-content: center; align-items: center; }
+        .modal-content { background: white; padding: 30px; border-radius: 20px; width: 95%; max-width: 800px; max-height: 90vh; overflow-y: auto; position: relative; }
+        .cerrar { position: absolute; top: 15px; right: 20px; font-size: 1.5rem; cursor: pointer; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <header>
     <div class="logo-area">
-        <img id="header-logo" src="" style="display:none;">
-        <h1 id="header-title" style="font-size:1.2rem; color:var(--primary);">DÓNDE COMPRO.COM</h1>
+        <h1 id="header-title" style="color:var(--primary); font-size:1.3rem;">DÓNDE COMPRO.COM</h1>
     </div>
     <div style="display: flex; gap: 10px;">
         <button class="btn btn-dark" onclick="abrirAdmin()">⚙️ ADMIN</button>
@@ -59,42 +46,36 @@
     <div class="search-box">
         <input type="text" id="main-search" placeholder="¿Qué buscas hoy?" onkeyup="buscar()">
         <select id="search-rubro" style="max-width:200px;" onchange="buscar()"></select>
-        <button class="btn btn-primary" onclick="buscar()">BUSCAR</button>
     </div>
     <div id="results-area" class="results-grid"></div>
 </main>
 
 <div id="modal-login" class="modal">
     <div class="modal-content" style="max-width:400px;">
-        <h3>Ingreso Comerciante</h3><br>
-        <input type="email" id="log-email" placeholder="Email"><br><br>
-        <input type="password" id="log-pass" placeholder="Contraseña"><br><br>
-        <button class="btn btn-primary" style="width:100%" onclick="accederTienda()">INGRESAR</button>
-        <button class="btn" style="width:100%; margin-top:10px;" onclick="cerrarModal('modal-login')">Cancelar</button>
+        <span class="cerrar" onclick="cerrarModal('modal-login')">×</span>
+        <h3>Acceso Comerciante</h3><br>
+        <input type="email" id="log-email" placeholder="Tu Email">
+        <input type="password" id="log-pass" placeholder="Tu Contraseña" style="margin-top:10px;">
+        <button class="btn btn-primary" style="width:100%; margin-top:20px;" onclick="accederTienda()">INGRESAR AL PANEL</button>
     </div>
 </div>
 
 <div id="modal-panel-tienda" class="modal">
     <div class="modal-content">
-        <span class="close-modal" onclick="location.reload()">×</span>
+        <span class="cerrar" onclick="location.reload()">×</span>
         <h2 id="lbl-nombre-tienda">Mi Tienda</h2><br>
-        <div class="panel-grid">
-            <div class="panel-item">
-                <h4>📍 Datos del Local</h4><br>
-                <label>WhatsApp (con código):</label><input type="text" id="t-tel">
-                <label>Dirección:</label><input type="text" id="t-dir">
-                <button class="btn btn-primary" style="width:100%; margin-top:15px;" onclick="guardarPerfilTienda()">ACTUALIZAR DATOS</button>
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap:20px;">
+            <div style="background:#f9f9f9; padding:20px; border-radius:15px;">
+                <h4>📦 Cargar Producto</h4><br>
+                <input type="hidden" id="p-idx" value="-1">
+                <input type="text" id="p-nom" placeholder="Nombre del producto">
+                <input type="number" id="p-pre" placeholder="Precio $" style="margin-top:10px;">
+                <input type="text" id="p-img" placeholder="URL Imagen" style="margin-top:10px;">
+                <button id="btn-save-prod" class="btn btn-primary" style="width:100%; margin-top:15px;" onclick="guardarProducto()">GUARDAR PRODUCTO</button>
             </div>
-            <div class="panel-item">
-                <h4>📦 Inventario</h4><br>
-                <div style="background:#eee; padding:15px; border-radius:10px;">
-                    <input type="hidden" id="p-idx" value="-1">
-                    <input type="text" id="p-nom" placeholder="Producto">
-                    <input type="number" id="p-pre" placeholder="Precio $">
-                    <input type="text" id="p-img" placeholder="URL de Imagen">
-                    <button id="btn-save-prod" class="btn btn-primary" style="width:100%; margin-top:10px;" onclick="guardarProducto()">CARGAR PRODUCTO</button>
-                </div>
-                <div id="t-lista-prods" style="margin-top:15px;"></div>
+            <div style="background:white; border:1px solid #eee; padding:20px; border-radius:15px;">
+                <h4>Lista de Productos</h4><br>
+                <div id="t-lista-prods"></div>
             </div>
         </div>
     </div>
@@ -102,26 +83,9 @@
 
 <div id="modal-admin" class="modal">
     <div class="modal-content">
-        <span class="close-modal" onclick="cerrarModal('modal-admin')">×</span>
-        <h2>Panel Central</h2><br>
-        <div class="panel-grid">
-            <div class="panel-item">
-                <h4>⚙️ Configuración</h4><br>
-                <input type="text" id="adm-name" placeholder="Nombre del Sitio">
-                <input type="text" id="adm-logo" placeholder="URL Logo">
-                <button class="btn btn-primary" onclick="guardarConfig()">Guardar</button>
-            </div>
-            <div class="panel-item">
-                <h4>📂 Rubros</h4><br>
-                <input type="text" id="new-rubro" placeholder="Nuevo Rubro">
-                <button class="btn btn-primary" onclick="agregarRubro()">+</button>
-                <div id="adm-rubros-list"></div>
-            </div>
-            <div class="panel-item" style="grid-column: span 2;">
-                <h4>🏪 Comercios</h4><br>
-                <div id="adm-comercios-list"></div>
-            </div>
-        </div>
+        <span class="cerrar" onclick="cerrarModal('modal-admin')">×</span>
+        <h2>Panel de Control Central</h2><br>
+        <div id="adm-comercios-list"></div>
     </div>
 </div>
 
@@ -144,29 +108,15 @@ const auth = firebase.auth();
 let tActiva = null;
 window.dbLocal = { config: {}, rubros: [], comercios: [] };
 
-// SINCRONIZACIÓN
-db.ref('/').on('value', snap => {
-    const data = snap.val() || {};
-    window.dbLocal.config = data.config || {};
-    window.dbLocal.rubros = data.rubros || [];
-    window.dbLocal.comercios = data.comercios ? Object.entries(data.comercios).map(([id, val]) => ({id, ...val})) : [];
-    
-    document.getElementById('header-title').innerText = window.dbLocal.config.name || 'DÓNDE COMPRO.COM';
-    
-    let opts = '<option value="">Todos los rubros</option>';
-    window.dbLocal.rubros.forEach(r => opts += `<option value="${r}">${r}</option>`);
-    document.getElementById('search-rubro').innerHTML = opts;
-    
-    buscar();
-});
+// SINCRONIZACIÓN Y ACCESOS
+function abrirModal(id) { document.getElementById(id).style.display = 'flex'; }
+function cerrarModal(id) { document.getElementById(id).style.display = 'none'; }
 
-// FUNCIONES DE ACCESO
 function abrirAdmin() {
-    const pass = prompt("Clave de Administrador:");
+    const pass = prompt("Clave Admin:");
     if(pass === "1234") {
         abrirModal('modal-admin');
-        renderRubrosAdmin();
-        renderComerciosAdmin();
+        renderAdmin();
     }
 }
 
@@ -176,66 +126,25 @@ function accederTienda() {
     auth.signInWithEmailAndPassword(email, pass).then(cred => {
         db.ref('comercios/' + cred.user.uid).once('value', snap => {
             tActiva = { id: cred.user.uid, ...snap.val() };
-            if(tActiva.estado !== 'activo') return alert("Tienda pendiente de aprobación.");
             cerrarModal('modal-login');
             abrirModal('modal-panel-tienda');
             document.getElementById('lbl-nombre-tienda').innerText = tActiva.nombre;
-            document.getElementById('t-tel').value = tActiva.tel || '';
-            document.getElementById('t-dir').value = tActiva.dir || '';
             renderProdsPanel();
         });
-    }).catch(e => alert(e.message));
+    }).catch(e => alert("Error: " + e.message));
 }
 
-// GESTIÓN PRODUCTOS
-function guardarProducto() {
-    const id = document.getElementById('p-idx').value;
-    const datos = {
-        nom: document.getElementById('p-nom').value,
-        pre: document.getElementById('p-pre').value,
-        img: document.getElementById('p-img').value || 'https://via.placeholder.com/300'
-    };
-
-    if(id === "-1") {
-        const ref = db.ref('comercios/' + tActiva.id + '/prods').push();
-        ref.set({...datos, id: ref.key});
-    } else {
-        db.ref('comercios/' + tActiva.id + '/prods/' + id).update(datos);
-    }
+// LÓGICA DE DATOS
+db.ref('/').on('value', snap => {
+    const data = snap.val() || {};
+    window.dbLocal.comercios = data.comercios ? Object.entries(data.comercios).map(([id, val]) => ({id, ...val})) : [];
     
-    document.getElementById('p-idx').value = "-1";
-    document.getElementById('p-nom').value = "";
-    document.getElementById('p-pre').value = "";
-    document.getElementById('p-img').value = "";
-    document.getElementById('btn-save-prod').innerText = "CARGAR PRODUCTO";
-    renderProdsPanel();
-}
+    let opts = '<option value="">Todos los rubros</option>';
+    (data.rubros || []).forEach(r => opts += `<option value="${r}">${r}</option>`);
+    document.getElementById('search-rubro').innerHTML = opts;
+    buscar();
+});
 
-function renderProdsPanel() {
-    db.ref('comercios/' + tActiva.id + '/prods').on('value', snap => {
-        const prods = snap.val() ? Object.values(snap.val()) : [];
-        document.getElementById('t-lista-prods').innerHTML = prods.map(p => `
-            <div style="display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid #eee;">
-                <span>${p.nom} ($${p.pre})</span>
-                <div>
-                    <button onclick="editP('${p.id}','${p.nom}','${p.pre}','${p.img}')">✏️</button>
-                    <button onclick="borrarP('${p.id}')">🗑️</button>
-                </div>
-            </div>`).join('');
-    });
-}
-
-function editP(id, nom, pre, img) {
-    document.getElementById('p-idx').value = id;
-    document.getElementById('p-nom').value = nom;
-    document.getElementById('p-pre').value = pre;
-    document.getElementById('p-img').value = img;
-    document.getElementById('btn-save-prod').innerText = "ACTUALIZAR";
-}
-
-function borrarP(id) { db.ref('comercios/' + tActiva.id + '/prods/' + id).remove(); }
-
-// BUSCADOR
 function buscar() {
     const q = document.getElementById('main-search').value.toLowerCase();
     const r = document.getElementById('search-rubro').value;
@@ -250,22 +159,45 @@ function buscar() {
             <div class="card">
                 <img src="${p.img}" class="card-img">
                 <div class="card-body">
-                    <span class="store-badge">De: ${c.nombre}</span>
-                    <h3 style="margin:10px 0;">${p.nom}</h3>
+                    <span style="font-size:0.7rem; color:#999;">${c.nombre}</span>
+                    <h3>${p.nom}</h3>
                     <div class="price-tag">$${p.pre}</div>
-                    <p style="font-size:0.8rem; color:#666;">📍 ${c.dir || 'Rosario de la Frontera'}</p>
-                    <div style="display:flex; gap:8px; margin-top:15px;">
-                        <button class="btn btn-primary" style="flex:2" onclick="window.open('https://wa.me/${c.tel}?text=Hola, consulto por ${p.nom}')">💬 PEDIR</button>
-                        <button class="btn btn-dark" style="flex:1" onclick="window.open('https://www.google.com/maps/search/${encodeURIComponent(c.dir + ' Rosario de la Frontera')}')">📍 RUTA</button>
-                    </div>
+                    <button class="btn btn-primary" style="width:100%" onclick="window.open('https://wa.me/${c.tel}')">💬 PEDIR POR WHATSAPP</button>
                 </div>
             </div>`;
         });
     });
 }
 
-function abrirModal(id) { document.getElementById(id).style.display = 'flex'; }
-function cerrarModal(id) { document.getElementById(id).style.display = 'none'; }
+function renderProdsPanel() {
+    db.ref('comercios/' + tActiva.id + '/prods').on('value', snap => {
+        const prods = snap.val() ? Object.values(snap.val()) : [];
+        document.getElementById('t-lista-prods').innerHTML = prods.map(p => `
+            <div style="padding:10px; border-bottom:1px solid #eee; display:flex; justify-content:space-between;">
+                <span>${p.nom} ($${p.pre})</span>
+                <button onclick="db.ref('comercios/${tActiva.id}/prods/${p.id}').remove()">🗑️</button>
+            </div>`).join('');
+    });
+}
+
+function renderAdmin() {
+    document.getElementById('adm-comercios-list').innerHTML = window.dbLocal.comercios.map(c => `
+        <div style="padding:10px; border:1px solid #ddd; margin-bottom:5px; border-radius:8px; display:flex; justify-content:space-between;">
+            <span>${c.nombre} (${c.estado})</span>
+            ${c.estado === 'pendiente' ? `<button onclick="db.ref('comercios/${c.id}').update({estado:'activo'})">Aprobar</button>` : ''}
+        </div>`).join('');
+}
+
+function guardarProducto() {
+    const datos = {
+        nom: document.getElementById('p-nom').value,
+        pre: document.getElementById('p-pre').value,
+        img: document.getElementById('p-img').value || 'https://via.placeholder.com/300'
+    };
+    const ref = db.ref('comercios/' + tActiva.id + '/prods').push();
+    ref.set({...datos, id: ref.key});
+    document.getElementById('p-nom').value = ""; document.getElementById('p-pre').value = "";
+}
 </script>
 </body>
 </html>
