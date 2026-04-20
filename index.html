@@ -14,7 +14,7 @@
         .logo-area { display: flex; align-items: center; gap: 10px; }
         .logo-area img { height: 45px; border-radius: 5px; max-width: 150px; object-fit: contain; }
 
-        .btn { padding: 10px 18px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; transition: 0.2s; display: inline-flex; align-items: center; gap: 5px; text-decoration: none; justify-content: center; }
+        .btn { padding: 10px 18px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; transition: 0.2s; display: inline-flex; align-items: center; gap: 5px; text-decoration: none; justify-content: center; font-size: 0.9rem; }
         .btn-primary { background: var(--primary); color: white; }
         .btn-secondary { background: var(--secondary); color: white; }
         .btn-dark { background: #333; color: white; }
@@ -47,6 +47,8 @@
         
         .admin-prod-item { display: flex; align-items: center; gap: 10px; padding: 10px; border: 1px solid #eee; border-radius: 10px; margin-bottom: 10px; }
         .admin-prod-item img { width: 50px; height: 50px; object-fit: cover; border-radius: 5px; }
+
+        .backup-section { border-top: 2px dashed #eee; margin-top: 20px; padding-top: 20px; }
 
         @media (max-width: 768px) { .grid-2 { grid-template-columns: 1fr; } .search-box { flex-direction: column; } }
     </style>
@@ -112,7 +114,7 @@
                 <label>WhatsApp (Sin espacios):</label><input type="text" id="t-tel" placeholder="Ej: 5493871234567">
                 <label>Dirección o Coordenadas:</label>
                 <div style="display:flex; gap:5px;"><input type="text" id="t-dir" placeholder="Calle o Coordenadas"><button class="btn btn-dark" onclick="obtenerGPS()">📍</button></div>
-                <label>Foto del Local (Subir archivo):</label><input type="file" id="t-img-file" accept="image/*">
+                <label>Foto del Local:</label><input type="file" id="t-img-file" accept="image/*">
                 <label>Horarios:</label><input type="text" id="t-hor" placeholder="Ej: Lunes a Sábados 08:00 a 21:00">
                 <button class="btn btn-primary" style="width:100%" onclick="guardarPerfilTienda()">Guardar Perfil</button>
             </div>
@@ -122,7 +124,7 @@
                     <input type="hidden" id="p-idx" value="-1">
                     <input type="text" id="p-nom" placeholder="Nombre Producto">
                     <input type="number" id="p-pre" placeholder="Precio $">
-                    <label>Foto Producto (Subir archivo):</label><input type="file" id="p-img-file" accept="image/*">
+                    <label>Foto Producto:</label><input type="file" id="p-img-file" accept="image/*">
                     <button class="btn btn-secondary" style="width:100%" onclick="guardarProducto()">Guardar Producto</button>
                 </div>
                 <div id="t-lista-prods" style="max-height: 300px; overflow-y: auto;"></div>
@@ -139,18 +141,29 @@
                 <h4>🎨 Identidad</h4>
                 <label>Nombre:</label><input type="text" id="adm-name">
                 <label>Slogan:</label><input type="text" id="adm-slogan">
-                <label>Logo del Sitio (Subir archivo):</label><input type="file" id="adm-logo-file" accept="image/*">
-                <button class="btn btn-primary" onclick="guardarConfigSitio()">Guardar</button>
+                <label>Logo del Sitio:</label><input type="file" id="adm-logo-file" accept="image/*">
+                <button class="btn btn-primary" onclick="guardarConfigSitio()">Guardar Cambios</button>
+                
                 <h4 style="margin-top:20px;">🏷️ Rubros</h4>
                 <div style="display:flex; gap:5px;"><input type="text" id="adm-new-rubro"><button class="btn btn-secondary" onclick="agregarRubro()">+</button></div>
                 <div id="adm-rubros-list"></div>
+
+                <div class="backup-section">
+                    <h4>💾 Base de Datos (Backup)</h4>
+                    <p style="font-size: 0.7rem; color: #666; margin-bottom: 10px;">Descarga o restaura toda la información del sitio.</p>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <button class="btn btn-dark" onclick="exportarDB()">📥 Exportar .JSON</button>
+                        <button class="btn btn-dark" onclick="document.getElementById('import-file').click()">📤 Importar .JSON</button>
+                        <input type="file" id="import-file" style="display:none" accept=".json" onchange="importarDB(event)">
+                    </div>
+                </div>
             </section>
             <section style="background:#f9f9f9; padding:20px; border-radius:15px;">
                 <h4>🏪 Gestión de Comercios</h4>
                 <div id="adm-comercios-list"></div>
             </section>
         </div>
-        <button class="btn btn-dark" style="width:100%; margin-top:20px;" onclick="cerrarModal('modal-admin')">Cerrar</button>
+        <button class="btn btn-dark" style="width:100%; margin-top:20px;" onclick="cerrarModal('modal-admin')">Cerrar Admin</button>
     </div>
 </div>
 
@@ -164,7 +177,7 @@
 
     function salvar() { localStorage.setItem('donde_compro_db', JSON.stringify(db)); }
     
-    // Función Maestra para convertir imágenes a Base64
+    // Auxiliar para imágenes
     async function toBase64(file) {
         return new Promise((resolve, reject) => {
             if (!file) resolve(null);
@@ -175,6 +188,42 @@
         });
     }
 
+    // --- MÓDULO BACKUP ---
+    function exportarDB() {
+        const dataStr = JSON.stringify(db, null, 2);
+        const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+        const exportFileDefaultName = 'backup_dondecompro_' + new Date().toISOString().slice(0,10) + '.json';
+
+        const linkElement = document.createElement('a');
+        linkElement.setAttribute('href', dataUri);
+        linkElement.setAttribute('download', exportFileDefaultName);
+        linkElement.click();
+    }
+
+    function importarDB(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const importedData = JSON.parse(e.target.result);
+                if (importedData.config && importedData.comercios) {
+                    if (confirm("¿Estás seguro? Se sobrescribirán todos los datos actuales.")) {
+                        db = importedData;
+                        salvar();
+                        location.reload();
+                    }
+                } else {
+                    alert("El archivo no parece ser una base de datos válida.");
+                }
+            } catch (err) {
+                alert("Error al leer el archivo.");
+            }
+        };
+        reader.readAsText(file);
+    }
+
+    // --- LÓGICA GENERAL ---
     window.onload = () => { 
         aplicarConfig(); 
         actualizarSelects(); 
@@ -190,16 +239,14 @@
         document.getElementById('hero-slogan').innerText = db.config.slogan;
         if(db.config.logo) { 
             const img = document.getElementById('header-logo');
-            img.src = db.config.logo; 
-            img.style.display = 'block'; 
+            img.src = db.config.logo; img.style.display = 'block'; 
         }
     }
 
     function actualizarSelects() {
         const options = db.rubros.map(r => `<option value="${r}">${r}</option>`).join('');
         document.getElementById('search-rubro').innerHTML = '<option value="">Todos los rubros</option>' + options;
-        const regRubro = document.getElementById('reg-rubro');
-        if(regRubro) regRubro.innerHTML = options;
+        const rReg = document.getElementById('reg-rubro'); if(rReg) rReg.innerHTML = options;
     }
 
     function buscar() {
@@ -210,9 +257,9 @@
 
         db.comercios.filter(c => c.estado === 'activo').forEach(c => {
             const matchRubro = !r || c.rubro === r;
-            const esCoordenada = /[0-9]/.test(c.dir) && c.dir.includes(",");
-            const destinoFinal = esCoordenada ? c.dir : `${c.dir}, Rosario de la Frontera, Salta, Argentina`;
-            const linkMapa = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destinoFinal)}`;
+            const esCoord = /[0-9]/.test(c.dir) && c.dir.includes(",");
+            const destino = esCoord ? c.dir : `${c.dir}, Rosario de la Frontera, Salta`;
+            const linkMapa = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destino)}`;
 
             if ((c.nombre.toLowerCase().includes(q) || c.rubro.toLowerCase().includes(q) || q === '') && matchRubro) {
                 res.innerHTML += `
@@ -241,7 +288,7 @@
                                 <p style="font-size: 0.75rem; font-weight: 600; color: #333; margin-bottom: 5px;">🏪 TIENDA: ${c.nombre}</p>
                             </div>
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 15px;">
-                                <button class="btn btn-secondary" style="font-size: 0.75rem;" onclick="window.open('https://wa.me/${c.tel.replace(/\D/g,'')}?text=Hola, vi ${p.nom} en la página')">💬 CONSULTAR</button>
+                                <button class="btn btn-secondary" style="font-size: 0.75rem;" onclick="window.open('https://wa.me/${c.tel.replace(/\D/g,'')}?text=Hola, vi ${p.nom} en la página')">💬 WHATSAPP</button>
                                 <button class="btn btn-dark" style="font-size: 0.75rem;" onclick="verTienda('${c.nombre.replace(/'/g, "\\'")}')">🏪 VER TIENDA</button>
                             </div>
                             <button class="btn btn-primary" style="width: 100%; margin-top: 5px; font-size: 0.8rem;" onclick="window.open('${linkMapa}', '_blank')">🚀 CÓMO LLEGAR</button>
@@ -250,7 +297,7 @@
                 });
             }
         });
-        if (res.innerHTML === "") res.innerHTML = "<p style='grid-column: 1/-1; text-align:center; padding:50px; color:#999;'>No se encontraron resultados.</p>";
+        if (res.innerHTML === "") res.innerHTML = "<p style='grid-column: 1/-1; text-align:center; padding:50px; color:#999;'>No hay resultados.</p>";
     }
 
     function verTienda(nombreTienda) {
@@ -260,14 +307,14 @@
         window.scrollTo({top: 0, behavior: 'smooth'});
     }
 
+    // --- FUNCIONES COMERCIANTE ---
     async function guardarPerfilTienda() {
         const file = document.getElementById('t-img-file').files[0];
         if(file) tActiva.imgLocal = await toBase64(file);
-        
         tActiva.tel = document.getElementById('t-tel').value; 
         tActiva.dir = document.getElementById('t-dir').value;
         tActiva.hor = document.getElementById('t-hor').value;
-        salvar(); alert("Perfil guardado");
+        salvar(); alert("Perfil actualizado");
     }
 
     async function guardarProducto() {
@@ -275,59 +322,14 @@
         const pre = document.getElementById('p-pre').value;
         const file = document.getElementById('p-img-file').files[0];
         const idx = parseInt(document.getElementById('p-idx').value);
-
         if(!nom || !pre) return alert("Faltan datos");
-
         let b64 = (idx !== -1) ? tActiva.prods[idx].img : ''; 
         if(file) b64 = await toBase64(file);
-
         const prod = { nom, pre, img: b64 };
         if(idx === -1) tActiva.prods.push(prod); else tActiva.prods[idx] = prod;
-
-        document.getElementById('p-nom').value = ''; 
-        document.getElementById('p-pre').value = '';
-        document.getElementById('p-img-file').value = ''; 
-        document.getElementById('p-idx').value = '-1';
+        document.getElementById('p-nom').value = ''; document.getElementById('p-pre').value = '';
+        document.getElementById('p-img-file').value = ''; document.getElementById('p-idx').value = '-1';
         salvar(); renderProds();
-    }
-
-    async function guardarConfigSitio() {
-        const file = document.getElementById('adm-logo-file').files[0];
-        if(file) db.config.logo = await toBase64(file);
-        
-        db.config.name = document.getElementById('adm-name').value;
-        db.config.slogan = document.getElementById('adm-slogan').value;
-        salvar(); aplicarConfig(); alert("Ajustes guardados");
-    }
-
-    // Funciones de apoyo (Igual que el original pero integradas)
-    function registrarTienda() {
-        const n = document.getElementById('reg-nombre').value.trim();
-        const r = document.getElementById('reg-rubro').value;
-        const p = document.getElementById('reg-pass').value;
-        if(!n || !p) return alert("Faltan datos");
-        db.comercios.push({ id: Date.now(), nombre: n, rubro: r, pass: p, estado: 'pendiente', tel:'', dir:'', imgLocal:'', hor:'', prods:[] });
-        salvar(); alert("Solicitud enviada."); cerrarModal('modal-registro');
-    }
-
-    function accederTienda() {
-        const n = document.getElementById('log-nombre').value.trim().toLowerCase();
-        const p = document.getElementById('log-pass').value;
-        const c = db.comercios.find(i => i.nombre.toLowerCase() === n && i.pass === p);
-        if(!c) return alert("Datos incorrectos");
-        if(c.estado !== 'activo') return alert("Tienda pendiente de aprobación.");
-        tActiva = c;
-        document.getElementById('lbl-nombre-tienda').innerText = "Panel: " + c.nombre;
-        document.getElementById('t-tel').value = c.tel; 
-        document.getElementById('t-dir').value = c.dir;
-        document.getElementById('t-hor').value = c.hor;
-        renderProds(); cerrarModal('modal-login'); abrirModal('modal-panel-tienda');
-    }
-
-    function obtenerGPS() {
-        navigator.geolocation.getCurrentPosition(p => { 
-            document.getElementById('t-dir').value = p.coords.latitude.toFixed(6) + ", " + p.coords.longitude.toFixed(6); 
-        }, () => alert("Activa el GPS"));
     }
 
     function renderProds() {
@@ -349,10 +351,42 @@
 
     function delP(i) { if(confirm("¿Borrar?")) { tActiva.prods.splice(i,1); salvar(); renderProds(); } }
 
-    function abrirAdmin() {
-        document.getElementById('adm-name').value = db.config.name;
-        document.getElementById('adm-slogan').value = db.config.slogan;
-        renderRubrosAdmin(); renderComerciosAdmin(); abrirModal('modal-admin');
+    function accederTienda() {
+        const n = document.getElementById('log-nombre').value.trim().toLowerCase();
+        const p = document.getElementById('log-pass').value;
+        const c = db.comercios.find(i => i.nombre.toLowerCase() === n && i.pass === p);
+        if(!c) return alert("Datos incorrectos");
+        if(c.estado !== 'activo') return alert("Pendiente de aprobación.");
+        tActiva = c;
+        document.getElementById('lbl-nombre-tienda').innerText = "Panel: " + c.nombre;
+        document.getElementById('t-tel').value = c.tel; 
+        document.getElementById('t-dir').value = c.dir;
+        document.getElementById('t-hor').value = c.hor;
+        renderProds(); cerrarModal('modal-login'); abrirModal('modal-panel-tienda');
+    }
+
+    function registrarTienda() {
+        const n = document.getElementById('reg-nombre').value.trim();
+        const r = document.getElementById('reg-rubro').value;
+        const p = document.getElementById('reg-pass').value;
+        if(!n || !p) return alert("Faltan datos");
+        db.comercios.push({ id: Date.now(), nombre: n, rubro: r, pass: p, estado: 'pendiente', tel:'', dir:'', imgLocal:'', hor:'', prods:[] });
+        salvar(); alert("Solicitud enviada."); cerrarModal('modal-registro');
+    }
+
+    function obtenerGPS() {
+        navigator.geolocation.getCurrentPosition(p => { 
+            document.getElementById('t-dir').value = p.coords.latitude.toFixed(6) + ", " + p.coords.longitude.toFixed(6); 
+        }, () => alert("Activa el GPS"));
+    }
+
+    // --- FUNCIONES ADMIN ---
+    async function guardarConfigSitio() {
+        const file = document.getElementById('adm-logo-file').files[0];
+        if(file) db.config.logo = await toBase64(file);
+        db.config.name = document.getElementById('adm-name').value;
+        db.config.slogan = document.getElementById('adm-slogan').value;
+        salvar(); aplicarConfig(); alert("Ajustes guardados");
     }
 
     function agregarRubro() {
@@ -369,8 +403,8 @@
         <div style="padding:10px; background:#fff; margin-bottom:10px; border-radius:10px; font-size:0.8rem; border:1px solid #ddd; display:flex; justify-content:space-between; align-items:center;">
             <div><b>${c.nombre}</b> (${c.rubro})<br><span style="color:${c.estado==='activo'?'green':'orange'}">${c.estado.toUpperCase()}</span></div>
             <div style="display:flex; gap:5px;">
-                ${c.estado === 'pendiente' ? `<button class="btn btn-secondary" style="padding:5px;" onclick="aprobarC(${c.id})">OK</button>` : ''}
-                <button class="btn btn-danger" style="padding:5px;" onclick="borrarC(${c.id})">✕</button>
+                ${c.estado === 'pendiente' ? `<button class="btn btn-secondary" style="padding:4px;" onclick="aprobarC(${c.id})">OK</button>` : ''}
+                <button class="btn btn-danger" style="padding:4px;" onclick="borrarC(${c.id})">✕</button>
             </div>
         </div>`).join('');
     }
@@ -381,6 +415,12 @@
     }
 
     function borrarC(id) { if(confirm("¿Eliminar?")) { db.comercios = db.comercios.filter(i => i.id !== id); salvar(); renderComerciosAdmin(); } }
+
+    function abrirAdmin() {
+        document.getElementById('adm-name').value = db.config.name;
+        document.getElementById('adm-slogan').value = db.config.slogan;
+        renderRubrosAdmin(); renderComerciosAdmin(); abrirModal('modal-admin');
+    }
 </script>
 </body>
 </html>
