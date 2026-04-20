@@ -11,6 +11,7 @@
         body { font-family: 'Poppins', sans-serif; background-color: var(--bg); color: #333; line-height: 1.6; }
         header { background: #fff; padding: 15px 5%; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 1000; }
         .logo-area { display: flex; align-items: center; gap: 12px; cursor: pointer; }
+        .logo-img { height: 45px; width: auto; border-radius: 5px; }
         .btn { padding: 10px 18px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; transition: 0.2s; display: inline-flex; align-items: center; gap: 5px; text-decoration: none; justify-content: center; font-size: 0.9rem; }
         .btn-primary { background: var(--primary); color: white; }
         .btn-secondary { background: var(--secondary); color: white; }
@@ -32,7 +33,7 @@
 <body>
 
 <header>
-    <div class="logo-area" onclick="location.reload()">
+    <div class="logo-area" onclick="location.reload()" id="header-logo-container">
         <h1 id="header-title">MI PLATAFORMA</h1>
     </div>
     <div style="display: flex; gap: 10px;">
@@ -47,7 +48,7 @@
     </div>
 
     <div class="search-box">
-        <input type="text" id="main-search" placeholder="¿Qué buscas?" onkeyup="buscar()">
+        <input type="text" id="main-search" placeholder="Busca comercios por nombre..." onkeyup="buscar()">
         <select id="search-rubro" onchange="buscar()"></select>
     </div>
 
@@ -83,6 +84,7 @@
                 <h4>🎨 Personalización</h4><br>
                 <label>Nombre del Sitio:</label><input type="text" id="adm-name">
                 <label>Slogan:</label><input type="text" id="adm-slogan">
+                <label>URL del Logo (Opcional):</label><input type="text" id="adm-logo" placeholder="https://ejemplo.com/logo.png">
                 <button class="btn btn-primary" style="width:100%" onclick="guardarConfigSitio()">Guardar Cambios</button>
             </div>
             <div class="admin-section">
@@ -100,9 +102,9 @@
 </div>
 
 <script>
-    // 1. Inicialización de Datos (LocalStorage)
+    // 1. Base de Datos Local
     let db = JSON.parse(localStorage.getItem('mi_db_comercial')) || {
-        config: { name: 'DÓNDE COMPRO', slogan: 'Tu ciudad en un solo lugar' },
+        config: { name: 'DÓNDE COMPRO', slogan: 'Tu ciudad en un solo lugar', logo: '' },
         rubros: ['Almacén', 'Farmacia', 'Ferretería'],
         comercios: []
     };
@@ -116,12 +118,19 @@
         document.getElementById('header-title').innerText = db.config.name;
         document.getElementById('hero-slogan').innerText = db.config.slogan;
         document.getElementById('tab-title').innerText = db.config.name;
+        
+        // Renderizado del Logo
+        const logoCont = document.getElementById('header-logo-container');
+        if(db.config.logo) {
+            logoCont.innerHTML = `<img src="${db.config.logo}" class="logo-img" alt="logo"> <h1 id="header-title">${db.config.name}</h1>`;
+        }
     }
 
-    // 2. Funciones de Panel Administrador
+    // 2. Funciones de Administración
     function abrirAdmin() {
         document.getElementById('adm-name').value = db.config.name;
         document.getElementById('adm-slogan').value = db.config.slogan;
+        document.getElementById('adm-logo').value = db.config.logo || '';
         renderComerciosAdmin();
         abrirModal('modal-admin');
     }
@@ -129,8 +138,10 @@
     function guardarConfigSitio() {
         db.config.name = document.getElementById('adm-name').value;
         db.config.slogan = document.getElementById('adm-slogan').value;
+        db.config.logo = document.getElementById('adm-logo').value;
         salvar();
-        alert("Configuración actualizada correctamente.");
+        alert("Configuración guardada.");
+        location.reload(); 
     }
 
     function renderComerciosAdmin() {
@@ -138,11 +149,15 @@
         lista.innerHTML = db.comercios.length === 0 ? "<p>No hay solicitudes.</p>" : "";
         
         db.comercios.forEach((c, index) => {
+            const btnActivar = c.estado === 'pendiente' 
+                ? `<button class="btn btn-secondary" style="padding:5px; font-size:0.7rem;" onclick="aprobarComercio(${index})">✅ Activar</button>` 
+                : `<span style="color:green; font-size:0.8rem;">[Activo]</span>`;
+
             lista.innerHTML += `
                 <div style="background:white; padding:10px; border-radius:8px; margin-bottom:10px; border:1px solid #ddd;">
-                    <b>${c.nombre}</b> (${c.estado})<br>
-                    <button class="btn btn-secondary" style="padding:5px; font-size:0.7rem; margin-top:5px;" onclick="aprobarComercio(${index})">✅ Activar</button>
-                    <button class="btn btn-danger" style="padding:5px; font-size:0.7rem; margin-top:5px;" onclick="borrarComercio(${index})">🗑️ Borrar</button>
+                    <b>${c.nombre}</b><br>
+                    ${btnActivar}
+                    <button class="btn btn-danger" style="padding:5px; font-size:0.7rem;" onclick="borrarComercio(${index})">🗑️ Borrar</button>
                 </div>`;
         });
     }
@@ -151,11 +166,10 @@
         db.comercios[index].estado = 'activo';
         salvar();
         renderComerciosAdmin();
-        alert("Comercio activado. Ahora puede iniciar sesión.");
     }
 
     function borrarComercio(index) {
-        if(confirm("¿Seguro que quieres eliminar este comercio?")) {
+        if(confirm("¿Eliminar este comercio?")) {
             db.comercios.splice(index, 1);
             salvar();
             renderComerciosAdmin();
@@ -169,17 +183,37 @@
             document.getElementById('new-rubro').value = "";
             salvar();
             actualizarSelects();
-            alert("Rubro añadido.");
         }
     }
 
-    // 3. Registro y Búsqueda
+    // 3. Lógica de Comercios e Ingreso
+    function accederTienda() {
+        const nombre = document.getElementById('log-nombre').value;
+        const pass = document.getElementById('log-pass').value;
+
+        // Buscamos el comercio que coincida con nombre y contraseña
+        const tienda = db.comercios.find(c => c.nombre === nombre && c.pass === pass);
+
+        if (!tienda) {
+            alert("Credenciales incorrectas.");
+            return;
+        }
+
+        if (tienda.estado !== 'activo') {
+            alert("Tu comercio aún está en espera de aprobación por el Administrador.");
+            return;
+        }
+
+        alert("¡Bienvenido " + tienda.nombre + "! Próximamente habilitaremos tu panel de productos.");
+        cerrarModal('modal-login');
+    }
+
     function registrarTienda() {
         const nombre = document.getElementById('reg-nombre').value;
         const pass = document.getElementById('reg-pass').value;
         const rubro = document.getElementById('reg-rubro').value;
 
-        if(!nombre || !pass) return alert("Completa todos los campos.");
+        if(!nombre || !pass) return alert("Completa los datos.");
 
         db.comercios.push({
             nombre: nombre,
@@ -190,29 +224,34 @@
         });
 
         salvar();
-        alert("Solicitud enviada. Contacta al administrador para que te active.");
+        alert("Solicitud registrada. Espera la activación del administrador.");
         cerrarModal('modal-registro');
     }
 
+    // 4. Búsqueda Integrada
     function buscar() {
         const q = document.getElementById('main-search').value.toLowerCase();
+        const rubroFiltro = document.getElementById('search-rubro').value;
         const res = document.getElementById('results-area');
         res.innerHTML = "";
 
-        const activos = db.comercios.filter(c => c.estado === 'activo');
-        activos.forEach(c => {
-            if(c.nombre.toLowerCase().includes(q)) {
-                res.innerHTML += `
-                    <div class="card">
-                        <h3>${c.nombre}</h3>
-                        <p>🏷️ Rubro: ${c.rubro}</p>
-                        <button class="btn btn-primary" style="width:100%; margin-top:10px;">Ver Tienda</button>
-                    </div>`;
-            }
+        const filtrados = db.comercios.filter(c => {
+            const coincideNombre = c.nombre.toLowerCase().includes(q);
+            const coincideRubro = rubroFiltro === "" || c.rubro === rubroFiltro;
+            return c.estado === 'activo' && coincideNombre && coincideRubro;
+        });
+
+        filtrados.forEach(c => {
+            res.innerHTML += `
+                <div class="card">
+                    <h3>${c.nombre}</h3>
+                    <p>🏷️ Rubro: ${c.rubro}</p>
+                    <button class="btn btn-primary" style="width:100%; margin-top:10px;">Ver Tienda</button>
+                </div>`;
         });
     }
 
-    // 4. Utilidades de Interfaz
+    // 5. Utilidades
     function actualizarSelects() {
         const html = db.rubros.map(r => `<option value="${r}">${r}</option>`).join('');
         document.getElementById('search-rubro').innerHTML = '<option value="">Todos los rubros</option>' + html;
@@ -222,7 +261,7 @@
     function abrirModal(id) { document.getElementById(id).style.display = 'flex'; }
     function cerrarModal(id) { document.getElementById(id).style.display = 'none'; }
 
-    // Ejecución inicial
+    // Inicio
     actualizarSelects();
     aplicarConfig();
     buscar();
