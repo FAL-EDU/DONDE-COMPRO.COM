@@ -10,7 +10,7 @@
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Poppins', sans-serif; background-color: var(--bg); color: #333; line-height: 1.6; }
         header { background: #fff; padding: 15px 5%; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 1000; }
-        .logo-area { display: flex; align-items: center; gap: 10px; }
+        .logo-area { display: flex; align-items: center; gap: 10px; cursor: pointer; }
         .logo-area img { height: 45px; border-radius: 5px; max-width: 150px; object-fit: contain; }
         .btn { padding: 10px 18px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; transition: 0.2s; display: inline-flex; align-items: center; gap: 5px; text-decoration: none; justify-content: center; font-size: 0.9rem; }
         .btn-primary { background: var(--primary); color: white; }
@@ -33,7 +33,6 @@
         .modal-content { background: white; padding: 30px; border-radius: 20px; width: 100%; max-width: 1000px; max-height: 90vh; overflow-y: auto; }
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         input, select, textarea { width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 8px; font-family: inherit; }
-        input[type="file"] { padding: 5px; background: #fff; }
         .admin-prod-item { display: flex; align-items: center; gap: 10px; padding: 10px; border: 1px solid #eee; border-radius: 10px; margin-bottom: 10px; }
         .admin-prod-item img { width: 50px; height: 50px; object-fit: cover; border-radius: 5px; }
         @media (max-width: 768px) { .grid-2 { grid-template-columns: 1fr; } .search-box { flex-direction: column; } }
@@ -42,7 +41,7 @@
 <body>
 
 <header>
-    <div class="logo-area" onclick="location.reload()" style="cursor:pointer">
+    <div class="logo-area" onclick="limpiarFiltro()">
         <img id="header-logo" src="" style="display: none;">
         <h1 id="header-title">DÓNDE COMPRO.COM</h1>
     </div>
@@ -73,14 +72,14 @@
     <div class="modal-content">
         <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #eee; padding-bottom:10px; margin-bottom:20px;">
             <h2 id="lbl-nombre-tienda">Panel</h2>
-            <button class="btn btn-dark" onclick="cerrarModal('modal-panel-tienda')">Salir</button>
+            <button class="btn btn-dark" onclick="cerrarModal('modal-panel-tienda')">Cerrar Sesión</button>
         </div>
         <div class="grid-2">
             <div style="background:#f8f9fa; padding:20px; border-radius:15px;">
-                <h4>📍 Perfil</h4><br>
-                <label>WhatsApp:</label><input type="text" id="t-tel">
+                <h4>📍 Datos del Local</h4><br>
+                <label>WhatsApp:</label><input type="text" id="t-tel" placeholder="549...">
                 <label>Dirección:</label><div style="display:flex; gap:5px;"><input type="text" id="t-dir"><button class="btn btn-dark" onclick="obtenerGPS()">📍</button></div>
-                <label>Foto Local:</label><input type="file" id="t-img-file" accept="image/*">
+                <label>Foto:</label><input type="file" id="t-img-file" accept="image/*">
                 <label>Horarios:</label><input type="text" id="t-hor">
                 <button class="btn btn-primary" style="width:100%" onclick="guardarPerfilTienda()">Guardar Perfil</button>
             </div>
@@ -91,7 +90,7 @@
                     <input type="text" id="p-nom" placeholder="Producto">
                     <input type="number" id="p-pre" placeholder="Precio">
                     <input type="file" id="p-img-file" accept="image/*">
-                    <button class="btn btn-secondary" style="width:100%" onclick="guardarProducto()">Guardar</button>
+                    <button class="btn btn-secondary" style="width:100%" onclick="guardarProducto()">Guardar Producto</button>
                 </div>
                 <div id="t-lista-prods" style="max-height: 300px; overflow-y: auto;"></div>
             </div>
@@ -104,12 +103,11 @@
         <h2>Admin Central</h2>
         <div class="grid-2">
             <section style="background:#f9f9f9; padding:20px; border-radius:15px;">
-                <h4>Identidad</h4>
-                <input type="text" id="adm-name" placeholder="Nombre">
-                <input type="text" id="adm-slogan" placeholder="Slogan">
+                <h4>Sitio</h4>
+                <input type="text" id="adm-name"><input type="text" id="adm-slogan">
                 <input type="file" id="adm-logo-file" accept="image/*">
                 <button class="btn btn-primary" onclick="guardarConfigSitio()">Guardar</button>
-                <hr style="margin:15px 0">
+                <hr>
                 <button class="btn btn-dark" onclick="exportarDB()">📥 Exportar</button>
                 <button class="btn btn-dark" onclick="document.getElementById('import-file').click()">📤 Importar</button>
                 <input type="file" id="import-file" style="display:none" onchange="importarDB(event)">
@@ -125,21 +123,21 @@
 
 <script>
     let db = JSON.parse(localStorage.getItem('donde_compro_db')) || {
-        config: { name: 'DÓNDE COMPRO.COM', slogan: 'Buscador local', logo: '' },
+        config: { name: 'DÓNDE COMPRO.COM', slogan: 'Buscador de productos locales', logo: '' },
         rubros: ['Farmacia', 'Ferretería', 'Almacén'],
         comercios: []
     };
     let tActiva = null;
-    let modoTiendaUnica = null; // Variable para controlar la vista de una sola tienda
+    let tiendaFiltradaID = null; // Guardamos el ID de la tienda para la vista única
 
     function salvar() { localStorage.setItem('donde_compro_db', JSON.stringify(db)); }
     
     async function toBase64(file) {
         return new Promise((resolve) => {
             if (!file) resolve(null);
-            const r = new FileReader();
-            r.readAsDataURL(file);
-            r.onload = () => resolve(r.result);
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
         });
     }
 
@@ -155,12 +153,12 @@
     }
 
     function actualizarSelects() {
-        const h = db.rubros.map(r => `<option value="${r}">${r}</option>`).join('');
-        document.getElementById('search-rubro').innerHTML = '<option value="">Todos los rubros</option>' + h;
-        if(document.getElementById('reg-rubro')) document.getElementById('reg-rubro').innerHTML = h;
+        const options = db.rubros.map(r => `<option value="${r}">${r}</option>`).join('');
+        document.getElementById('search-rubro').innerHTML = '<option value="">Todos los rubros</option>' + options;
+        if(document.getElementById('reg-rubro')) document.getElementById('reg-rubro').innerHTML = options;
     }
 
-    // --- CORRECCIÓN DE BÚSQUEDA Y VER TIENDA ---
+    // --- LÓGICA DE BÚSQUEDA Y "VER TIENDA" ---
     function buscar() {
         const q = document.getElementById('main-search').value.toLowerCase().trim();
         const r = document.getElementById('search-rubro').value;
@@ -168,116 +166,125 @@
         res.innerHTML = "";
 
         db.comercios.filter(c => c.estado === 'activo').forEach(c => {
-            // Caso 1: Si estamos viendo una tienda específica (Ver Tienda)
-            if (modoTiendaUnica === c.nombre) {
-                renderizarComercio(c, res, true); // Mostrar comercio y TODOS sus productos
+            // Caso A: Si el usuario eligió "Ver Tienda", mostramos SOLO esa tienda y TODOS sus productos
+            if (tiendaFiltradaID && c.id === tiendaFiltradaID) {
+                renderizarTiendaCompleta(c, res);
                 return;
             }
 
-            // Caso 2: Búsqueda normal
-            const matchRubro = !r || c.rubro === r;
-            const matchComercio = c.nombre.toLowerCase().includes(q);
+            // Caso B: Búsqueda normal (si no hay una tienda seleccionada)
+            if (!tiendaFiltradaID) {
+                const matchRubro = !r || c.rubro === r;
+                const matchComercio = c.nombre.toLowerCase().includes(q);
 
-            if (matchRubro) {
-                if (q === '' || matchComercio) {
-                    renderizarComercio(c, res, false); // Mostrar solo el comercio
-                }
-                
-                // Si buscó un producto, mostrar los productos que coincidan
-                if (q !== '' && !matchComercio) {
-                    const prodsEncontrados = c.prods.filter(p => p.nom.toLowerCase().includes(q));
-                    prodsEncontrados.forEach(p => renderizarProducto(p, c, res));
+                if (matchRubro) {
+                    if (q === '' || matchComercio) {
+                        renderizarTarjetaComercio(c, res);
+                    }
+                    if (q !== '' && !matchComercio) {
+                        c.prods.filter(p => p.nom.toLowerCase().includes(q))
+                               .forEach(p => renderizarTarjetaProducto(p, c, res));
+                    }
                 }
             }
         });
+
+        if (res.innerHTML === "") res.innerHTML = "<p style='grid-column:1/-1; text-align:center; padding:40px; color:#999;'>No hay resultados para tu búsqueda.</p>";
     }
 
-    function renderizarComercio(c, contenedor, mostrarTodosLosProds) {
-        const esCoord = /[0-9]/.test(c.dir) && c.dir.includes(",");
-        const dest = esCoord ? c.dir : `${c.dir}, Rosario de la Frontera, Salta`;
-        const link = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(dest)}`;
-
-        contenedor.innerHTML += `
-            <div class="card" style="grid-column: 1/-1; background: #fff; border-left: 8px solid var(--primary);">
-                <div style="display:flex; flex-wrap:wrap;">
-                    <img src="${c.imgLocal || 'https://via.placeholder.com/150'}" style="width:200px; height:150px; object-fit:cover;">
-                    <div class="card-content" style="flex:1">
-                        <div class="card-title">${c.nombre} <small>(${c.rubro})</small></div>
-                        <div class="card-info">📍 ${c.dir || 'Consultar'}</div>
-                        <div class="card-info">📞 ${c.tel || '-'}</div>
-                        <div class="card-info">⏰ ${c.hor || '-'}</div>
-                        <div style="display:flex; gap:10px; margin-top:10px;">
-                            <button class="btn btn-primary" onclick="window.open('${link}', '_blank')">🚀 RUTA</button>
-                            <button class="btn btn-secondary" onclick="window.open('https://wa.me/${c.tel.replace(/\D/g,'')}', '_blank')">💬 WHATSAPP</button>
-                            ${!mostrarTodosLosProds ? `<button class="btn btn-dark" onclick="verTienda('${c.nombre.replace(/'/g, "\\'")}')">📦 VER PRODUCTOS</button>` : `<button class="btn btn-danger" onclick="limpiarFiltro()">✕ CERRAR TIENDA</button>`}
-                        </div>
-                    </div>
+    function renderizarTarjetaComercio(c, res) {
+        res.innerHTML += `
+            <div class="card">
+                <img class="card-img" src="${c.imgLocal || 'https://via.placeholder.com/400x200?text=Comercio'}">
+                <div class="card-content">
+                    <div class="card-title">${c.nombre} <small style="font-size:0.7rem; color:#999;">(${c.rubro})</small></div>
+                    <div class="card-info">📍 ${c.dir || 'Sin dirección'}</div>
+                    <div class="card-info">📞 ${c.tel || 'Sin WhatsApp'}</div>
+                    <button class="btn btn-dark" style="width:100%; margin-top:10px;" onclick="verTienda(${c.id})">📦 VER PRODUCTOS</button>
                 </div>
             </div>`;
-
-        if (mostrarTodosLosProds) {
-            if (c.prods.length === 0) {
-                contenedor.innerHTML += `<p style="grid-column: 1/-1; text-align:center; padding:20px;">Esta tienda aún no cargó productos.</p>`;
-            } else {
-                c.prods.forEach(p => renderizarProducto(p, c, contenedor));
-            }
-        }
     }
 
-    function renderizarProducto(p, c, contenedor) {
-        const esCoord = /[0-9]/.test(c.dir) && c.dir.includes(",");
-        const dest = esCoord ? c.dir : `${c.dir}, Rosario de la Frontera, Salta`;
-        const link = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(dest)}`;
-        
-        contenedor.innerHTML += `
-            <div class="card" style="border-top: 5px solid var(--secondary);">
+    function renderizarTarjetaProducto(p, c, res) {
+        const linkMapa = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(c.dir + ', Rosario de la Frontera, Salta')}`;
+        res.innerHTML += `
+            <div class="card" style="border-top-color: var(--secondary);">
                 <img class="card-img" src="${p.img || 'https://via.placeholder.com/400x200?text=Producto'}">
                 <div class="card-content">
                     <div class="card-title">${p.nom}</div>
                     <div class="price-tag">$${p.pre}</div>
-                    <p style="font-size:0.7rem; color:#666; margin-bottom:10px;">En: ${c.nombre}</p>
-                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px;">
-                        <button class="btn btn-secondary" style="font-size:0.7rem" onclick="window.open('https://wa.me/${c.tel.replace(/\D/g,'')}?text=Hola vi ${p.nom}', '_blank')">💬 CONSULTAR</button>
-                        <button class="btn btn-primary" style="font-size:0.7rem" onclick="window.open('${link}', '_blank')">🚀 IR AL LOCAL</button>
+                    <p style="font-size:0.7rem; color:#666;">Tienda: ${c.nombre}</p>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:5px; margin-top:10px;">
+                        <button class="btn btn-secondary" onclick="window.open('https://wa.me/${c.tel.replace(/\D/g,'')}?text=Vi ${p.nom}', '_blank')">💬 PEDIR</button>
+                        <button class="btn btn-primary" onclick="window.open('${linkMapa}', '_blank')">🚀 RUTA</button>
                     </div>
                 </div>
             </div>`;
     }
 
-    function verTienda(nombre) {
-        modoTiendaUnica = nombre;
-        document.getElementById('main-search').value = ""; // Limpiamos para que no interfiera
+    function renderizarTiendaCompleta(c, res) {
+        const linkMapa = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(c.dir + ', Rosario de la Frontera, Salta')}`;
+        // Cabecera de la tienda
+        res.innerHTML += `
+            <div class="card" style="grid-column: 1/-1; background: #fff; border-left: 8px solid var(--primary); padding:10px;">
+                <div style="display:flex; flex-wrap:wrap; gap:20px;">
+                    <img src="${c.imgLocal || 'https://via.placeholder.com/200'}" style="width:250px; height:180px; object-fit:cover; border-radius:10px;">
+                    <div style="flex:1; min-width:250px;">
+                        <h2 style="color:var(--primary);">${c.nombre}</h2>
+                        <p>🏷️ ${c.rubro}</p>
+                        <p>📍 ${c.dir || 'Consultar'}</p>
+                        <p>📞 ${c.tel || '-'}</p>
+                        <p>⏰ ${c.hor || '-'}</p>
+                        <div style="display:flex; gap:10px; margin-top:15px; flex-wrap:wrap;">
+                            <button class="btn btn-primary" onclick="window.open('${linkMapa}', '_blank')">🚀 CÓMO LLEGAR</button>
+                            <button class="btn btn-secondary" onclick="window.open('https://wa.me/${c.tel.replace(/\D/g,'')}', '_blank')">💬 WHATSAPP</button>
+                            <button class="btn btn-danger" onclick="limpiarFiltro()">✕ CERRAR TIENDA</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <h3 style="grid-column:1/-1; margin-top:20px; border-bottom:2px solid #eee;">Catálogo de Productos:</h3>`;
+        
+        // Listado de sus productos
+        if (c.prods.length === 0) {
+            res.innerHTML += `<p style="grid-column:1/-1; text-align:center; padding:30px;">Esta tienda aún no tiene productos cargados.</p>`;
+        } else {
+            c.prods.forEach(p => renderizarTarjetaProducto(p, c, res));
+        }
+    }
+
+    function verTienda(id) {
+        tiendaFiltradaID = id;
+        document.getElementById('main-search').value = ""; // Limpiar busqueda
         buscar();
         window.scrollTo({top: 0, behavior: 'smooth'});
     }
 
     function limpiarFiltro() {
-        modoTiendaUnica = null;
+        tiendaFiltradaID = null;
+        document.getElementById('main-search').value = "";
         buscar();
     }
 
-    // --- RESTO DE FUNCIONES ---
+    // --- RESTO DE FUNCIONES (ADMIN, COMERCIANTE, BACKUP) ---
     async function guardarPerfilTienda() {
         const f = document.getElementById('t-img-file').files[0];
         if(f) tActiva.imgLocal = await toBase64(f);
         tActiva.tel = document.getElementById('t-tel').value; 
         tActiva.dir = document.getElementById('t-dir').value;
         tActiva.hor = document.getElementById('t-hor').value;
-        salvar(); alert("Guardado");
+        salvar(); alert("Perfil guardado!");
     }
 
     async function guardarProducto() {
         const n = document.getElementById('p-nom').value;
         const p = document.getElementById('p-pre').value;
         const f = document.getElementById('p-img-file').files[0];
-        const idx = parseInt(document.getElementById('p-idx').value);
-        if(!n || !p) return;
-        let img = (idx !== -1) ? tActiva.prods[idx].img : '';
-        if(f) img = await toBase64(f);
-        const nuevo = { nom: n, pre: p, img: img };
-        if(idx === -1) tActiva.prods.push(nuevo); else tActiva.prods[idx] = nuevo;
+        if(!n || !p) return alert("Faltan datos");
+        let img = ''; if(f) img = await toBase64(f);
+        tActiva.prods.push({ nom: n, pre: p, img: img });
+        salvar(); renderProds();
         document.getElementById('p-nom').value = ''; document.getElementById('p-pre').value = '';
-        document.getElementById('p-idx').value = '-1'; salvar(); renderProds();
     }
 
     function renderProds() {
@@ -293,7 +300,7 @@
         const n = document.getElementById('log-nombre').value.toLowerCase();
         const p = document.getElementById('log-pass').value;
         const c = db.comercios.find(i => i.nombre.toLowerCase() === n && i.pass === p);
-        if(!c || c.estado !== 'activo') return alert("Error de acceso");
+        if(!c || c.estado !== 'activo') return alert("No autorizado");
         tActiva = c;
         document.getElementById('lbl-nombre-tienda').innerText = c.nombre;
         document.getElementById('t-tel').value = c.tel;
@@ -318,19 +325,18 @@
                 <span>${c.nombre} [${c.estado}]</span>
                 <div>
                     <button onclick="aprobar('${c.id}')">OK</button>
-                    <button onclick="borrar('${c.id}')">✕</button>
+                    <button onclick="borrarC('${c.id}')">✕</button>
                 </div>
             </div>`).join('');
         abrirModal('modal-admin');
     }
 
     function aprobar(id) { const c = db.comercios.find(i => i.id == id); if(c) c.estado = 'activo'; salvar(); abrirAdmin(); }
-    function borrar(id) { db.comercios = db.comercios.filter(i => i.id != id); salvar(); abrirAdmin(); }
-    
+    function borrarC(id) { db.comercios = db.comercios.filter(i => i.id != id); salvar(); abrirAdmin(); }
+
     function exportarDB() {
-        const blob = new Blob([JSON.stringify(db)], {type: "application/json"});
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a'); a.href = url; a.download = "backup.json"; a.click();
+        const b = new Blob([JSON.stringify(db)], {type: "application/json"});
+        const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = "backup.json"; a.click();
     }
 
     function importarDB(e) {
@@ -344,6 +350,14 @@
         navigator.geolocation.getCurrentPosition(p => { 
             document.getElementById('t-dir').value = `${p.coords.latitude.toFixed(6)}, ${p.coords.longitude.toFixed(6)}`; 
         });
+    }
+
+    async function guardarConfigSitio() {
+        const f = document.getElementById('adm-logo-file').files[0];
+        if(f) db.config.logo = await toBase64(f);
+        db.config.name = document.getElementById('adm-name').value;
+        db.config.slogan = document.getElementById('adm-slogan').value;
+        salvar(); location.reload();
     }
 </script>
 </body>
