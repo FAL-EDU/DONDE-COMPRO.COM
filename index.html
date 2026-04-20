@@ -10,8 +10,6 @@
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Poppins', sans-serif; background-color: var(--bg); color: #333; line-height: 1.6; }
         header { background: #fff; padding: 15px 5%; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 1000; }
-        .logo-area { display: flex; align-items: center; gap: 12px; cursor: pointer; }
-        .logo-img { height: 45px; width: auto; border-radius: 5px; }
         .btn { padding: 10px 18px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; transition: 0.2s; display: inline-flex; align-items: center; gap: 5px; text-decoration: none; justify-content: center; font-size: 0.9rem; }
         .btn-primary { background: var(--primary); color: white; }
         .btn-secondary { background: var(--secondary); color: white; }
@@ -27,18 +25,17 @@
         .admin-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
         .admin-section { background: #f8f9fa; padding: 15px; border-radius: 12px; border: 1px solid #eee; }
         input, select { width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 8px; }
-        #panel-comerciante { display: none; background: #fff; padding: 30px; border-radius: 20px; box-shadow: var(--card-shadow); }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
+        #panel-comerciante { display: none; background: white; padding: 30px; border-radius: 20px; box-shadow: var(--card-shadow); }
+        @media (max-width: 900px) { .admin-grid { grid-template-columns: 1fr; } .search-box { flex-direction: column; } }
     </style>
 </head>
 <body>
 
 <header>
-    <div class="logo-area" onclick="location.reload()" id="header-logo-container">
-        <h1 id="header-title">CARGANDO...</h1>
+    <div class="logo-area" onclick="location.reload()" style="cursor:pointer">
+        <h1 id="header-title">MI PLATAFORMA</h1>
     </div>
-    <div id="header-buttons" style="display: flex; gap: 10px;">
+    <div id="nav-buttons" style="display: flex; gap: 10px;">
         <button class="btn btn-dark" onclick="abrirAdmin()">⚙️ ADMIN</button>
         <button class="btn btn-primary" onclick="abrirModal('modal-login')">🏪 MI TIENDA</button>
     </div>
@@ -50,7 +47,7 @@
             <h2 id="hero-slogan" style="font-weight: 300; color: #666;">Encuentra todo en tu ciudad</h2>
         </div>
         <div class="search-box">
-            <input type="text" id="main-search" placeholder="Buscar por nombre..." onkeyup="buscar()">
+            <input type="text" id="main-search" placeholder="¿Qué buscas?" onkeyup="buscar()">
             <select id="search-rubro" onchange="buscar()"></select>
         </div>
         <div id="results-area" class="results-grid"></div>
@@ -58,20 +55,20 @@
 
     <div id="panel-comerciante">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-            <h2 id="txt-bienvenida">Panel de Control</h2>
+            <h2 id="txt-bienvenida">Bienvenido</h2>
             <button class="btn btn-danger" onclick="location.reload()">Cerrar Sesión</button>
         </div>
         <div class="admin-grid">
             <div class="admin-section">
-                <h4>➕ Nuevo Producto</h4><br>
-                <input type="text" id="prod-nombre" placeholder="Nombre del producto">
+                <h4>➕ Cargar Producto</h4><br>
+                <input type="text" id="prod-nombre" placeholder="Nombre (ej: Paracetamol)">
                 <input type="number" id="prod-precio" placeholder="Precio ($)">
                 <button class="btn btn-secondary" style="width:100%" onclick="agregarProducto()">Guardar</button>
             </div>
             <div class="admin-section" style="grid-column: span 2;">
                 <h4>📦 Mis Productos</h4>
-                <table>
-                    <thead><tr><th>Producto</th><th>Precio</th><th>Acción</th></tr></thead>
+                <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+                    <thead><tr style="text-align: left; border-bottom: 2px solid #ddd;"><th>Nombre</th><th>Precio</th><th>Acción</th></tr></thead>
                     <tbody id="lista-productos"></tbody>
                 </table>
             </div>
@@ -79,62 +76,64 @@
     </div>
 </main>
 
+<div id="modal-login" class="modal">
+    <div class="modal-content" style="max-width: 400px; text-align: center;">
+        <h3>Ingreso Comerciantes</h3><br>
+        <input type="text" id="log-nombre" placeholder="Nombre del comercio">
+        <input type="password" id="log-pass" placeholder="Contraseña">
+        <button class="btn btn-primary" style="width:100%" onclick="accederTienda()">INGRESAR</button>
+        <button class="btn btn-secondary" style="width:100%; margin-top:10px" onclick="cerrarModal('modal-login'); abrirModal('modal-registro')">Registrar mi tienda</button>
+    </div>
+</div>
+
+<div id="modal-registro" class="modal">
+    <div class="modal-content" style="max-width: 450px;">
+        <h3>Solicitud de Registro</h3><br>
+        <label>Nombre del Comercio:</label><input type="text" id="reg-nombre">
+        <label>Rubro:</label><select id="reg-rubro"></select> <label>Contraseña:</label><input type="password" id="reg-pass">
+        <button class="btn btn-primary" style="width:100%" onclick="registrarTienda()">Enviar Solicitud</button>
+        <button class="btn" style="width:100%; margin-top:10px" onclick="cerrarModal('modal-registro')">Volver</button>
+    </div>
+</div>
+
 <div id="modal-admin" class="modal">
     <div class="modal-content">
-        <h2>Administración</h2><br>
+        <h2>Panel de Administración General</h2><br>
         <div class="admin-grid">
             <div class="admin-section">
-                <h4>🎨 Configuración</h4>
+                <h4>🎨 Personalización</h4><br>
+                <button class="btn btn-danger" style="width:100%; background: #000; margin-bottom: 15px;" onclick="resetTotal()">⚠️ BORRAR DATOS VIEJOS</button>
                 <label>Nombre:</label><input type="text" id="adm-name">
-                <label>Logo (URL):</label><input type="text" id="adm-logo">
+                <label>Slogan:</label><input type="text" id="adm-slogan">
                 <button class="btn btn-primary" style="width:100%" onclick="guardarConfigSitio()">Guardar</button>
-                <hr style="margin:20px 0;">
-                <button class="btn btn-danger" style="width:100%; background: #000;" onclick="resetTotal()">⚠️ LIMPIAR TODA LA BASE DE DATOS</button>
             </div>
-            <div class="admin-section"><h4>🏪 Comercios</h4><div id="adm-comercios-list"></div></div>
             <div class="admin-section">
-                <h4>🏷️ Rubros</h4>
+                <h4>🏪 Validar Comercios</h4><br>
+                <div id="adm-comercios-list"></div>
+            </div>
+            <div class="admin-section">
+                <h4>🏷️ Rubros</h4><br>
                 <input type="text" id="new-rubro" placeholder="Nuevo...">
-                <button class="btn btn-secondary" style="width:100%" onclick="agregarRubro()">Añadir</button>
+                <button class="btn btn-secondary" style="width:100%" onclick="agregarRubro()">+ Añadir</button>
             </div>
         </div>
         <button class="btn btn-dark" style="width:100%; margin-top:20px" onclick="cerrarModal('modal-admin')">Cerrar</button>
     </div>
 </div>
 
-<div id="modal-login" class="modal">
-    <div class="modal-content" style="max-width: 400px; text-align: center;">
-        <h3>Ingreso Comerciantes</h3><br>
-        <input type="text" id="log-nombre" placeholder="Nombre comercio">
-        <input type="password" id="log-pass" placeholder="Contraseña">
-        <button class="btn btn-primary" style="width:100%" onclick="accederTienda()">INGRESAR</button>
-        <button class="btn btn-secondary" style="width:100%; margin-top:10px" onclick="cerrarModal('modal-login'); abrirModal('modal-registro')">Registrarme</button>
-    </div>
-</div>
-
-<div id="modal-registro" class="modal">
-    <div class="modal-content" style="max-width: 450px;">
-        <h3>Registro</h3><br>
-        <input type="text" id="reg-nombre" placeholder="Nombre"><br>
-        <select id="reg-rubro"></select><br>
-        <input type="password" id="reg-pass" placeholder="Pass"><br>
-        <button class="btn btn-primary" style="width:100%" onclick="registrarTienda()">Enviar Solicitud</button>
-    </div>
-</div>
-
 <script>
     let db = JSON.parse(localStorage.getItem('mi_db_comercial')) || {
-        config: { name: 'MI CIUDAD', slogan: 'Tu guía comercial', logo: '' },
-        rubros: ['Tienda', 'Servicios'],
+        config: { name: 'DÓNDE COMPRO', slogan: 'Tu ciudad en un solo lugar' },
+        rubros: ['Almacén', 'Farmacia', 'Ferretería'],
         comercios: []
     };
-    
-    let tiendaActual = null;
+
+    let tiendaActiva = null;
 
     function salvar() { localStorage.setItem('mi_db_comercial', JSON.stringify(db)); aplicarConfig(); }
 
     function resetTotal() {
-        if(confirm("¿Seguro? Esto borrará todos los comercios y configuraciones para arreglar el código viejo.")){
+        if(confirm("¿Borrar todo? Esto arreglará errores de versiones viejas.")) {
             localStorage.clear();
             location.reload();
         }
@@ -142,97 +141,100 @@
 
     function aplicarConfig() {
         document.getElementById('header-title').innerText = db.config.name;
+        document.getElementById('hero-slogan').innerText = db.config.slogan;
         document.getElementById('tab-title').innerText = db.config.name;
-        if(db.config.logo) document.getElementById('header-logo-container').innerHTML = `<img src="${db.config.logo}" class="logo-img"> <h1>${db.config.name}</h1>`;
     }
 
+    // --- TIENDA Y PRODUCTOS ---
     function accederTienda() {
         const u = document.getElementById('log-nombre').value;
         const p = document.getElementById('log-pass').value;
         const c = db.comercios.find(x => x.nombre === u && x.pass === p);
 
-        if(!c) return alert("Error.");
-        if(c.estado !== 'activo') return alert("No activado.");
+        if(!c) return alert("Usuario o contraseña incorrectos.");
+        if(c.estado !== 'activo') return alert("Tu cuenta aún no ha sido activada por el administrador.");
 
-        tiendaActual = c;
+        tiendaActiva = c;
         cerrarModal('modal-login');
         document.getElementById('vista-publica').style.display = 'none';
-        document.getElementById('header-buttons').style.display = 'none';
+        document.getElementById('nav-buttons').style.display = 'none';
         document.getElementById('panel-comerciante').style.display = 'block';
-        document.getElementById('txt-bienvenida').innerText = "Panel: " + c.nombre;
+        document.getElementById('txt-bienvenida').innerText = "Panel de: " + c.nombre;
         renderProductos();
     }
 
     function agregarProducto() {
         const n = document.getElementById('prod-nombre').value;
         const p = document.getElementById('prod-precio').value;
-        if(!n || !p) return;
-        tiendaActual.prods.push({nombre:n, precio:p});
+        if(!n || !p) return alert("Escribe nombre y precio.");
+        tiendaActiva.prods.push({nombre: n, precio: p});
         salvar();
         renderProductos();
+        document.getElementById('prod-nombre').value = "";
+        document.getElementById('prod-precio').value = "";
     }
 
     function renderProductos() {
-        const t = document.getElementById('lista-productos');
-        t.innerHTML = "";
-        tiendaActual.prods.forEach((p, i) => {
-            t.innerHTML += `<tr><td>${p.nombre}</td><td>$${p.precio}</td><td><button onclick="borrarP(${i})">🗑️</button></td></tr>`;
+        const list = document.getElementById('lista-productos');
+        list.innerHTML = "";
+        tiendaActiva.prods.forEach((prod, i) => {
+            list.innerHTML += `<tr style="border-bottom: 1px solid #eee;"><td>${prod.nombre}</td><td>$${prod.precio}</td><td><button class="btn btn-danger" style="padding:2px 8px;" onclick="borrarProd(${i})">🗑️</button></td></tr>`;
         });
     }
 
-    function borrarP(i) { tiendaActual.prods.splice(i,1); salvar(); renderProductos(); }
+    function borrarProd(i) { tiendaActiva.prods.splice(i, 1); salvar(); renderProductos(); }
 
     // --- ADMIN ---
     function abrirAdmin() {
         document.getElementById('adm-name').value = db.config.name;
-        document.getElementById('adm-logo').value = db.config.logo;
-        renderComAdmin();
+        document.getElementById('adm-slogan').value = db.config.slogan;
+        renderComerciosAdmin();
         abrirModal('modal-admin');
     }
 
-    function guardarConfigSitio() {
-        db.config.name = document.getElementById('adm-name').value;
-        db.config.logo = document.getElementById('adm-logo').value;
-        salvar();
-        location.reload();
-    }
-
-    function renderComAdmin() {
-        const l = document.getElementById('adm-comercios-list');
-        l.innerHTML = "";
-        db.comercios.forEach((c, i) => {
-            l.innerHTML += `<div style="padding:10px; border:1px solid #ddd;">${c.nombre} (${c.estado}) <button onclick="act(${i})">OK</button> <button onclick="del(${i})">X</button></div>`;
+    function renderComerciosAdmin() {
+        const lista = document.getElementById('adm-comercios-list');
+        lista.innerHTML = db.comercios.length === 0 ? "<p>No hay solicitudes.</p>" : "";
+        db.comercios.forEach((c, index) => {
+            lista.innerHTML += `
+                <div style="background:white; padding:10px; border-radius:8px; margin-bottom:10px; border:1px solid #ddd;">
+                    <b>${c.nombre}</b> (${c.estado})<br>
+                    <button class="btn btn-secondary" style="padding:5px; font-size:0.7rem; margin-top:5px;" onclick="aprobarComercio(${index})">✅ Activar</button>
+                    <button class="btn btn-danger" style="padding:5px; font-size:0.7rem; margin-top:5px;" onclick="borrarComercio(${index})">🗑️ Borrar</button>
+                </div>`;
         });
     }
 
-    function act(i) { db.comercios[i].estado = 'activo'; salvar(); renderComAdmin(); }
-    function del(i) { db.comercios.splice(i,1); salvar(); renderComAdmin(); }
-    function agregarRubro() { const r = document.getElementById('new-rubro').value; if(r){db.rubros.push(r); salvar(); actualizarSelects();}}
+    function aprobarComercio(index) { db.comercios[index].estado = 'activo'; salvar(); renderComerciosAdmin(); }
+    function borrarComercio(index) { if(confirm("¿Eliminar?")){db.comercios.splice(index, 1); salvar(); renderComerciosAdmin(); }}
+    function guardarConfigSitio() { db.config.name = document.getElementById('adm-name').value; db.config.slogan = document.getElementById('adm-slogan').value; salvar(); alert("Guardado."); }
+    function agregarRubro() { const r = document.getElementById('new-rubro').value; if(r){ db.rubros.push(r); salvar(); actualizarSelects(); }}
 
-    // --- SEARCH ---
+    // --- PUBLICO ---
+    function registrarTienda() {
+        const nombre = document.getElementById('reg-nombre').value;
+        const pass = document.getElementById('reg-pass').value;
+        const rubro = document.getElementById('reg-rubro').value;
+        if(!nombre || !pass) return alert("Completa los datos.");
+        db.comercios.push({ nombre, pass, rubro, estado: 'pendiente', prods: [] });
+        salvar();
+        alert("Enviado. Ahora entra a ADMIN y actívate.");
+        cerrarModal('modal-registro');
+    }
+
     function buscar() {
         const q = document.getElementById('main-search').value.toLowerCase();
         const res = document.getElementById('results-area');
         res.innerHTML = "";
         db.comercios.filter(c => c.estado === 'activo' && c.nombre.toLowerCase().includes(q)).forEach(c => {
-            res.innerHTML += `<div class="card"><h3>${c.nombre}</h3><p>🏷️ ${c.rubro}</p></div>`;
+            res.innerHTML += `<div class="card"><h3>${c.nombre}</h3><p>🏷️ Rubro: ${c.rubro}</p></div>`;
         });
     }
 
-    function registrarTienda() {
-        const n = document.getElementById('reg-nombre').value;
-        const p = document.getElementById('reg-pass').value;
-        const r = document.getElementById('reg-rubro').value;
-        db.comercios.push({ nombre: n, pass: p, rubro: r, estado: 'pendiente', prods: [] });
-        salvar();
-        alert("Enviado.");
-        cerrarModal('modal-registro');
-    }
-
     function actualizarSelects() {
-        const h = db.rubros.map(r => `<option value="${r}">${r}</option>`).join('');
-        document.getElementById('search-rubro').innerHTML = '<option value="">Todos</option>' + h;
-        document.getElementById('reg-rubro').innerHTML = h;
+        const html = db.rubros.map(r => `<option value="${r}">${r}</option>`).join('');
+        document.getElementById('search-rubro').innerHTML = '<option value="">Todos</option>' + html;
+        document.getElementById('reg-rubro').innerHTML = html;
     }
 
     function abrirModal(id) { document.getElementById(id).style.display = 'flex'; }
@@ -242,4 +244,3 @@
 </script>
 </body>
 </html>
-
