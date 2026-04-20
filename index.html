@@ -9,36 +9,25 @@
         :root { --primary: #0056b3; --secondary: #28a745; --danger: #dc3545; --bg: #f8f9fa; --card-shadow: 0 4px 15px rgba(0,0,0,0.08); }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Poppins', sans-serif; background-color: var(--bg); color: #333; line-height: 1.6; }
-        
         header { background: #fff; padding: 15px 5%; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 1000; }
         .logo-area { display: flex; align-items: center; gap: 12px; cursor: pointer; }
-        .logo-area img { height: 45px; border-radius: 5px; max-width: 150px; object-fit: contain; }
-
         .btn { padding: 10px 18px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; transition: 0.2s; display: inline-flex; align-items: center; gap: 5px; text-decoration: none; justify-content: center; font-size: 0.9rem; }
         .btn-primary { background: var(--primary); color: white; }
         .btn-secondary { background: var(--secondary); color: white; }
         .btn-dark { background: #333; color: white; }
         .btn-danger { background: var(--danger); color: white; }
-        .btn-outline { background: transparent; border: 1px solid var(--primary); color: var(--primary); font-size: 0.75rem; padding: 5px 10px; border-radius: 5px; margin: 2px; }
-        
+        .btn-outline { background: transparent; border: 1px solid var(--primary); color: var(--primary); font-size: 0.75rem; padding: 5px 10px; border-radius: 5px; }
         .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
         .search-box { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 5px 25px rgba(0,0,0,0.05); display: flex; gap: 10px; margin-bottom: 40px; }
-        .search-box input, .search-box select { padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; }
-        .search-box input { flex: 3; }
-        .search-box select { flex: 1; }
-
+        .search-box input, .search-box select { padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; flex: 1; }
         .results-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 25px; }
-        .card { background: white; border-radius: 15px; overflow: hidden; box-shadow: var(--card-shadow); display: flex; flex-direction: column; border-top: 5px solid var(--primary); transition: 0.3s; }
-        .card:hover { transform: translateY(-5px); }
-        .card-content { padding: 20px; flex-grow: 1; }
+        .card { background: white; border-radius: 15px; overflow: hidden; box-shadow: var(--card-shadow); display: flex; flex-direction: column; border-top: 5px solid var(--primary); }
+        .card-content { padding: 20px; }
         .price-tag { font-size: 1.5rem; font-weight: 600; color: var(--secondary); margin: 10px 0; }
-
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; justify-content: center; align-items: center; padding: 20px; }
         .modal-content { background: white; padding: 30px; border-radius: 20px; width: 100%; max-width: 900px; max-height: 90vh; overflow-y: auto; }
-        
         .admin-grid { display: grid; grid-template-columns: 1fr 1.5fr; gap: 20px; }
-        input, select { width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 8px; font-family: inherit; }
-        label { font-size: 0.8rem; font-weight: 600; color: #555; display: block; margin-bottom: 4px; }
+        input, select { width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 8px; }
         @media (max-width: 768px) { .admin-grid { grid-template-columns: 1fr; } .search-box { flex-direction: column; } }
     </style>
 </head>
@@ -56,7 +45,7 @@
 
 <main class="container">
     <div class="search-box">
-        <input type="text" id="main-search" placeholder="¿Qué buscas hoy?" onkeyup="if(event.key==='Enter') buscar()">
+        <input type="text" id="main-search" placeholder="¿Qué buscas?" onkeyup="if(event.key==='Enter') buscar()">
         <select id="search-rubro" onchange="buscar()"></select>
         <button class="btn btn-secondary" onclick="buscar()">BUSCAR</button>
     </div>
@@ -65,37 +54,36 @@
 
 <div id="modal-login" class="modal">
     <div class="modal-content" style="max-width: 400px; text-align: center;">
-        <h3>Panel de Comerciantes</h3><br>
-        <input type="email" id="log-email" placeholder="Correo electrónico">
+        <h3>Ingreso Comerciantes</h3><br>
+        <input type="email" id="log-email" placeholder="Email">
         <input type="password" id="log-pass" placeholder="Contraseña">
-        <button class="btn btn-primary" style="width:100%" onclick="acceder()">ENTRAR AL PANEL</button>
+        <button class="btn btn-primary" style="width:100%" onclick="acceder()">ENTRAR</button>
         <button class="btn" style="width:100%; margin-top:10px" onclick="cerrarModal('modal-login')">Cancelar</button>
     </div>
 </div>
 
 <div id="modal-panel-tienda" class="modal">
     <div class="modal-content">
-        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #eee; padding-bottom:15px; margin-bottom:20px;">
-            <h2 id="lbl-nombre-tienda">Cargando...</h2>
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #eee; margin-bottom:20px; padding-bottom:10px;">
+            <h2 id="lbl-nombre-tienda">Mi Panel</h2>
             <button class="btn btn-dark" onclick="cerrarSesion()">Cerrar Sesión</button>
         </div>
         <div class="admin-grid">
             <div style="background:#f8f9fa; padding:15px; border-radius:12px;">
-                <h4>📍 Datos del Local</h4><br>
-                <label>WhatsApp (solo números):</label><input type="text" id="t-tel">
-                <label>Ubicación (Dirección o Coordenadas):</label>
-                <div style="display:flex; gap:5px;"><input type="text" id="t-dir"><button class="btn btn-dark" onclick="obtenerGPS()">📍</button></div>
-                <label>Horarios de Atención:</label><input type="text" id="t-hor">
+                <h4>📍 Perfil Local</h4><br>
+                <label>WhatsApp:</label><input type="text" id="t-tel">
+                <label>Dirección:</label><div style="display:flex; gap:5px;"><input type="text" id="t-dir"><button class="btn btn-dark" onclick="obtenerGPS()">📍</button></div>
+                <label>Horarios:</label><input type="text" id="t-hor">
                 <button class="btn btn-primary" style="width:100%" onclick="guardarPerfilTienda()">Actualizar Perfil</button>
             </div>
             <div>
-                <h4 id="form-prod-title">📦 Gestión de Productos</h4><br>
+                <h4>📦 Productos</h4><br>
                 <div style="background:#eee; padding:15px; border-radius:10px; margin-bottom:15px;">
                     <input type="hidden" id="p-edit-index" value="-1">
-                    <input type="text" id="p-nom" placeholder="Nombre del producto">
+                    <input type="text" id="p-nom" placeholder="Producto">
                     <input type="number" id="p-pre" placeholder="Precio $">
                     <button id="btn-save-prod" class="btn btn-secondary" style="width:100%" onclick="guardarProducto()">AGREGAR PRODUCTO</button>
-                    <button id="btn-cancel-edit" class="btn btn-danger" style="width:100%; margin-top:5px; display:none;" onclick="cancelarEdicion()">CANCELAR EDICIÓN</button>
+                    <button id="btn-cancel-edit" class="btn btn-danger" style="width:100%; margin-top:5px; display:none;" onclick="cancelarEdicion()">CANCELAR</button>
                 </div>
                 <div id="t-lista-prods"></div>
             </div>
@@ -121,13 +109,13 @@
     const db = getFirestore(app);
     const auth = getAuth(app);
 
-    // Exponer herramientas a nivel global para el script tradicional
+    // Exportar funciones correctamente al objeto window
     window.db = db;
     window.auth = auth;
     window.fs = { doc, setDoc, getDoc, updateDoc, collection, getDocs, query, where };
-    window.fa = { signInWithEmailAndPassword, signOut };
+    window.signIn = signInWithEmailAndPassword; // Función directa
+    window.logout = signOut;
 
-    // Observador de Sesión
     onAuthStateChanged(auth, async (user) => {
         if (user) {
             const snap = await getDoc(doc(db, "comercios", user.uid));
@@ -148,76 +136,57 @@
 </script>
 
 <script>
-    // --- LÓGICA PRINCIPAL (Global) ---
+    // --- LÓGICA TRADICIONAL ---
+    async function acceder() {
+        const email = document.getElementById('log-email').value;
+        const pass = document.getElementById('log-pass').value;
+        try {
+            // Cambio aquí: Llamada directa a la función exportada
+            await window.signIn(window.auth, email, pass);
+            cerrarModal('modal-login');
+        } catch (e) { alert("Error: " + e.message); }
+    }
+
+    async function cerrarSesion() {
+        await window.logout(window.auth);
+        location.reload();
+    }
 
     async function cargarRubros() {
-        // Lista estática o podrías traerla de Firestore
-        const rubros = ['Almacén', 'Farmacia', 'Ferretería', 'Carnicería', 'Tienda de Ropa', 'Otros'];
+        const rubros = ['Almacén', 'Farmacia', 'Ferretería', 'Carnicería', 'Ropa', 'Otros'];
         const select = document.getElementById('search-rubro');
         select.innerHTML = '<option value="">Todos los rubros</option>' + 
             rubros.map(r => `<option value="${r}">${r}</option>`).join('');
         buscar();
     }
 
-    async function acceder() {
-        const email = document.getElementById('log-email').value;
-        const pass = document.getElementById('log-pass').value;
-        try {
-            await window.fa.signInWithEmailAndPassword(window.auth, email, pass);
-            cerrarModal('modal-login');
-        } catch (e) { 
-            alert("Error de acceso: Asegúrate de que el email esté registrado en Firebase."); 
-        }
-    }
-
-    async function cerrarSesion() {
-        await window.fa.signOut(window.auth);
-        location.reload();
-    }
-
     async function buscar() {
         const qText = document.getElementById('main-search').value.toLowerCase();
-        const rubro = document.getElementById('search-rubro').value;
         const resArea = document.getElementById('results-area');
-        resArea.innerHTML = "<p>Buscando en la nube...</p>";
-
+        resArea.innerHTML = "Buscando...";
+        
         try {
-            const q = window.fs.query(window.fs.collection(window.db, "comercios"), window.fs.where("estado", "==", "activo"));
-            const snap = await window.fs.getDocs(q);
-            
+            const snap = await window.fs.getDocs(window.fs.collection(window.db, "comercios"));
             resArea.innerHTML = "";
-            snap.forEach((docSnap) => {
+            snap.forEach(docSnap => {
                 const c = docSnap.data();
-                if (!rubro || c.rubro === rubro) {
-                    const coincideNombre = c.nombre.toLowerCase().includes(qText);
-                    const prodsCoincidentes = (c.prods || []).filter(p => p.nom.toLowerCase().includes(qText));
-
-                    if (coincideNombre || prodsCoincidentes.length > 0) {
-                        const listaAMostrar = coincideNombre ? (c.prods || []) : prodsCoincidentes;
-                        
-                        listaAMostrar.forEach(p => {
-                            resArea.innerHTML += `
-                            <div class="card">
-                                <div class="card-content">
-                                    <h3 style="color:var(--primary)">${p.nom}</h3>
-                                    <div class="price-tag">$${p.pre}</div>
-                                    <p style="font-size:0.85rem">🏪 <b>${c.nombre}</b></p>
-                                    <p style="font-size:0.75rem; color:#666;">📍 ${c.dir || 'Consultar'}</p>
-                                    <button class="btn btn-secondary" style="width:100%; margin-top:15px" 
-                                        onclick="window.open('https://wa.me/${c.tel}?text=Hola, consulto por ${p.nom}')">
-                                        💬 CONSULTAR WHATSAPP
-                                    </button>
-                                </div>
-                            </div>`;
-                        });
-                    }
+                if(c.estado === "activo") {
+                    const prods = (c.prods || []).filter(p => p.nom.toLowerCase().includes(qText));
+                    prods.forEach(p => {
+                        resArea.innerHTML += `
+                        <div class="card">
+                            <div class="card-content">
+                                <h3>${p.nom}</h3>
+                                <div class="price-tag">$${p.pre}</div>
+                                <p>🏪 ${c.nombre}</p>
+                                <button class="btn btn-secondary" style="width:100%;margin-top:10px" onclick="window.open('https://wa.me/${c.tel}')">CONSULTAR</button>
+                            </div>
+                        </div>`;
+                    });
                 }
             });
-            if(resArea.innerHTML === "") resArea.innerHTML = "<p>No se encontraron productos.</p>";
         } catch(e) { console.error(e); }
     }
-
-    // --- FUNCIONES DEL PANEL DE TIENDA ---
 
     function cargarDatosEnPanel() {
         document.getElementById('t-tel').value = window.tActiva.tel || '';
@@ -227,51 +196,40 @@
     }
 
     async function guardarPerfilTienda() {
-        const ref = window.fs.doc(window.db, "comercios", window.tActiva.id);
         const data = {
             tel: document.getElementById('t-tel').value,
             dir: document.getElementById('t-dir').value,
             hor: document.getElementById('t-hor').value
         };
-        await window.fs.updateDoc(ref, data);
-        alert("¡Perfil actualizado con éxito!");
+        await window.fs.updateDoc(window.fs.doc(window.db, "comercios", window.tActiva.id), data);
+        alert("Perfil actualizado");
     }
 
     async function guardarProducto() {
         const n = document.getElementById('p-nom').value;
         const p = document.getElementById('p-pre').value;
         const idx = parseInt(document.getElementById('p-edit-index').value);
-        
-        if(!n || !p) return alert("Por favor, ingresa nombre y precio.");
+        if(!n || !p) return;
 
         if(!window.tActiva.prods) window.tActiva.prods = [];
+        if(idx === -1) window.tActiva.prods.push({ nom: n, pre: p });
+        else window.tActiva.prods[idx] = { nom: n, pre: p };
 
-        if(idx === -1) {
-            window.tActiva.prods.push({ nom: n, pre: p });
-        } else {
-            window.tActiva.prods[idx] = { nom: n, pre: p };
-        }
-
-        await window.fs.updateDoc(window.fs.doc(window.db, "comercios", window.tActiva.id), {
-            prods: window.tActiva.prods
-        });
-
+        await window.fs.updateDoc(window.fs.doc(window.db, "comercios", window.tActiva.id), { prods: window.tActiva.prods });
         cancelarEdicion();
         renderMisProductos();
     }
 
     function renderMisProductos() {
         const div = document.getElementById('t-lista-prods');
-        const productos = window.tActiva.prods || [];
-        div.innerHTML = productos.map((p, i) => `
-            <div style="display:flex; justify-content:space-between; align-items:center; padding:10px; border-bottom:1px solid #ddd; background:white; margin-bottom:5px; border-radius:5px;">
-                <span><b>${p.nom}</b> - $${p.pre}</span>
+        div.innerHTML = (window.tActiva.prods || []).map((p, i) => `
+            <div style="display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid #ddd;">
+                <span>${p.nom} - $${p.pre}</span>
                 <div>
                     <button class="btn-outline" onclick="cargarEdicion(${i})">✏️</button>
-                    <button class="btn-outline" style="color:var(--danger); border-color:var(--danger)" onclick="eliminarP(${i})">✕</button>
+                    <button class="btn-outline" style="color:red" onclick="eliminarP(${i})">✕</button>
                 </div>
-            </div>
-        `).join('');
+            </div>`).join('');
     }
 
     function cargarEdicion(i) {
@@ -279,7 +237,6 @@
         document.getElementById('p-nom').value = p.nom;
         document.getElementById('p-pre').value = p.pre;
         document.getElementById('p-edit-index').value = i;
-        document.getElementById('btn-save-prod').innerText = "GUARDAR CAMBIOS";
         document.getElementById('btn-cancel-edit').style.display = "block";
     }
 
@@ -287,29 +244,20 @@
         document.getElementById('p-nom').value = '';
         document.getElementById('p-pre').value = '';
         document.getElementById('p-edit-index').value = '-1';
-        document.getElementById('btn-save-prod').innerText = "AGREGAR PRODUCTO";
         document.getElementById('btn-cancel-edit').style.display = "none";
     }
 
     async function eliminarP(i) {
-        if(confirm("¿Estás seguro de eliminar este producto?")) {
+        if(confirm("¿Eliminar?")) {
             window.tActiva.prods.splice(i, 1);
-            await window.fs.updateDoc(window.fs.doc(window.db, "comercios", window.tActiva.id), {
-                prods: window.tActiva.prods
-            });
+            await window.fs.updateDoc(window.fs.doc(window.db, "comercios", window.tActiva.id), { prods: window.tActiva.prods });
             renderMisProductos();
         }
     }
 
-    // --- UTILIDADES ---
     function abrirModal(id) { document.getElementById(id).style.display = 'flex'; }
     function cerrarModal(id) { document.getElementById(id).style.display = 'none'; }
-    
-    function obtenerGPS() { 
-        navigator.geolocation.getCurrentPosition(p => { 
-            document.getElementById('t-dir').value = p.coords.latitude.toFixed(6) + "," + p.coords.longitude.toFixed(6); 
-        }, () => alert("Permiso de ubicación denegado.")); 
-    }
+    function obtenerGPS() { navigator.geolocation.getCurrentPosition(p => { document.getElementById('t-dir').value = p.coords.latitude.toFixed(6) + "," + p.coords.longitude.toFixed(6); }); }
 </script>
 </body>
 </html>
