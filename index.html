@@ -19,6 +19,8 @@
         .btn-secondary { background: var(--secondary); color: white; }
         .btn-dark { background: #333; color: white; }
         .btn-danger { background: var(--danger); color: white; }
+        .btn-outline { background: transparent; border: 1px solid #ddd; color: var(--primary); font-size: 0.75rem; padding: 5px 10px; border-radius: 5px; }
+        .btn-outline:hover { background: #f0f7ff; }
         
         .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
 
@@ -32,9 +34,9 @@
         .card { background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.08); display: flex; flex-direction: column; border-top: 5px solid var(--primary); transition: transform 0.2s; }
         .card-img { width: 100%; height: 180px; object-fit: cover; background: #eee; }
         .card-content { padding: 20px; flex-grow: 1; }
-        .card-title { font-size: 1.2rem; font-weight: 600; margin-bottom: 10px; color: var(--primary); }
-        .card-info { font-size: 0.85rem; color: #555; margin-bottom: 5px; display: flex; align-items: center; gap: 8px; }
+        .card-title { font-size: 1.1rem; font-weight: 600; color: var(--primary); display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
         .price-tag { font-size: 1.4rem; font-weight: 600; color: var(--secondary); margin: 5px 0; }
+        .card-info { font-size: 0.85rem; color: #555; margin-bottom: 5px; display: flex; align-items: center; gap: 8px; }
         
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 2000; justify-content: center; align-items: center; padding: 20px; }
         .modal-content { background: white; padding: 30px; border-radius: 20px; width: 100%; max-width: 1000px; max-height: 90vh; overflow-y: auto; }
@@ -64,11 +66,11 @@
 
 <main class="container">
     <div style="text-align: center; margin-bottom: 30px;">
-        <h2 id="hero-slogan" style="font-weight: 300;">Buscador de productos en comercios locales</h2>
+        <h2 id="hero-slogan" style="font-weight: 300;">Buscador de productos locales</h2>
     </div>
 
     <div class="search-box">
-        <input type="text" id="main-search" placeholder="¿Qué buscas? (Ej: Pan, Coca Cola...)" onkeyup="if(event.key==='Enter') buscar()">
+        <input type="text" id="main-search" placeholder="¿Qué buscas?" onkeyup="if(event.key==='Enter') buscar()">
         <select id="search-rubro" onchange="buscar()">
             <option value="">Todos los rubros</option>
         </select>
@@ -81,19 +83,19 @@
 <div id="modal-login" class="modal">
     <div class="modal-content" style="max-width: 400px; text-align: center;">
         <h3>Ingreso Comerciantes</h3><br>
-        <input type="text" id="log-nombre" placeholder="Nombre de tu comercio">
+        <input type="text" id="log-nombre" placeholder="Nombre Comercio">
         <input type="password" id="log-pass" placeholder="Contraseña">
         <button class="btn btn-primary" style="width:100%" onclick="accederTienda()">INGRESAR</button>
         <hr style="margin:20px 0">
         <button class="btn btn-secondary" style="width:100%" onclick="cerrarModal('modal-login'); abrirModal('modal-registro')">Solicitar Registro</button>
-        <button class="btn" style="width:100%; margin-top:10px" onclick="cerrarModal('modal-login')">Cancelar</button>
+        <button class="btn" style="width:100%; margin-top:10px" onclick="cerrarModal('modal-login')">Cerrar</button>
     </div>
 </div>
 
 <div id="modal-registro" class="modal">
     <div class="modal-content" style="max-width: 450px;">
         <h3>Solicitud de Registro</h3><br>
-        <label>Nombre del Comercio:</label><input type="text" id="reg-nombre">
+        <label>Comercio:</label><input type="text" id="reg-nombre">
         <label>Rubro:</label><select id="reg-rubro"></select>
         <label>Contraseña:</label><input type="password" id="reg-pass">
         <button class="btn btn-primary" style="width:100%" onclick="registrarTienda()">Enviar Solicitud</button>
@@ -104,29 +106,26 @@
 <div id="modal-panel-tienda" class="modal">
     <div class="modal-content">
         <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #eee; padding-bottom:10px; margin-bottom:20px;">
-            <h2 id="lbl-nombre-tienda">Panel de Gestión</h2>
+            <h2 id="lbl-nombre-tienda">Panel</h2>
             <button class="btn btn-dark" onclick="cerrarModal('modal-panel-tienda')">Cerrar Sesión</button>
         </div>
         <div class="grid-2">
             <div style="background:#f8f9fa; padding:20px; border-radius:15px;">
                 <h4>📍 Datos del Local</h4><br>
-                <label>WhatsApp:</label><input type="text" id="t-tel" placeholder="Ej: 5493876000000">
-                <label>Dirección/Coordenadas:</label>
-                <div style="display:flex; gap:5px;"><input type="text" id="t-dir" placeholder="Calle o Lat, Lon"><button class="btn btn-dark" onclick="obtenerGPS()">📍</button></div>
-                <label>Foto del Local:</label><input type="file" id="t-img-file" accept="image/*">
-                <label>Horarios:</label><input type="text" id="t-hor" placeholder="Ej: 08:00 a 22:00">
+                <label>WhatsApp:</label><input type="text" id="t-tel">
+                <label>Dirección:</label>
+                <div style="display:flex; gap:5px;"><input type="text" id="t-dir"><button class="btn btn-dark" onclick="obtenerGPS()">📍</button></div>
+                <label>Foto:</label><input type="file" id="t-img-file" accept="image/*">
+                <label>Horarios:</label><input type="text" id="t-hor">
                 <button class="btn btn-primary" style="width:100%" onclick="guardarPerfilTienda()">Guardar Perfil</button>
             </div>
             <div style="background:#fff; border:1px solid #eee; padding:20px; border-radius:15px;">
-                <h4>📦 Mis Productos</h4><br>
-                <div style="background:#eee; padding:15px; border-radius:10px; margin-bottom:20px;">
-                    <input type="hidden" id="p-idx" value="-1">
-                    <input type="text" id="p-nom" placeholder="Producto">
-                    <input type="number" id="p-pre" placeholder="Precio $">
-                    <input type="file" id="p-img-file" accept="image/*">
-                    <button class="btn btn-secondary" style="width:100%" onclick="guardarProducto()">Guardar Producto</button>
-                </div>
-                <div id="t-lista-prods" style="max-height: 300px; overflow-y: auto;"></div>
+                <h4>📦 Productos</h4><br>
+                <input type="text" id="p-nom" placeholder="Producto">
+                <input type="number" id="p-pre" placeholder="Precio $">
+                <input type="file" id="p-img-file" accept="image/*">
+                <button class="btn btn-secondary" style="width:100%" onclick="guardarProducto()">Añadir Producto</button>
+                <div id="t-lista-prods" style="margin-top:15px; max-height: 250px; overflow-y: auto;"></div>
             </div>
         </div>
     </div>
@@ -134,23 +133,19 @@
 
 <div id="modal-admin" class="modal">
     <div class="modal-content">
-        <h2>Administración Central</h2>
+        <h2>Administración</h2>
         <div class="grid-2">
-            <section style="background:#f9f9f9; padding:20px; border-radius:15px;">
-                <h4>🎨 Identidad</h4>
-                <label>Nombre Sitio:</label><input type="text" id="adm-name">
+            <div>
+                <label>Nombre:</label><input type="text" id="adm-name">
                 <label>Slogan:</label><input type="text" id="adm-slogan">
                 <label>Logo:</label><input type="file" id="adm-logo-file" accept="image/*">
-                <button class="btn btn-primary" onclick="guardarConfigSitio()">Guardar Cambios</button>
-                <h4 style="margin-top:20px;">💾 Backup</h4>
-                <button class="btn btn-dark" onclick="exportarDB()">📥 Exportar</button>
+                <button class="btn btn-primary" onclick="guardarConfigSitio()">Guardar</button>
+                <hr style="margin:15px 0">
+                <button class="btn btn-dark" onclick="exportarDB()">📥 Backup</button>
                 <button class="btn btn-dark" onclick="document.getElementById('import-file').click()">📤 Importar</button>
                 <input type="file" id="import-file" style="display:none" onchange="importarDB(event)">
-            </section>
-            <section style="background:#f9f9f9; padding:20px; border-radius:15px;">
-                <h4>🏪 Comercios</h4>
-                <div id="adm-comercios-list"></div>
-            </section>
+            </div>
+            <div id="adm-comercios-list"></div>
         </div>
         <button class="btn btn-dark" style="width:100%; margin-top:20px;" onclick="cerrarModal('modal-admin')">Cerrar</button>
     </div>
@@ -168,19 +163,15 @@
     function salvar() { localStorage.setItem('donde_compro_db', JSON.stringify(db)); }
     
     async function toBase64(file) {
-        return new Promise((resolve) => {
-            if (!file) resolve(null);
+        return new Promise((res) => {
+            if (!file) res(null);
             const r = new FileReader();
             r.readAsDataURL(file);
-            r.onload = () => resolve(r.result);
+            r.onload = () => res(r.result);
         });
     }
 
-    window.onload = () => { 
-        aplicarConfig(); 
-        actualizarSelects(); 
-        irInicio(); 
-    };
+    window.onload = () => { aplicarConfig(); actualizarSelects(); irInicio(); };
 
     function irInicio() {
         tiendaFiltradaID = null;
@@ -191,7 +182,6 @@
 
     function aplicarConfig() {
         document.getElementById('header-title').innerText = db.config.name;
-        document.getElementById('tab-title').innerText = db.config.name;
         document.getElementById('hero-slogan').innerText = db.config.slogan;
         if(db.config.logo) { 
             const img = document.getElementById('header-logo');
@@ -205,7 +195,6 @@
         if(document.getElementById('reg-rubro')) document.getElementById('reg-rubro').innerHTML = options;
     }
 
-    // --- BÚSQUEDA Y MAPAS ---
     function buscar() {
         const q = document.getElementById('main-search').value.toLowerCase().trim();
         const r = document.getElementById('search-rubro').value;
@@ -222,19 +211,19 @@
 
         activos.forEach(c => {
             const matchRubro = (r === "" || c.rubro === r);
-            const matchNombre = (q === "" || c.nombre.toLowerCase().includes(q));
+            const matchComercio = (q === "" || c.nombre.toLowerCase().includes(q));
 
-            if (matchRubro && matchNombre) {
+            if (matchRubro && matchComercio) {
                 renderCardComercio(c, res);
             }
 
-            if (q !== "" && !matchNombre) {
+            if (q !== "" && !matchComercio) {
                 c.prods.filter(p => p.nom.toLowerCase().includes(q))
                        .forEach(p => renderCardProducto(p, c, res));
             }
         });
-
-        if(res.innerHTML === "") res.innerHTML = "<p style='grid-column:1/-1; text-align:center; padding:50px;'>No hay resultados.</p>";
+        
+        if(res.innerHTML==="") res.innerHTML="<p style='grid-column:1/-1;text-align:center;padding:40px;'>Sin resultados.</p>";
     }
 
     function renderCardComercio(c, res) {
@@ -251,15 +240,19 @@
     }
 
     function renderCardProducto(p, c, res) {
-        const dest = c.dir.includes(",") ? c.dir : `${c.dir}, Rosario de la Frontera, Salta`;
-        const link = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(dest)}`;
+        const loc = c.dir.includes(",") ? c.dir : `${c.dir}, Rosario de la Frontera, Salta`;
+        const link = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(loc)}`;
+        
         res.innerHTML += `
             <div class="card" style="border-top-color: var(--secondary);">
                 <img class="card-img" src="${p.img || 'https://via.placeholder.com/400x200?text=Producto'}">
                 <div class="card-content">
-                    <div class="card-title">${p.nom}</div>
+                    <div class="card-title">
+                        ${p.nom}
+                        ${!tiendaFiltradaID ? `<button class="btn-outline" onclick="verTienda(${c.id})">Ver Tienda</button>` : ''}
+                    </div>
                     <div class="price-tag">$${p.pre}</div>
-                    <p style="font-size:0.7rem; margin-bottom:10px;">Tienda: <b>${c.nombre}</b></p>
+                    <p style="font-size:0.75rem; margin-bottom:10px;">Tienda: <b>${c.nombre}</b></p>
                     <div style="display:grid; grid-template-columns:1fr 1fr; gap:5px;">
                         <button class="btn btn-secondary" onclick="window.open('https://wa.me/${c.tel.replace(/\D/g,'')}?text=Vi ${p.nom}', '_blank')">💬 PEDIR</button>
                         <button class="btn btn-primary" onclick="window.open('${link}', '_blank')">🚀 RUTA</button>
@@ -269,48 +262,37 @@
     }
 
     function renderTiendaDetalle(c, res) {
-        const dest = c.dir.includes(",") ? c.dir : `${c.dir}, Rosario de la Frontera, Salta`;
-        const link = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(dest)}`;
+        const loc = c.dir.includes(",") ? c.dir : `${c.dir}, Rosario de la Frontera, Salta`;
+        const link = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(loc)}`;
         res.innerHTML += `
             <div class="card" style="grid-column: 1/-1; background: #fff; border-left: 8px solid var(--primary); padding:20px;">
                 <div style="display:flex; flex-wrap:wrap; gap:25px;">
-                    <img src="${c.imgLocal || 'https://via.placeholder.com/300'}" style="width:280px; height:200px; object-fit:cover; border-radius:15px;">
+                    <img src="${c.imgLocal || 'https://via.placeholder.com/300'}" style="width:280px; height:180px; object-fit:cover; border-radius:15px;">
                     <div style="flex:1; min-width:300px;">
-                        <h2 style="color:var(--primary); font-size:2rem;">${c.nombre}</h2>
+                        <h2 style="color:var(--primary);">${c.nombre}</h2>
                         <p>📍 ${c.dir || 'Consultar'}</p>
-                        <p>⏰ ${c.hor || 'Sin horario cargado'}</p>
-                        <div style="display:flex; gap:10px; margin-top:20px; flex-wrap:wrap;">
-                            <button class="btn btn-primary" onclick="window.open('${link}', '_blank')">🚀 CÓMO LLEGAR (RUTA)</button>
+                        <p>⏰ ${c.hor || '-'}</p>
+                        <div style="display:flex; gap:10px; margin-top:20px;">
+                            <button class="btn btn-primary" onclick="window.open('${link}', '_blank')">🚀 CÓMO LLEGAR</button>
                             <button class="btn btn-secondary" onclick="window.open('https://wa.me/${c.tel.replace(/\D/g,'')}', '_blank')">💬 WHATSAPP</button>
                             <button class="btn btn-danger" onclick="irInicio()">✕ CERRAR TIENDA</button>
                         </div>
                     </div>
                 </div>
-            </div>
-            <h3 style="grid-column:1/-1; margin-top:20px; border-bottom:2px solid #eee; padding-bottom:5px;">Productos de la tienda:</h3>`;
-        
-        if (c.prods.length > 0) {
-            c.prods.forEach(p => renderCardProducto(p, c, res));
-        } else {
-            res.innerHTML += `<p style="grid-column:1/-1; text-align:center; padding:40px;">No hay productos cargados en este local.</p>`;
-        }
+            </div>`;
+        c.prods.forEach(p => renderCardProducto(p, c, res));
     }
 
-    function verTienda(id) {
-        tiendaFiltradaID = id;
-        buscar();
-        window.scrollTo({top: 0, behavior: 'smooth'});
-    }
+    function verTienda(id) { tiendaFiltradaID = id; buscar(); window.scrollTo(0,0); }
 
-    // --- FUNCIONES INTERNAS ---
+    // --- PANEL COMERCIANTE ---
     async function accederTienda() {
         const n = document.getElementById('log-nombre').value.toLowerCase().trim();
         const p = document.getElementById('log-pass').value;
         const c = db.comercios.find(i => i.nombre.toLowerCase() === n && i.pass === p);
-        if(!c) return alert("Datos incorrectos");
-        if(c.estado !== 'activo') return alert("Tienda pendiente de aprobación.");
+        if(!c || c.estado !== 'activo') return alert("Error o pendiente");
         tActiva = c;
-        document.getElementById('lbl-nombre-tienda').innerText = "Panel: " + c.nombre;
+        document.getElementById('lbl-nombre-tienda').innerText = c.nombre;
         document.getElementById('t-tel').value = c.tel; 
         document.getElementById('t-dir').value = c.dir;
         document.getElementById('t-hor').value = c.hor;
@@ -322,71 +304,70 @@
         const r = document.getElementById('reg-rubro').value;
         const p = document.getElementById('reg-pass').value;
         if(!n || !p) return alert("Faltan datos");
-        db.comercios.push({ id: Date.now(), nombre: n, rubro: r, pass: p, estado: 'pendiente', tel:'', dir:'', imgLocal:'', hor:'', prods:[] });
-        salvar(); alert("Solicitud enviada a revisión."); cerrarModal('modal-registro');
-    }
-
-    async function guardarPerfilTienda() {
-        const f = document.getElementById('t-img-file').files[0];
-        if(f) tActiva.imgLocal = await toBase64(f);
-        tActiva.tel = document.getElementById('t-tel').value; 
-        tActiva.dir = document.getElementById('t-dir').value;
-        tActiva.hor = document.getElementById('t-hor').value;
-        salvar(); alert("Perfil actualizado");
+        db.comercios.push({ id: Date.now(), nombre: n, rubro: r, pass: p, estado: 'pendiente', tel:'', dir:'', hor:'', prods:[] });
+        salvar(); alert("Solicitud enviada"); cerrarModal('modal-registro');
     }
 
     async function guardarProducto() {
         const n = document.getElementById('p-nom').value;
         const p = document.getElementById('p-pre').value;
         const f = document.getElementById('p-img-file').files[0];
-        if(!n || !p) return alert("Nombre y precio requeridos");
-        let img = ''; if(f) img = await toBase64(f);
-        tActiva.prods.push({ nom: n, pre: p, img: img });
-        document.getElementById('p-nom').value = ''; document.getElementById('p-pre').value = '';
+        if(!n || !p) return alert("Datos incompletos");
+        tActiva.prods.push({ nom: n, pre: p, img: await toBase64(f) });
         salvar(); renderProds();
     }
 
     function renderProds() {
         document.getElementById('t-lista-prods').innerHTML = tActiva.prods.map((p, i) => `
             <div class="admin-prod-item">
-                <img src="${p.img || 'https://via.placeholder.com/50'}">
-                <div style="flex:1"><b>${p.nom}</b><br>$${p.pre}</div>
-                <button class="btn btn-danger" onclick="tActiva.prods.splice(${i},1); salvar(); renderProds();">✕</button>
+                <img src="${p.img || ''}" style="width:40px;height:40px;">
+                <div style="flex:1"><b>${p.nom}</b> - $${p.pre}</div>
+                <button onclick="tActiva.prods.splice(${i},1); salvar(); renderProds();">✕</button>
             </div>`).join('');
     }
 
+    async function guardarPerfilTienda() {
+        const f = document.getElementById('t-img-file').files[0];
+        if(f) tActiva.imgLocal = await toBase64(f);
+        tActiva.tel = document.getElementById('t-tel').value;
+        tActiva.dir = document.getElementById('t-dir').value;
+        tActiva.hor = document.getElementById('t-hor').value;
+        salvar(); alert("Guardado");
+    }
+
+    // --- ADMIN ---
     function abrirAdmin() {
         document.getElementById('adm-name').value = db.config.name;
         document.getElementById('adm-slogan').value = db.config.slogan;
         document.getElementById('adm-comercios-list').innerHTML = db.comercios.map(c => `
-            <div style="padding:10px; background:#fff; margin-bottom:5px; border-radius:10px; display:flex; justify-content:space-between; border:1px solid #ddd;">
-                <span>${c.nombre} [${c.estado.toUpperCase()}]</span>
+            <div style="display:flex; justify-content:space-between; padding:10px; border:1px solid #eee; margin-bottom:5px;">
+                <span>${c.nombre} (${c.estado})</span>
                 <div>
-                    <button class="btn btn-secondary" style="padding:5px" onclick="aprobarC(${c.id})">OK</button>
-                    <button class="btn btn-danger" style="padding:5px" onclick="borrarC(${c.id})">✕</button>
+                    <button onclick="aprobar(${c.id})">OK</button>
+                    <button onclick="borrar(${c.id})">✕</button>
                 </div>
             </div>`).join('');
         abrirModal('modal-admin');
     }
 
-    function aprobarC(id) { const c = db.comercios.find(i => i.id == id); if(c) c.estado = 'activo'; salvar(); abrirAdmin(); }
-    function borrarC(id) { if(confirm("¿Eliminar?")) { db.comercios = db.comercios.filter(i => i.id != id); salvar(); abrirAdmin(); } }
-
-    function obtenerGPS() {
-        navigator.geolocation.getCurrentPosition(p => { 
-            document.getElementById('t-dir').value = `${p.coords.latitude.toFixed(6)}, ${p.coords.longitude.toFixed(6)}`; 
-        }, () => alert("Activa el GPS"));
-    }
+    function aprobar(id) { db.comercios.find(i=>i.id==id).estado = 'activo'; salvar(); abrirAdmin(); }
+    function borrar(id) { db.comercios = db.comercios.filter(i=>i.id!=id); salvar(); abrirAdmin(); }
 
     function exportarDB() {
         const b = new Blob([JSON.stringify(db)], {type: "application/json"});
-        const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = "backup_dondecompro.json"; a.click();
+        const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = "backup.json"; a.click();
     }
 
     function importarDB(e) {
         const r = new FileReader();
         r.onload = (ev) => { db = JSON.parse(ev.target.result); salvar(); location.reload(); };
         r.readAsText(e.target.files[0]);
+    }
+
+    function obtenerGPS() {
+        navigator.geolocation.getCurrentPosition(p => { 
+            document.getElementById('t-dir').value = `${p.coords.latitude.toFixed(6)}, ${p.coords.longitude.toFixed(6)}`; 
+        });
     }
 
     async function guardarConfigSitio() {
@@ -402,4 +383,3 @@
 </script>
 </body>
 </html>
-
