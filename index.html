@@ -48,8 +48,6 @@
         .admin-prod-item { display: flex; align-items: center; gap: 10px; padding: 10px; border: 1px solid #eee; border-radius: 10px; margin-bottom: 10px; }
         .admin-prod-item img { width: 50px; height: 50px; object-fit: cover; border-radius: 5px; }
 
-        .backup-section { border-top: 2px dashed #eee; margin-top: 20px; padding-top: 20px; }
-
         @media (max-width: 768px) { .grid-2 { grid-template-columns: 1fr; } .search-box { flex-direction: column; } }
     </style>
 </head>
@@ -142,20 +140,15 @@
                 <label>Nombre:</label><input type="text" id="adm-name">
                 <label>Slogan:</label><input type="text" id="adm-slogan">
                 <label>Logo del Sitio:</label><input type="file" id="adm-logo-file" accept="image/*">
-                <button class="btn btn-primary" onclick="guardarConfigSitio()">Guardar Cambios</button>
-                
+                <button class="btn btn-primary" onclick="guardarConfigSitio()">Guardar</button>
                 <h4 style="margin-top:20px;">🏷️ Rubros</h4>
                 <div style="display:flex; gap:5px;"><input type="text" id="adm-new-rubro"><button class="btn btn-secondary" onclick="agregarRubro()">+</button></div>
                 <div id="adm-rubros-list"></div>
-
-                <div class="backup-section">
-                    <h4>💾 Base de Datos (Backup)</h4>
-                    <p style="font-size: 0.7rem; color: #666; margin-bottom: 10px;">Descarga o restaura toda la información del sitio.</p>
-                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                        <button class="btn btn-dark" onclick="exportarDB()">📥 Exportar .JSON</button>
-                        <button class="btn btn-dark" onclick="document.getElementById('import-file').click()">📤 Importar .JSON</button>
-                        <input type="file" id="import-file" style="display:none" accept=".json" onchange="importarDB(event)">
-                    </div>
+                <div style="margin-top:20px; border-top:1px dashed #ccc; padding-top:10px;">
+                    <h4>💾 Backup de Datos</h4>
+                    <button class="btn btn-dark" onclick="exportarDB()">📥 Exportar</button>
+                    <button class="btn btn-dark" onclick="document.getElementById('import-file').click()">📤 Importar</button>
+                    <input type="file" id="import-file" style="display:none" accept=".json" onchange="importarDB(event)">
                 </div>
             </section>
             <section style="background:#f9f9f9; padding:20px; border-radius:15px;">
@@ -163,7 +156,7 @@
                 <div id="adm-comercios-list"></div>
             </section>
         </div>
-        <button class="btn btn-dark" style="width:100%; margin-top:20px;" onclick="cerrarModal('modal-admin')">Cerrar Admin</button>
+        <button class="btn btn-dark" style="width:100%; margin-top:20px;" onclick="cerrarModal('modal-admin')">Cerrar</button>
     </div>
 </div>
 
@@ -177,7 +170,6 @@
 
     function salvar() { localStorage.setItem('donde_compro_db', JSON.stringify(db)); }
     
-    // Auxiliar para imágenes
     async function toBase64(file) {
         return new Promise((resolve, reject) => {
             if (!file) resolve(null);
@@ -188,46 +180,10 @@
         });
     }
 
-    // --- MÓDULO BACKUP ---
-    function exportarDB() {
-        const dataStr = JSON.stringify(db, null, 2);
-        const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-        const exportFileDefaultName = 'backup_dondecompro_' + new Date().toISOString().slice(0,10) + '.json';
-
-        const linkElement = document.createElement('a');
-        linkElement.setAttribute('href', dataUri);
-        linkElement.setAttribute('download', exportFileDefaultName);
-        linkElement.click();
-    }
-
-    function importarDB(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            try {
-                const importedData = JSON.parse(e.target.result);
-                if (importedData.config && importedData.comercios) {
-                    if (confirm("¿Estás seguro? Se sobrescribirán todos los datos actuales.")) {
-                        db = importedData;
-                        salvar();
-                        location.reload();
-                    }
-                } else {
-                    alert("El archivo no parece ser una base de datos válida.");
-                }
-            } catch (err) {
-                alert("Error al leer el archivo.");
-            }
-        };
-        reader.readAsText(file);
-    }
-
-    // --- LÓGICA GENERAL ---
     window.onload = () => { 
         aplicarConfig(); 
         actualizarSelects(); 
-        document.getElementById('results-area').innerHTML = "<p style='grid-column: 1/-1; text-align:center; padding:50px; color:#666;'>Busca un producto o selecciona un rubro.</p>";
+        buscar(); // Carga inicial
     };
 
     function abrirModal(id) { document.getElementById(id).style.display = 'flex'; }
@@ -246,22 +202,36 @@
     function actualizarSelects() {
         const options = db.rubros.map(r => `<option value="${r}">${r}</option>`).join('');
         document.getElementById('search-rubro').innerHTML = '<option value="">Todos los rubros</option>' + options;
-        const rReg = document.getElementById('reg-rubro'); if(rReg) rReg.innerHTML = options;
+        const regRubro = document.getElementById('reg-rubro');
+        if(regRubro) regRubro.innerHTML = options;
+    }
+
+    // --- MEJORA DE MAPA Y BÚSQUEDA ---
+    function generarLinkMapa(direccion) {
+        if(!direccion) return "#";
+        // Si es coordenada (contiene coma y números), la usamos directo, si no, añadimos la ciudad
+        const esCoord = /[0-9]/.test(direccion) && direccion.includes(",");
+        const destino = esCoord ? direccion : `${direccion}, Rosario de la Frontera, Salta, Argentina`;
+        // Usamos la API de Google Maps Universal para asegurar que abra la APP con la RUTA calculada
+        return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destino)}&travelmode=driving`;
     }
 
     function buscar() {
-        const q = document.getElementById('main-search').value.toLowerCase();
+        const q = document.getElementById('main-search').value.toLowerCase().trim();
         const r = document.getElementById('search-rubro').value;
         const res = document.getElementById('results-area');
         res.innerHTML = "";
 
-        db.comercios.filter(c => c.estado === 'activo').forEach(c => {
-            const matchRubro = !r || c.rubro === r;
-            const esCoord = /[0-9]/.test(c.dir) && c.dir.includes(",");
-            const destino = esCoord ? c.dir : `${c.dir}, Rosario de la Frontera, Salta`;
-            const linkMapa = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destino)}`;
+        // Filtrar comercios activos
+        const comerciosActivos = db.comercios.filter(c => c.estado === 'activo');
 
-            if ((c.nombre.toLowerCase().includes(q) || c.rubro.toLowerCase().includes(q) || q === '') && matchRubro) {
+        comerciosActivos.forEach(c => {
+            const matchRubro = !r || c.rubro === r;
+            const matchComercio = c.nombre.toLowerCase().includes(q) || c.rubro.toLowerCase().includes(q);
+            const linkMapa = generarLinkMapa(c.dir);
+
+            // 1. Mostrar la tarjeta del Comercio si coincide el rubro y (el nombre o si la búsqueda está vacía)
+            if (matchRubro && (matchComercio || q === '')) {
                 res.innerHTML += `
                 <div class="card">
                     <img class="card-img" src="${c.imgLocal || 'https://via.placeholder.com/400x200?text=Comercio'}">
@@ -271,11 +241,13 @@
                         <div class="card-info">📞 ${c.tel || 'Sin WhatsApp'}</div>
                         <div class="card-info">⏰ ${c.hor || 'Consultar horario'}</div>
                         <br>
-                        <button class="btn btn-primary" style="width:100%" onclick="window.open('${linkMapa}', '_blank')">🚀 TRAZAR RUTA</button>
+                        <button class="btn btn-primary" style="width:100%" onclick="window.open('${linkMapa}', '_blank')">🚀 CÓMO LLEGAR (RUTA)</button>
+                        <button class="btn btn-dark" style="width:100%; margin-top:5px; font-size:0.8rem;" onclick="verTienda('${c.nombre.replace(/'/g, "\\'")}')">🏪 VER TODOS LOS PRODUCTOS</button>
                     </div>
                 </div>`;
             }
 
+            // 2. Mostrar Productos si el texto de búsqueda coincide con el nombre del producto
             if (q !== '') {
                 c.prods.filter(p => p.nom.toLowerCase().includes(q)).forEach(p => {
                     res.innerHTML += `
@@ -285,19 +257,19 @@
                             <div class="card-title">${p.nom}</div>
                             <div class="price-tag">$${p.pre}</div>
                             <div style="background: #f1f1f1; padding: 10px; border-radius: 10px; margin-top: 10px; border-left: 3px solid var(--primary);">
-                                <p style="font-size: 0.75rem; font-weight: 600; color: #333; margin-bottom: 5px;">🏪 TIENDA: ${c.nombre}</p>
+                                <p style="font-size: 0.75rem; font-weight: 600; color: #333; margin-bottom: 5px;">🏪 DISPONIBLE EN: ${c.nombre}</p>
                             </div>
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 15px;">
-                                <button class="btn btn-secondary" style="font-size: 0.75rem;" onclick="window.open('https://wa.me/${c.tel.replace(/\D/g,'')}?text=Hola, vi ${p.nom} en la página')">💬 WHATSAPP</button>
-                                <button class="btn btn-dark" style="font-size: 0.75rem;" onclick="verTienda('${c.nombre.replace(/'/g, "\\'")}')">🏪 VER TIENDA</button>
+                                <button class="btn btn-secondary" style="font-size: 0.75rem;" onclick="window.open('https://wa.me/${c.tel.replace(/\D/g,'')}?text=Hola, vi ${p.nom} en la página')">💬 PEDIR</button>
+                                <button class="btn btn-dark" style="font-size: 0.75rem;" onclick="verTienda('${c.nombre.replace(/'/g, "\\'")}')">🏪 LA TIENDA</button>
                             </div>
-                            <button class="btn btn-primary" style="width: 100%; margin-top: 5px; font-size: 0.8rem;" onclick="window.open('${linkMapa}', '_blank')">🚀 CÓMO LLEGAR</button>
+                            <button class="btn btn-primary" style="width: 100%; margin-top: 5px; font-size: 0.8rem;" onclick="window.open('${linkMapa}', '_blank')">🚀 TRAZAR RUTA</button>
                         </div>
                     </div>`;
                 });
             }
         });
-        if (res.innerHTML === "") res.innerHTML = "<p style='grid-column: 1/-1; text-align:center; padding:50px; color:#999;'>No hay resultados.</p>";
+        if (res.innerHTML === "") res.innerHTML = "<p style='grid-column: 1/-1; text-align:center; padding:50px; color:#999;'>No encontramos lo que buscas. Intenta con otra palabra.</p>";
     }
 
     function verTienda(nombreTienda) {
@@ -307,14 +279,31 @@
         window.scrollTo({top: 0, behavior: 'smooth'});
     }
 
-    // --- FUNCIONES COMERCIANTE ---
+    // --- RESTO DE FUNCIONES (Backup, Admin, Comercio) ---
+    function exportarDB() {
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(db));
+        const dlAnchorElem = document.createElement('a');
+        dlAnchorElem.setAttribute("href", dataStr);
+        dlAnchorElem.setAttribute("download", "dondecompro_db.json");
+        dlAnchorElem.click();
+    }
+
+    function importarDB(event) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            db = JSON.parse(e.target.result);
+            salvar(); location.reload();
+        };
+        reader.readAsText(event.target.files[0]);
+    }
+
     async function guardarPerfilTienda() {
         const file = document.getElementById('t-img-file').files[0];
         if(file) tActiva.imgLocal = await toBase64(file);
         tActiva.tel = document.getElementById('t-tel').value; 
         tActiva.dir = document.getElementById('t-dir').value;
         tActiva.hor = document.getElementById('t-hor').value;
-        salvar(); alert("Perfil actualizado");
+        salvar(); alert("Perfil guardado");
     }
 
     async function guardarProducto() {
@@ -356,7 +345,7 @@
         const p = document.getElementById('log-pass').value;
         const c = db.comercios.find(i => i.nombre.toLowerCase() === n && i.pass === p);
         if(!c) return alert("Datos incorrectos");
-        if(c.estado !== 'activo') return alert("Pendiente de aprobación.");
+        if(c.estado !== 'activo') return alert("Tienda pendiente de aprobación.");
         tActiva = c;
         document.getElementById('lbl-nombre-tienda').innerText = "Panel: " + c.nombre;
         document.getElementById('t-tel').value = c.tel; 
@@ -377,10 +366,9 @@
     function obtenerGPS() {
         navigator.geolocation.getCurrentPosition(p => { 
             document.getElementById('t-dir').value = p.coords.latitude.toFixed(6) + ", " + p.coords.longitude.toFixed(6); 
-        }, () => alert("Activa el GPS"));
+        }, () => alert("Activa el GPS en tu equipo"));
     }
 
-    // --- FUNCIONES ADMIN ---
     async function guardarConfigSitio() {
         const file = document.getElementById('adm-logo-file').files[0];
         if(file) db.config.logo = await toBase64(file);
@@ -403,8 +391,8 @@
         <div style="padding:10px; background:#fff; margin-bottom:10px; border-radius:10px; font-size:0.8rem; border:1px solid #ddd; display:flex; justify-content:space-between; align-items:center;">
             <div><b>${c.nombre}</b> (${c.rubro})<br><span style="color:${c.estado==='activo'?'green':'orange'}">${c.estado.toUpperCase()}</span></div>
             <div style="display:flex; gap:5px;">
-                ${c.estado === 'pendiente' ? `<button class="btn btn-secondary" style="padding:4px;" onclick="aprobarC(${c.id})">OK</button>` : ''}
-                <button class="btn btn-danger" style="padding:4px;" onclick="borrarC(${c.id})">✕</button>
+                ${c.estado === 'pendiente' ? `<button class="btn btn-secondary" style="padding:5px;" onclick="aprobarC(${c.id})">OK</button>` : ''}
+                <button class="btn btn-danger" style="padding:5px;" onclick="borrarC(${c.id})">✕</button>
             </div>
         </div>`).join('');
     }
@@ -424,3 +412,4 @@
 </script>
 </body>
 </html>
+
