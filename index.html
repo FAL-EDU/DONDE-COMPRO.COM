@@ -3,8 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="tab-title">Cargando...</title>
+    <title id="tab-title">DondeCompro.com</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
     <style>
         :root { --primary: #0056b3; --secondary: #28a745; --danger: #dc3545; --bg: #f8f9fa; --card-shadow: 0 4px 15px rgba(0,0,0,0.08); }
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -20,12 +24,13 @@
         .search-box { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 5px 25px rgba(0,0,0,0.05); display: flex; gap: 10px; margin-bottom: 40px; }
         .search-box input, .search-box select { padding: 12px; border: 1px solid #ddd; border-radius: 8px; width: 100%; }
         .results-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 25px; }
-        .card { background: white; border-radius: 15px; padding: 20px; box-shadow: var(--card-shadow); border-top: 5px solid var(--primary); }
+        .card { background: white; border-radius: 15px; padding: 20px; box-shadow: var(--card-shadow); border-top: 5px solid var(--primary); text-align: center; }
+        .card img { width: 80px; height: 80px; object-fit: cover; border-radius: 50%; margin-bottom: 10px; border: 2px solid #eee; background: #eee; }
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; justify-content: center; align-items: center; padding: 20px; }
         .modal-content { background: white; padding: 30px; border-radius: 20px; width: 100%; max-width: 1000px; max-height: 90vh; overflow-y: auto; position: relative; }
         .admin-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
         .admin-section { background: #f8f9fa; padding: 15px; border-radius: 12px; border: 1px solid #eee; }
-        input, select { width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 8px; }
+        input, select, textarea { width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 8px; font-family: inherit; }
         @media (max-width: 900px) { .admin-grid { grid-template-columns: 1fr; } .search-box { flex-direction: column; } }
     </style>
 </head>
@@ -33,7 +38,7 @@
 
 <header>
     <div class="logo-area" onclick="location.reload()">
-        <h1 id="header-title">MI PLATAFORMA</h1>
+        <h1 id="header-title">DONDE COMPRO</h1>
     </div>
     <div style="display: flex; gap: 10px;">
         <button class="btn btn-dark" onclick="abrirAdmin()">⚙️ ADMIN</button>
@@ -45,12 +50,10 @@
     <div style="text-align: center; margin-bottom: 30px;">
         <h2 id="hero-slogan" style="font-weight: 300; color: #666;">Encuentra todo en tu ciudad</h2>
     </div>
-
     <div class="search-box">
         <input type="text" id="main-search" placeholder="¿Qué buscas?" onkeyup="buscar()">
         <select id="search-rubro" onchange="buscar()"></select>
     </div>
-
     <div id="results-area" class="results-grid"></div>
 </main>
 
@@ -78,21 +81,21 @@
 
 <div id="modal-admin" class="modal">
     <div class="modal-content">
-        <h2>Panel de Administración General</h2><br>
+        <h2>Administración General</h2><br>
         <div class="admin-grid">
             <div class="admin-section">
-                <h4>🎨 Personalización</h4><br>
-                <label>Nombre del Sitio:</label><input type="text" id="adm-name">
+                <h4>🎨 Apariencia</h4><br>
+                <label>Nombre:</label><input type="text" id="adm-name">
                 <label>Slogan:</label><input type="text" id="adm-slogan">
-                <button class="btn btn-primary" style="width:100%" onclick="guardarConfigSitio()">Guardar Cambios</button>
+                <button class="btn btn-primary" style="width:100%" onclick="guardarConfigSitio()">Guardar</button>
             </div>
             <div class="admin-section">
-                <h4>🏪 Validar Comercios</h4><br>
+                <h4>🏪 Comercios</h4><br>
                 <div id="adm-comercios-list"></div>
             </div>
             <div class="admin-section">
                 <h4>🏷️ Rubros</h4><br>
-                <input type="text" id="new-rubro" placeholder="Nuevo rubro...">
+                <input type="text" id="new-rubro" placeholder="Ej: Farmacia">
                 <button class="btn btn-secondary" style="width:100%" onclick="agregarRubro()">+ Añadir</button>
             </div>
         </div>
@@ -100,133 +103,180 @@
     </div>
 </div>
 
+<div id="modal-panel-comercio" class="modal">
+    <div class="modal-content">
+        <h2 id="pc-titulo">Mi Tienda</h2><br>
+        <div class="admin-grid">
+            <div class="admin-section">
+                <h4>🖼️ Logo</h4><br>
+                <div id="pc-logo-preview" style="text-align:center; margin-bottom:10px;"></div>
+                <input type="file" id="pc-logo-input" accept="image/*" onchange="procesarLogo(event)">
+            </div>
+            <div class="admin-section">
+                <h4>📦 Productos</h4><br>
+                <textarea id="pc-prods" rows="5" placeholder="Lista de productos..."></textarea>
+                <button class="btn btn-primary" style="width:100%" onclick="guardarDatosTienda()">Guardar Cambios</button>
+            </div>
+            <div class="admin-section">
+                <h4>📍 GPS</h4><br>
+                <label>Coordenadas (Lat, Long):</label>
+                <input type="text" id="pc-coords" placeholder="-25.12, -64.56">
+            </div>
+        </div>
+        <button class="btn btn-dark" style="width:100%; margin-top:20px" onclick="cerrarModal('modal-panel-comercio')">Cerrar Sesión</button>
+    </div>
+</div>
+
 <script>
-    let db = JSON.parse(localStorage.getItem('mi_db_comercial')) || {
-        config: { name: 'DÓNDE COMPRO', slogan: 'Tu ciudad en un solo lugar' },
-        rubros: ['Almacén', 'Farmacia', 'Ferretería'],
-        comercios: []
+    // --- 1. CONFIGURACIÓN FIREBASE INTEGRADA ---
+    const firebaseConfig = {
+        apiKey: "AIzaSyB3kBkd3pj-o8RPZxXJfOo7GTl64d7un7c",
+        authDomain: "donde-compro-12345.firebaseapp.com",
+        databaseURL: "https://donde-compro-12345-default-rtdb.firebaseio.com",
+        projectId: "donde-compro-12345",
+        storageBucket: "donde-compro-12345.firebasestorage.app",
+        messagingSenderId: "769310157775",
+        appId: "1:769310157775:web:ab9db00bc911fb3abdc0ba",
+        measurementId: "G-NQZXDP6TS6"
     };
 
-    function salvar() {
-        localStorage.setItem('mi_db_comercial', JSON.stringify(db));
-        aplicarConfig();
-    }
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
 
-    function aplicarConfig() {
-        document.getElementById('header-title').innerText = db.config.name;
-        document.getElementById('hero-slogan').innerText = db.config.slogan;
-        document.getElementById('tab-title').innerText = db.config.name;
-    }
+    let appData = { config: {}, rubros: [], comercios: [] };
+    let idComercioActual = null;
 
-    function abrirAdmin() {
-        document.getElementById('adm-name').value = db.config.name;
-        document.getElementById('adm-slogan').value = db.config.slogan;
-        renderComerciosAdmin();
-        abrirModal('modal-admin');
-    }
+    // --- 2. SINCRONIZACIÓN CON FIRESTORE ---
+    function iniciarSincronizacion() {
+        db.collection("settings").doc("main").onSnapshot(doc => {
+            if(doc.exists) { appData.config = doc.data(); aplicarConfig(); }
+        });
 
-    function guardarConfigSitio() {
-        db.config.name = document.getElementById('adm-name').value;
-        db.config.slogan = document.getElementById('adm-slogan').value;
-        salvar();
-        alert("Configuración actualizada.");
-    }
+        db.collection("settings").doc("rubros").onSnapshot(doc => {
+            if(doc.exists) { appData.rubros = doc.data().lista || []; actualizarSelects(); }
+        });
 
-    function renderComerciosAdmin() {
-        const lista = document.getElementById('adm-comercios-list');
-        lista.innerHTML = db.comercios.length === 0 ? "<p>No hay solicitudes.</p>" : "";
-        db.comercios.forEach((c, index) => {
-            lista.innerHTML += `
-                <div style="background:white; padding:10px; border-radius:8px; margin-bottom:10px; border:1px solid #ddd;">
-                    <b>${c.nombre}</b> (${c.estado})<br>
-                    <button class="btn btn-secondary" style="padding:5px; font-size:0.7rem; margin-top:5px;" onclick="aprobarComercio(${index})">✅ Activar</button>
-                    <button class="btn btn-danger" style="padding:5px; font-size:0.7rem; margin-top:5px;" onclick="borrarComercio(${index})">🗑️ Borrar</button>
-                </div>`;
+        db.collection("comercios").onSnapshot(snapshot => {
+            appData.comercios = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            buscar();
+            if(document.getElementById('modal-admin').style.display === 'flex') renderComerciosAdmin();
         });
     }
 
-    function aprobarComercio(index) {
-        db.comercios[index].estado = 'activo';
-        salvar();
-        renderComerciosAdmin();
-        buscar(); 
+    function aplicarConfig() {
+        document.getElementById('header-title').innerText = appData.config.name || 'DONDE COMPRO';
+        document.getElementById('hero-slogan').innerText = appData.config.slogan || 'Encuentra todo en tu ciudad';
+        document.getElementById('tab-title').innerText = appData.config.name || 'DondeCompro.com';
     }
 
-    function borrarComercio(index) {
-        if(confirm("¿Eliminar comercio?")) {
-            db.comercios.splice(index, 1);
-            salvar();
-            renderComerciosAdmin();
-            buscar();
-        }
+    // --- 3. FUNCIONES ---
+    function guardarConfigSitio() {
+        db.collection("settings").doc("main").set({
+            name: document.getElementById('adm-name').value,
+            slogan: document.getElementById('adm-slogan').value
+        }).then(() => alert("Sitio actualizado"));
     }
 
     function agregarRubro() {
         const r = document.getElementById('new-rubro').value;
         if(r) {
-            db.rubros.push(r);
-            document.getElementById('new-rubro').value = "";
-            salvar();
-            actualizarSelects();
+            const nuevaLista = [...appData.rubros, r];
+            db.collection("settings").doc("rubros").set({ lista: nuevaLista })
+                .then(() => document.getElementById('new-rubro').value = "");
         }
     }
 
     function registrarTienda() {
-        const nombre = document.getElementById('reg-nombre').value;
-        const pass = document.getElementById('reg-pass').value;
-        const rubro = document.getElementById('reg-rubro').value;
-        if(!nombre || !pass) return alert("Completa los campos.");
-        db.comercios.push({ nombre: nombre, pass: pass, rubro: rubro, estado: 'pendiente', prods: [] });
-        salvar();
-        alert("Solicitud enviada.");
-        cerrarModal('modal-registro');
-    }
-
-    // CORRECCIÓN BARRA DE BÚSQUEDA (Imagen 1)
-    function buscar() {
-        const q = document.getElementById('main-search').value.toLowerCase();
-        const r = document.getElementById('search-rubro').value;
-        const res = document.getElementById('results-area');
-        res.innerHTML = "";
-
-        const filtrados = db.comercios.filter(c => {
-            const coincideNombre = c.nombre.toLowerCase().includes(q);
-            const coincideRubro = r === "" || c.rubro === r;
-            return c.estado === 'activo' && coincideNombre && coincideRubro;
-        });
-
-        filtrados.forEach(c => {
-            res.innerHTML += `
-                <div class="card">
-                    <h3>${c.nombre}</h3>
-                    <p>🏷️ Rubro: ${c.rubro}</p>
-                    <button class="btn btn-primary" style="width:100%; margin-top:10px;">Ver Tienda</button>
-                </div>`;
-        });
+        db.collection("comercios").add({
+            nombre: document.getElementById('reg-nombre').value,
+            pass: document.getElementById('reg-pass').value,
+            rubro: document.getElementById('reg-rubro').value,
+            estado: 'pendiente', prods: '', logo: '', coords: ''
+        }).then(() => { alert("Solicitud enviada"); cerrarModal('modal-registro'); });
     }
 
     function accederTienda() {
         const u = document.getElementById('log-nombre').value;
         const p = document.getElementById('log-pass').value;
-        const c = db.comercios.find(x => x.nombre === u && x.pass === p);
-        if(!c) return alert("Usuario o clave incorrecta.");
-        if(c.estado !== 'activo') return alert("Tu cuenta aún no ha sido activada.");
-        alert("¡Bienvenido " + c.nombre + "!");
-        // Aquí iría la redirección al panel del comercio
+        const c = appData.comercios.find(x => x.nombre === u && x.pass === p);
+        if(!c) return alert("Error de acceso");
+        if(c.estado !== 'activo') return alert("Pendiente de activación");
+        idComercioActual = c.id;
+        cerrarModal('modal-login');
+        abrirPanelTienda(c);
+    }
+
+    function abrirPanelTienda(c) {
+        document.getElementById('pc-titulo').innerText = "Tienda: " + c.nombre;
+        document.getElementById('pc-prods').value = c.prods || '';
+        document.getElementById('pc-coords').value = c.coords || '';
+        document.getElementById('pc-logo-preview').innerHTML = c.logo ? `<img src="${c.logo}" width="80">` : "Sin logo";
+        abrirModal('modal-panel-comercio');
+    }
+
+    function procesarLogo(event) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            db.collection("comercios").doc(idComercioActual).update({ logo: e.target.result })
+                .then(() => document.getElementById('pc-logo-preview').innerHTML = `<img src="${e.target.result}" width="80">`);
+        };
+        reader.readAsDataURL(event.target.files[0]);
+    }
+
+    function guardarDatosTienda() {
+        db.collection("comercios").doc(idComercioActual).update({
+            prods: document.getElementById('pc-prods').value,
+            coords: document.getElementById('pc-coords').value
+        }).then(() => alert("Cambios guardados"));
+    }
+
+    function buscar() {
+        const q = document.getElementById('main-search').value.toLowerCase();
+        const r = document.getElementById('search-rubro').value;
+        const res = document.getElementById('results-area');
+        res.innerHTML = "";
+        appData.comercios.filter(c => {
+            const mQ = c.nombre.toLowerCase().includes(q) || c.prods.toLowerCase().includes(q);
+            const mR = r === "" || c.rubro === r;
+            return c.estado === 'activo' && mQ && mR;
+        }).forEach(c => {
+            res.innerHTML += `
+                <div class="card">
+                    <img src="${c.logo || 'https://via.placeholder.com/80?text=Logo'}">
+                    <h3>${c.nombre}</h3>
+                    <p>🏷️ ${c.rubro}</p>
+                    <button class="btn btn-primary" style="width:100%; margin-top:10px" onclick="window.open('https://www.google.com/maps?q=${c.coords}')">📍 Cómo llegar</button>
+                </div>`;
+        });
+    }
+
+    function renderComerciosAdmin() {
+        const lista = document.getElementById('adm-comercios-list');
+        lista.innerHTML = appData.comercios.map(c => `
+            <div style="background:white; padding:8px; border-radius:8px; margin-bottom:5px; font-size:0.8rem; border:1px solid #ddd;">
+                ${c.nombre} [${c.estado}]<br>
+                <button onclick="db.collection('comercios').doc('${c.id}').update({estado:'activo'})">✅</button>
+                <button onclick="if(confirm('¿Borrar?')) db.collection('comercios').doc('${c.id}').delete()">🗑️</button>
+            </div>
+        `).join('');
     }
 
     function actualizarSelects() {
-        const html = db.rubros.map(r => `<option value="${r}">${r}</option>`).join('');
+        const html = appData.rubros.map(r => `<option value="${r}">${r}</option>`).join('');
         document.getElementById('search-rubro').innerHTML = '<option value="">Todos los rubros</option>' + html;
         document.getElementById('reg-rubro').innerHTML = html;
     }
 
     function abrirModal(id) { document.getElementById(id).style.display = 'flex'; }
     function cerrarModal(id) { document.getElementById(id).style.display = 'none'; }
+    function abrirAdmin() { 
+        document.getElementById('adm-name').value = appData.config.name || '';
+        document.getElementById('adm-slogan').value = appData.config.slogan || '';
+        renderComerciosAdmin(); 
+        abrirModal('modal-admin'); 
+    }
 
-    actualizarSelects();
-    aplicarConfig();
-    buscar();
+    iniciarSincronizacion();
 </script>
 </body>
 </html>
