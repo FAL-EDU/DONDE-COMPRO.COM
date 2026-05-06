@@ -3,281 +3,252 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="tab-title">Cargando...</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <title>DÓNDE COMPRO - Rosario de la Frontera</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
-        :root { --primary: #0056b3; --secondary: #28a745; --danger: #dc3545; --bg: #f8f9fa; --card-shadow: 0 4px 15px rgba(0,0,0,0.08); }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Poppins', sans-serif; background-color: var(--bg); color: #333; line-height: 1.6; }
-        header { background: #fff; padding: 15px 5%; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 1000; }
-        .logo-area { display: flex; align-items: center; gap: 12px; cursor: pointer; }
-        .logo-img { height: 40px; width: auto; object-fit: contain; }
-        .btn { padding: 10px 18px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; transition: 0.2s; display: inline-flex; align-items: center; gap: 5px; text-decoration: none; justify-content: center; font-size: 0.9rem; }
-        .btn-primary { background: var(--primary); color: white; }
-        .btn-secondary { background: var(--secondary); color: white; }
-        .btn-dark { background: #333; color: white; }
-        .btn-danger { background: var(--danger); color: white; }
-        .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
-        .search-box { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 5px 25px rgba(0,0,0,0.05); display: flex; gap: 10px; margin-bottom: 40px; }
-        .search-box input, .search-box select { padding: 12px; border: 1px solid #ddd; border-radius: 8px; width: 100%; }
-        .results-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 25px; }
-        .card { background: white; border-radius: 15px; padding: 20px; box-shadow: var(--card-shadow); border-top: 5px solid var(--primary); }
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; justify-content: center; align-items: center; padding: 20px; }
-        .modal-content { background: white; padding: 30px; border-radius: 20px; width: 100%; max-width: 1000px; max-height: 90vh; overflow-y: auto; position: relative; }
-        .admin-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
-        .admin-section { background: #f8f9fa; padding: 15px; border-radius: 12px; border: 1px solid #eee; }
-        input, select { width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 8px; font-family: inherit; }
-        .rubro-item { display: flex; justify-content: space-between; align-items: center; background: white; padding: 8px 12px; border-radius: 8px; margin-bottom: 8px; border: 1px solid #eee; font-size: 0.9rem; }
-        @media (max-width: 900px) { .admin-grid { grid-template-columns: 1fr; } .search-box { flex-direction: column; } }
+        .vista { display: none; }
+        .vista.activa { display: block; }
+        #mapa-registro { height: 350px; width: 100%; border-radius: 1.5rem; z-index: 10; border: 2px solid #e2e8f0; }
+        /* Toggle Switch Style */
+        .switch { position: relative; display: inline-block; width: 50px; height: 24px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: #10b981; }
+        input:checked + .slider:before { transform: translateX(26px); }
     </style>
 </head>
-<body>
+<body class="bg-slate-50 text-slate-900 font-sans">
 
-<header>
-    <div class="logo-area" onclick="location.reload()">
-        <img id="site-logo-preview" class="logo-img" style="display:none">
-        <h1 id="header-title">MI PLATAFORMA</h1>
-    </div>
-    <div style="display: flex; gap: 10px;">
-        <button class="btn btn-dark" onclick="abrirAdmin()">⚙️ ADMIN</button>
-        <button class="btn btn-primary" onclick="abrirModal('modal-login')">🏪 MI TIENDA</button>
-    </div>
-</header>
-
-<main class="container">
-    <div style="text-align: center; margin-bottom: 30px;">
-        <h2 id="hero-slogan" style="font-weight: 300; color: #666;">Encuentra todo en tu ciudad</h2>
-    </div>
-
-    <div class="search-box">
-        <input type="text" id="main-search" placeholder="¿Qué buscas?" onkeyup="buscar()">
-        <select id="search-rubro" onchange="buscar()"></select>
-    </div>
-
-    <div id="results-area" class="results-grid"></div>
-</main>
-
-<div id="modal-login" class="modal">
-    <div class="modal-content" style="max-width: 400px; text-align: center;">
-        <h3>Ingreso Comerciantes</h3><br>
-        <input type="text" id="log-nombre" placeholder="Nombre del comercio">
-        <input type="password" id="log-pass" placeholder="Contraseña">
-        <button class="btn btn-primary" style="width:100%" onclick="accederTienda()">INGRESAR</button>
-        <button class="btn btn-secondary" style="width:100%; margin-top:10px" onclick="cerrarModal('modal-login'); abrirModal('modal-registro')">Registrar mi tienda</button>
-        <button class="btn btn-danger" style="width:100%; margin-top:10px" onclick="cerrarModal('modal-login')">Cerrar</button>
-    </div>
-</div>
-
-<div id="modal-registro" class="modal">
-    <div class="modal-content" style="max-width: 450px;">
-        <h3>Solicitud de Registro</h3><br>
-        <label>Nombre del Comercio:</label><input type="text" id="reg-nombre">
-        <label>Rubro:</label>
-        <select id="reg-rubro">
-            </select>
-        <label>Contraseña:</label><input type="password" id="reg-pass">
-        <button class="btn btn-primary" style="width:100%" onclick="registrarTienda()">Enviar Solicitud</button>
-        <button class="btn" style="width:100%; margin-top:10px" onclick="cerrarModal('modal-registro')">Volver</button>
-    </div>
-</div>
-
-<div id="modal-admin" class="modal">
-    <div class="modal-content">
-        <h2>Panel de Administración General</h2><br>
-        <div class="admin-grid">
-            <div class="admin-section">
-                <h4>🎨 Identidad del Sitio</h4><br>
-                <label>Logo del Sitio:</label>
-                <input type="file" id="adm-logo-input" accept="image/*" onchange="previsualizarLogoAdmin(event)">
-                <label>Nombre:</label><input type="text" id="adm-name">
-                <label>Slogan:</label><input type="text" id="adm-slogan">
-                <button class="btn btn-primary" style="width:100%" onclick="guardarConfigSitio()">Guardar Todo</button>
-            </div>
-            <div class="admin-section">
-                <h4>🏪 Validar Comercios</h4><br>
-                <div id="adm-comercios-list"></div>
-            </div>
-            <div class="admin-section">
-                <h4>🏷️ Gestionar Rubros</h4><br>
-                <div id="adm-rubros-list" style="max-height: 150px; overflow-y: auto; margin-bottom: 10px;"></div>
-                <input type="text" id="new-rubro" placeholder="Nombre nuevo rubro">
-                <button class="btn btn-secondary" style="width:100%" onclick="agregarRubro()">+ Añadir Rubro</button>
+    <nav class="bg-indigo-700 text-white p-4 shadow-lg sticky top-0 z-[1001]">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="font-black text-xl cursor-pointer tracking-tighter" onclick="verVista('cliente')">📍 DÓNDE COMPRO</h1>
+            <div class="flex gap-2">
+                <button onclick="verVista('cliente')" class="px-4 py-1 bg-indigo-800 rounded-full text-sm font-bold transition">Inicio</button>
+                <button onclick="verVista('admin')" class="px-4 py-1 border border-indigo-300 rounded-full text-sm font-bold hover:bg-white hover:text-indigo-700 transition">Mi Panel</button>
             </div>
         </div>
-        <button class="btn btn-dark" style="width:100%; margin-top:20px" onclick="cerrarModal('modal-admin')">Cerrar</button>
-    </div>
-</div>
+    </nav>
 
-<script>
-    // Inicialización de base de datos local
-    let db = JSON.parse(localStorage.getItem('mi_db_comercial')) || {
-        config: { name: 'DÓNDE COMPRO.COM', slogan: 'Tu ciudad en un solo lugar', logo: null },
-        rubros: ['Almacén', 'Farmacia', 'Ferretería'],
-        comercios: []
-    };
-
-    function salvar() {
-        localStorage.setItem('mi_db_comercial', JSON.stringify(db));
-        aplicarConfig();
-    }
-
-    function aplicarConfig() {
-        document.getElementById('header-title').innerText = db.config.name;
-        document.getElementById('hero-slogan').innerText = db.config.slogan;
-        document.getElementById('tab-title').innerText = db.config.name;
+    <main class="container mx-auto p-4">
         
-        const logoPreview = document.getElementById('site-logo-preview');
-        if (db.config.logo) {
-            logoPreview.src = db.config.logo;
-            logoPreview.style.display = 'block';
-        } else {
-            logoPreview.style.display = 'none';
+        <!-- VISTA CLIENTE -->
+        <div id="vista-cliente" class="vista activa">
+            <div class="max-w-2xl mx-auto mb-10 mt-6 text-center">
+                <h2 class="text-3xl font-black text-slate-800 mb-4 tracking-tight uppercase">Rosario de la Frontera</h2>
+                <input type="text" id="buscador" onkeyup="filtrar()" placeholder="Busca productos, farmacias o tiendas..." 
+                class="w-full px-8 py-5 rounded-[2rem] border-none shadow-2xl text-lg font-semibold focus:ring-4 focus:ring-indigo-200 outline-none">
+            </div>
+            <div id="lista-cliente" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8"></div>
+        </div>
+
+        <!-- VISTA ADMIN -->
+        <div id="vista-admin" class="vista max-w-2xl mx-auto">
+            
+            <div class="bg-white p-8 rounded-[2.5rem] shadow-xl mb-8 border-t-8 border-emerald-500">
+                <h2 class="font-black text-2xl mb-2 text-emerald-700 uppercase">Configuración del Local</h2>
+                <p class="text-[10px] text-slate-400 mb-6 uppercase font-bold italic text-center">Ajusta el marcador en el mapa para tu ubicación exacta</p>
+                
+                <div id="mapa-registro" class="mb-6"></div>
+                
+                <div class="grid grid-cols-1 gap-4">
+                    <div class="grid grid-cols-2 gap-2">
+                        <input type="text" id="t-lat" placeholder="Latitud" readonly class="p-3 bg-slate-100 border rounded-xl text-xs font-mono text-center">
+                        <input type="text" id="t-lng" placeholder="Longitud" readonly class="p-3 bg-slate-100 border rounded-xl text-xs font-mono text-center">
+                    </div>
+                    <input type="text" id="t-nombre" placeholder="Nombre de la Tienda" class="p-4 bg-slate-50 border rounded-2xl font-bold text-lg focus:bg-white">
+                    <input type="text" id="t-rubro" placeholder="Rubro (Ej: Farmacia, Panadería)" class="p-3 bg-slate-50 border rounded-xl focus:bg-white">
+                    <input type="text" id="t-direccion" placeholder="Dirección (Ej: Calle Alvarado 123)" class="p-3 bg-slate-50 border rounded-xl focus:bg-white">
+                    <input type="text" id="t-horarios" placeholder="Horarios (Ej: Lun a Sáb 08:00 - 22:00)" class="p-3 bg-slate-50 border rounded-xl focus:bg-white">
+                    
+                    <div class="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border">
+                        <span class="font-bold text-slate-600 text-sm">¿ATIENDE FUERA DE HORARIO?</span>
+                        <label class="switch">
+                            <input type="checkbox" id="t-fuera">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+
+                    <input type="text" id="t-logo" placeholder="URL del Logo o Foto del Local" class="p-3 bg-slate-50 border rounded-xl focus:bg-white">
+                    <input type="text" id="t-whatsapp" placeholder="WhatsApp (Ej: 5493876123456)" class="p-3 bg-slate-50 border rounded-xl font-bold text-emerald-600 focus:bg-white">
+                    
+                    <button onclick="guardarPerfil()" class="bg-emerald-600 text-white py-5 rounded-2xl font-black text-xl hover:bg-emerald-700 transition shadow-lg mt-4 uppercase">Actualizar Datos Local</button>
+                </div>
+            </div>
+
+            <div class="bg-white p-8 rounded-[2.5rem] shadow-xl mb-8 border-t-8 border-indigo-500">
+                <h2 class="font-black text-2xl mb-6 text-indigo-700 uppercase">Publicar Producto</h2>
+                <div class="grid gap-4">
+                    <input type="text" id="p-nombre" placeholder="Nombre del Producto" class="w-full p-4 bg-slate-50 border rounded-2xl font-bold focus:bg-white">
+                    <input type="number" id="p-precio" placeholder="Precio $" class="w-full p-4 bg-slate-50 border rounded-2xl font-bold text-emerald-600 focus:bg-white">
+                    <input type="text" id="p-img" placeholder="URL de la imagen del producto" class="w-full p-4 bg-slate-50 border rounded-2xl focus:bg-white">
+                    <button id="btn-p" onclick="publicar()" class="bg-indigo-600 text-white py-5 rounded-2xl font-black shadow-lg uppercase hover:bg-indigo-700 transition">Publicar Ahora</button>
+                </div>
+            </div>
+
+            <h3 class="font-bold text-slate-400 uppercase text-[10px] mb-4 px-4 tracking-widest">Productos Activos:</h3>
+            <div id="lista-admin" class="grid gap-3 mb-20"></div>
+        </div>
+    </nav>
+
+    <script>
+        const S_URL = 'https://mefeupfmvhfnnmttpfgq.supabase.co';
+        const S_KEY = 'sb_publishable_fMwMKzGhNbj9RyVhPv33sA_rqDg30C7';
+        const _supabase = supabase.createClient(S_URL, S_KEY);
+
+        let productos = [];
+        let mapa, marcador;
+
+        function verVista(v) {
+            document.querySelectorAll('.vista').forEach(x => x.classList.remove('activa'));
+            document.getElementById('vista-' + v).classList.add('activa');
+            if(v === 'admin') setTimeout(initMapa, 200);
+            cargar();
         }
-    }
 
-    // Funciones de previsualización de imagen para Admin
-    let tempLogoBase64 = null;
-    function previsualizarLogoAdmin(event) {
-        const reader = new FileReader();
-        reader.onload = function(e) { tempLogoBase64 = e.target.result; };
-        reader.readAsDataURL(event.target.files[0]);
-    }
-
-    function abrirAdmin() {
-        document.getElementById('adm-name').value = db.config.name;
-        document.getElementById('adm-slogan').value = db.config.slogan;
-        tempLogoBase64 = db.config.logo;
-        renderComerciosAdmin();
-        renderRubrosAdmin();
-        abrirModal('modal-admin');
-    }
-
-    function guardarConfigSitio() {
-        db.config.name = document.getElementById('adm-name').value;
-        db.config.slogan = document.getElementById('adm-slogan').value;
-        db.config.logo = tempLogoBase64;
-        salvar();
-        alert("Configuración guardada correctamente.");
-    }
-
-    function renderComerciosAdmin() {
-        const lista = document.getElementById('adm-comercios-list');
-        lista.innerHTML = db.comercios.length === 0 ? "<p>No hay solicitudes.</p>" : "";
-        db.comercios.forEach((c, index) => {
-            lista.innerHTML += `
-                <div style="background:white; padding:10px; border-radius:8px; margin-bottom:10px; border:1px solid #ddd;">
-                    <b>${c.nombre}</b> (${c.estado})<br>
-                    <button class="btn btn-secondary" style="padding:5px; font-size:0.7rem; margin-top:5px;" onclick="aprobarComercio(${index})">✅ Activar</button>
-                    <button class="btn btn-danger" style="padding:5px; font-size:0.7rem; margin-top:5px;" onclick="borrarComercio(${index})">🗑️ Borrar</button>
-                </div>`;
-        });
-    }
-
-    function renderRubrosAdmin() {
-        const lista = document.getElementById('adm-rubros-list');
-        lista.innerHTML = "";
-        db.rubros.forEach((r, index) => {
-            lista.innerHTML += `
-                <div class="rubro-item">
-                    <span>${r}</span>
-                    <button class="btn-danger" style="padding:2px 8px; border-radius:4px" onclick="eliminarRubro(${index})">✖</button>
-                </div>`;
-        });
-    }
-
-    function eliminarRubro(index) {
-        if(confirm(`¿Deseas eliminar el rubro "${db.rubros[index]}"?`)) {
-            db.rubros.splice(index, 1);
-            salvar();
-            actualizarSelects();
-            renderRubrosAdmin();
+        function initMapa() {
+            if (mapa) return;
+            const centro = [-25.795, -64.966];
+            mapa = L.map('mapa-registro').setView(centro, 15);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapa);
+            marcador = L.marker(centro, {draggable: true}).addTo(mapa);
+            
+            marcador.on('dragend', () => {
+                const p = marcador.getLatLng();
+                document.getElementById('t-lat').value = p.lat.toFixed(6);
+                document.getElementById('t-lng').value = p.lng.toFixed(6);
+            });
+            cargarPerfilInputs();
         }
-    }
 
-    function aprobarComercio(index) {
-        db.comercios[index].estado = 'activo';
-        salvar();
-        renderComerciosAdmin();
-        buscar(); 
-    }
-
-    function borrarComercio(index) {
-        if(confirm("¿Eliminar comercio?")) {
-            db.comercios.splice(index, 1);
-            salvar();
-            renderComerciosAdmin();
-            buscar();
+        async function cargarPerfilInputs() {
+            const { data } = await _supabase.from('comercios').select('*').limit(1).maybeSingle();
+            if(data) {
+                document.getElementById('t-nombre').value = data.nombre_comercio || "";
+                document.getElementById('t-rubro').value = data.rubro || "";
+                document.getElementById('t-direccion').value = data.direccion || "";
+                document.getElementById('t-horarios').value = data.horarios || "";
+                document.getElementById('t-fuera').checked = data.fuera_horario || false;
+                document.getElementById('t-logo').value = data.logo_url || "";
+                document.getElementById('t-whatsapp').value = data.whatsapp || "";
+                if(data.latitud) {
+                    document.getElementById('t-lat').value = data.latitud;
+                    document.getElementById('t-lng').value = data.longitud;
+                    marcador.setLatLng([data.latitud, data.longitud]);
+                    mapa.setView([data.latitud, data.longitud], 16);
+                }
+            }
         }
-    }
 
-    function agregarRubro() {
-        const r = document.getElementById('new-rubro').value;
-        if(r) {
-            db.rubros.push(r);
-            document.getElementById('new-rubro').value = "";
-            salvar();
-            actualizarSelects();
-            renderRubrosAdmin();
+        async function guardarPerfil() {
+            const info = {
+                nombre_comercio: document.getElementById('t-nombre').value,
+                rubro: document.getElementById('t-rubro').value,
+                direccion: document.getElementById('t-direccion').value,
+                horarios: document.getElementById('t-horarios').value,
+                fuera_horario: document.getElementById('t-fuera').checked,
+                logo_url: document.getElementById('t-logo').value,
+                whatsapp: document.getElementById('t-whatsapp').value,
+                latitud: parseFloat(document.getElementById('t-lat').value),
+                longitud: parseFloat(document.getElementById('t-lng').value)
+            };
+            const { data: ex } = await _supabase.from('comercios').select('id').limit(1).maybeSingle();
+            if (ex) await _supabase.from('comercios').update(info).eq('id', ex.id);
+            else await _supabase.from('comercios').insert([info]);
+            alert("✅ ¡Datos del comercio actualizados!");
+            cargar();
         }
-    }
 
-    function registrarTienda() {
-        const nombre = document.getElementById('reg-nombre').value;
-        const pass = document.getElementById('reg-pass').value;
-        const rubro = document.getElementById('reg-rubro').value;
-        if(!nombre || !pass || !rubro) return alert("Completa todos los campos, incluido el rubro.");
-        db.comercios.push({ nombre: nombre, pass: pass, rubro: rubro, estado: 'pendiente', prods: [] });
-        salvar();
-        alert("Solicitud de registro enviada con éxito.");
-        cerrarModal('modal-registro');
-    }
+        async function publicar() {
+            const btn = document.getElementById('btn-p');
+            const pData = {
+                nombre_producto: document.getElementById('p-nombre').value,
+                precio: parseFloat(document.getElementById('p-precio').value),
+                imagen_url: document.getElementById('p-img').value
+            };
 
-    function buscar() {
-        const q = document.getElementById('main-search').value.toLowerCase();
-        const r = document.getElementById('search-rubro').value;
-        const res = document.getElementById('results-area');
-        res.innerHTML = "";
+            if(!pData.nombre_producto || isNaN(pData.precio)) return alert("⚠️ Completa nombre y precio.");
 
-        const filtrados = db.comercios.filter(c => {
-            const coincideNombre = c.nombre.toLowerCase().includes(q);
-            const coincideRubro = r === "" || c.rubro === r;
-            return c.estado === 'activo' && coincideNombre && coincideRubro;
-        });
+            btn.disabled = true; btn.innerText = "Publicando...";
 
-        filtrados.forEach(c => {
-            res.innerHTML += `
-                <div class="card">
-                    <h3>${c.nombre}</h3>
-                    <p>🏷️ Rubro: ${c.rubro}</p>
-                    <button class="btn btn-primary" style="width:100%; margin-top:10px;">Ver Tienda</button>
-                </div>`;
-        });
-    }
+            try {
+                let { data: local } = await _supabase.from('comercios').select('id').limit(1).maybeSingle();
+                if (!local) throw new Error("Primero guarda el perfil del local arriba.");
 
-    function accederTienda() {
-        const u = document.getElementById('log-nombre').value;
-        const p = document.getElementById('log-pass').value;
-        const c = db.comercios.find(x => x.nombre === u && x.pass === p);
-        if(!c) return alert("Usuario o clave incorrecta.");
-        if(c.estado !== 'activo') return alert("Tu cuenta aún no ha sido activada por administración.");
-        alert("¡Bienvenido " + c.nombre + "!");
-    }
+                const { error } = await _supabase.from('productos').insert([{ ...pData, tienda_id: local.id }]);
+                if (error) throw error;
 
-    function actualizarSelects() {
-        const optionsHtml = db.rubros.map(r => `<option value="${r}">${r}</option>`).join('');
-        // Actualiza el filtro de búsqueda
-        document.getElementById('search-rubro').innerHTML = '<option value="">Todos los rubros</option>' + optionsHtml;
-        // Actualiza el selector en el registro (Imagen 1 corregida)
-        document.getElementById('reg-rubro').innerHTML = '<option value="" disabled selected>Selecciona un rubro</option>' + optionsHtml;
-    }
+                alert("✅ ¡Producto publicado!");
+                document.getElementById('p-nombre').value = "";
+                document.getElementById('p-precio').value = "";
+                cargar();
+            } catch (e) {
+                alert("Error: " + e.message);
+            } finally {
+                btn.disabled = false; btn.innerText = "Publicar Ahora";
+            }
+        }
 
-    function abrirModal(id) { document.getElementById(id).style.display = 'flex'; }
-    function cerrarModal(id) { document.getElementById(id).style.display = 'none'; }
+        async function cargar() {
+            const { data } = await _supabase.from('productos').select('*, comercios(*)');
+            productos = data || [];
+            render();
+        }
 
-    // Ejecución inicial
-    actualizarSelects();
-    aplicarConfig();
-    buscar();
-</script>
+        function render(lista = productos) {
+            document.getElementById('lista-cliente').innerHTML = lista.map(p => `
+                <div class="bg-white rounded-[2rem] shadow-lg overflow-hidden flex flex-col hover:-translate-y-2 transition-all duration-300 border border-slate-100">
+                    <div class="relative">
+                        <img src="${p.imagen_url || 'https://via.placeholder.com/400'}" class="w-full h-52 object-cover bg-slate-100">
+                        ${p.comercios?.fuera_horario ? `
+                            <span class="absolute top-4 right-4 bg-red-500 text-white text-[9px] font-black px-2 py-1 rounded-lg shadow-lg animate-pulse uppercase">Urgencias 24h</span>
+                        ` : ''}
+                    </div>
+                    <div class="p-7 flex-grow">
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="text-[9px] font-black bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full uppercase tracking-tighter">${p.comercios?.rubro || 'Local'}</span>
+                        </div>
+                        <h3 class="font-black text-xl uppercase leading-tight mb-2 text-slate-800">${p.nombre_producto}</h3>
+                        <p class="text-emerald-600 font-black text-3xl mb-4">$${p.precio}</p>
+                        
+                        <div class="pt-4 border-t border-slate-50">
+                            <div class="flex items-center gap-2 mb-1">
+                                <img src="${p.comercios?.logo_url || 'https://cdn-icons-png.flaticon.com/512/123/123403.png'}" class="w-5 h-5 rounded-full object-cover">
+                                <p class="text-xs font-black text-slate-800 uppercase italic">${p.comercios?.nombre_comercio}</p>
+                            </div>
+                            <p class="text-[10px] text-slate-400 font-bold uppercase">📍 ${p.comercios?.direccion || 'Consulte dirección'}</p>
+                            <p class="text-[9px] text-indigo-500 font-bold uppercase mt-1">🕒 ${p.comercios?.horarios || 'Horario no especificado'}</p>
+                        </div>
+
+                        <a href="https://wa.me/${p.comercios?.whatsapp}?text=Hola! Consulto por ${p.nombre_producto}" target="_blank" 
+                           class="block mt-6 text-center bg-emerald-500 text-white py-4 rounded-2xl font-black text-xs shadow-lg uppercase hover:bg-emerald-600 transition">
+                           Consultar por WhatsApp
+                        </a>
+                    </div>
+                </div>
+            `).join('');
+
+            document.getElementById('lista-admin').innerHTML = productos.map(p => `
+                <div class="bg-white p-4 rounded-2xl flex justify-between items-center shadow-sm border border-slate-100">
+                    <span class="font-black text-[11px] uppercase text-slate-700">${p.nombre_producto}</span>
+                    <button onclick="eliminar('${p.id}')" class="text-red-500 font-black text-[10px] hover:bg-red-50 px-4 py-2 rounded-xl transition">BORRAR</button>
+                </div>
+            `).join('');
+        }
+
+        function filtrar() {
+            const t = document.getElementById('buscador').value.toLowerCase();
+            render(productos.filter(p => p.nombre_producto.toLowerCase().includes(t) || p.comercios?.nombre_comercio.toLowerCase().includes(t) || p.comercios?.rubro.toLowerCase().includes(t)));
+        }
+
+        async function eliminar(id) {
+            if(confirm("¿Eliminar este producto?")) { await _supabase.from('productos').delete().eq('id', id); cargar(); }
+        }
+
+        window.onload = () => verVista('cliente');
+    </script>
 </body>
 </html>
