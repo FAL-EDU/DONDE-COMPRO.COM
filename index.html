@@ -1,247 +1,34 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DÓNDE COMPRO - Rosario de la Frontera</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <style>
-        .vista { display: none; }
-        .vista.activa { display: block; }
-        #mapa-registro { height: 350px; width: 100%; border-radius: 1.5rem; z-index: 10; border: 2px solid #e2e8f0; }
-        .switch { position: relative; display: inline-block; width: 50px; height: 24px; }
-        .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px; }
-        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
-        input:checked + .slider { background-color: #10b981; }
-        input:checked + .slider:before { transform: translateX(26px); }
-    </style>
-</head>
-<body class="bg-slate-50 text-slate-900 font-sans">
-
-    <nav class="bg-indigo-700 text-white p-4 shadow-lg sticky top-0 z-[1001]">
-        <div class="container mx-auto flex justify-between items-center">
-            <h1 class="font-black text-xl cursor-pointer tracking-tighter" onclick="verVista('cliente')">📍 DÓNDE COMPRO</h1>
-            <div class="flex gap-2">
-                <button onclick="verVista('cliente')" class="px-4 py-1 bg-indigo-800 rounded-full text-sm font-bold transition">Inicio</button>
-                <button onclick="verVista('admin')" class="px-4 py-1 border border-indigo-300 rounded-full text-sm font-bold hover:bg-white hover:text-indigo-700 transition">Mi Panel</button>
-            </div>
+<div id="vista-superadmin" class="vista max-w-5xl mx-auto">
+    
+    <div class="bg-white p-6 rounded-[2rem] shadow-xl mb-8 border-l-8 border-indigo-500">
+        <h2 class="font-black text-xl mb-4 uppercase text-indigo-700">📦 Gestión de Rubros</h2>
+        <div class="flex gap-2 mb-4">
+            <input type="text" id="nuevo-rubro" placeholder="Nombre del nuevo rubro..." class="flex-grow p-3 bg-slate-50 border rounded-xl">
+            <button onclick="agregarRubro()" class="bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-indigo-700">Añadir</button>
         </div>
-    </nav>
+        <div id="lista-rubros" class="flex flex-wrap gap-2"></div>
+    </div>
 
-    <main class="container mx-auto p-4">
-        <div id="vista-cliente" class="vista activa">
-            <div class="max-w-2xl mx-auto mb-10 mt-6 text-center">
-                <h2 class="text-3xl font-black text-slate-800 mb-4 tracking-tight uppercase">Rosario de la Frontera</h2>
-                <input type="text" id="buscador" onkeyup="filtrar()" placeholder="Busca productos, farmacias o tiendas..." 
-                class="w-full px-8 py-5 rounded-[2rem] border-none shadow-2xl text-lg font-semibold focus:ring-4 focus:ring-indigo-200 outline-none">
-            </div>
-            <div id="lista-cliente" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8"></div>
+    <div class="bg-white p-6 rounded-[2rem] shadow-xl border-t-8 border-slate-800">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="font-black text-xl uppercase text-slate-800">🏪 Control de Tiendas</h2>
+            <button onclick="descargarRegistro()" class="bg-emerald-500 text-white px-4 py-2 rounded-lg text-xs font-bold shadow hover:bg-emerald-600">
+                📥 DESCARGAR EXCEL (CSV)
+            </button>
         </div>
-
-        <div id="vista-admin" class="vista max-w-2xl mx-auto">
-            <div class="bg-white p-8 rounded-[2.5rem] shadow-xl mb-8 border-t-8 border-emerald-500">
-                <h2 class="font-black text-2xl mb-2 text-emerald-700 uppercase">Configuración del Local</h2>
-                <p class="text-[10px] text-slate-400 mb-6 uppercase font-bold italic text-center">Ajusta el marcador en el mapa para tu ubicación exacta</p>
-                <div id="mapa-registro" class="mb-6"></div>
-                <div class="grid grid-cols-1 gap-4">
-                    <div class="grid grid-cols-2 gap-2">
-                        <input type="text" id="t-lat" placeholder="Latitud" readonly class="p-3 bg-slate-100 border rounded-xl text-xs font-mono text-center">
-                        <input type="text" id="t-lng" placeholder="Longitud" readonly class="p-3 bg-slate-100 border rounded-xl text-xs font-mono text-center">
-                    </div>
-                    <input type="text" id="t-nombre" placeholder="Nombre de la Tienda" class="p-4 bg-slate-50 border rounded-2xl font-bold text-lg focus:bg-white">
-                    <input type="text" id="t-rubro" placeholder="Rubro (Ej: Farmacia, Panadería)" class="p-3 bg-slate-50 border rounded-xl focus:bg-white">
-                    <input type="text" id="t-direccion" placeholder="Dirección (Ej: Calle Alvarado 123)" class="p-3 bg-slate-50 border rounded-xl focus:bg-white">
-                    <input type="text" id="t-horarios" placeholder="Horarios (Ej: Lun a Sáb 08:00 - 22:00)" class="p-3 bg-slate-50 border rounded-xl focus:bg-white">
-                    <div class="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border">
-                        <span class="font-bold text-slate-600 text-sm uppercase">¿Atiende urgencias fuera de horario?</span>
-                        <label class="switch">
-                            <input type="checkbox" id="t-fuera">
-                            <span class="slider"></span>
-                        </label>
-                    </div>
-                    <input type="text" id="t-logo" placeholder="URL del Logo o Foto del Local" class="p-3 bg-slate-50 border rounded-xl focus:bg-white">
-                    <input type="text" id="t-whatsapp" placeholder="WhatsApp (Ej: 5493876123456)" class="p-3 bg-slate-50 border rounded-xl font-bold text-emerald-600 focus:bg-white">
-                    <button onclick="guardarPerfil()" class="bg-emerald-600 text-white py-5 rounded-2xl font-black text-xl hover:bg-emerald-700 transition shadow-lg mt-4 uppercase">Actualizar Datos Local</button>
-                </div>
-            </div>
-
-            <div class="bg-white p-8 rounded-[2.5rem] shadow-xl mb-8 border-t-8 border-indigo-500">
-                <h2 class="font-black text-2xl mb-6 text-indigo-700 uppercase">Publicar Producto</h2>
-                <div class="grid gap-4">
-                    <input type="text" id="p-nombre" placeholder="Nombre del Producto" class="w-full p-4 bg-slate-50 border rounded-2xl font-bold focus:bg-white">
-                    <input type="number" id="p-precio" placeholder="Precio $" class="w-full p-4 bg-slate-50 border rounded-2xl font-bold text-emerald-600 focus:bg-white">
-                    <input type="text" id="p-img" placeholder="URL de la imagen del producto" class="w-full p-4 bg-slate-50 border rounded-2xl focus:bg-white">
-                    <button id="btn-p" onclick="publicar()" class="bg-indigo-600 text-white py-5 rounded-2xl font-black shadow-lg uppercase hover:bg-indigo-700 transition">Publicar Ahora</button>
-                </div>
-            </div>
-            <h3 class="font-bold text-slate-400 uppercase text-[10px] mb-4 px-4 tracking-widest">Productos Activos:</h3>
-            <div id="lista-admin" class="grid gap-3 mb-20"></div>
+        
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm">
+                <thead>
+                    <tr class="border-b text-slate-400 uppercase text-[10px]">
+                        <th class="p-3">Tienda / Inicio</th>
+                        <th class="p-3">Rubro</th>
+                        <th class="p-3">Estado</th>
+                        <th class="p-3 text-right">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-tiendas-body"></tbody>
+            </table>
         </div>
-    </main>
-
-    <script>
-        const S_URL = 'https://mefeupfmvhfnnmttpfgq.supabase.co';
-        const S_KEY = 'sb_publishable_fMwMKzGhNbj9RyVhPv33sA_rqDg30C7';
-        const _supabase = supabase.createClient(S_URL, S_KEY);
-
-        let productos = [];
-        let mapa, marcador;
-
-        function verVista(v) {
-            document.querySelectorAll('.vista').forEach(x => x.classList.remove('activa'));
-            document.getElementById('vista-' + v).classList.add('activa');
-            if(v === 'admin') setTimeout(initMapa, 200);
-            cargar();
-        }
-
-        function initMapa() {
-            if (mapa) return;
-            const centro = [-25.795, -64.966];
-            mapa = L.map('mapa-registro').setView(centro, 15);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapa);
-            marcador = L.marker(centro, {draggable: true}).addTo(mapa);
-            
-            marcador.on('dragend', () => {
-                const p = marcador.getLatLng();
-                document.getElementById('t-lat').value = p.lat.toFixed(6);
-                document.getElementById('t-lng').value = p.lng.toFixed(6);
-            });
-            cargarPerfilInputs();
-        }
-
-        async function cargarPerfilInputs() {
-            const { data } = await _supabase.from('comercios').select('*').limit(1).maybeSingle();
-            if(data) {
-                document.getElementById('t-nombre').value = data.nombre_comercio || "";
-                document.getElementById('t-rubro').value = data.rubro || "";
-                document.getElementById('t-direccion').value = data.direccion || "";
-                document.getElementById('t-horarios').value = data.horarios || "";
-                document.getElementById('t-fuera').checked = data.fuera_horario || false;
-                document.getElementById('t-logo').value = data.logo_url || "";
-                document.getElementById('t-whatsapp').value = data.whatsapp || "";
-                if(data.latitud) {
-                    document.getElementById('t-lat').value = data.latitud;
-                    document.getElementById('t-lng').value = data.longitud;
-                    marcador.setLatLng([data.latitud, data.longitud]);
-                    mapa.setView([data.latitud, data.longitud], 16);
-                }
-            }
-        }
-
-        async function guardarPerfil() {
-            const info = {
-                nombre_comercio: document.getElementById('t-nombre').value,
-                rubro: document.getElementById('t-rubro').value,
-                direccion: document.getElementById('t-direccion').value,
-                horarios: document.getElementById('t-horarios').value,
-                fuera_horario: document.getElementById('t-fuera').checked,
-                logo_url: document.getElementById('t-logo').value,
-                whatsapp: document.getElementById('t-whatsapp').value,
-                latitud: parseFloat(document.getElementById('t-lat').value) || 0,
-                longitud: parseFloat(document.getElementById('t-lng').value) || 0
-            };
-
-            const { data: ex } = await _supabase.from('comercios').select('id').limit(1).maybeSingle();
-            
-            let res;
-            if (ex) res = await _supabase.from('comercios').update(info).eq('id', ex.id);
-            else res = await _supabase.from('comercios').insert([info]);
-
-            if (res.error) {
-                console.error(res.error);
-                alert("❌ Error: " + res.error.message);
-            } else {
-                alert("✅ ¡Perfil del comercio actualizado en la base de datos!");
-                cargar();
-            }
-        }
-
-        async function publicar() {
-            const btn = document.getElementById('btn-p');
-            const pData = {
-                nombre_producto: document.getElementById('p-nombre').value,
-                precio: parseFloat(document.getElementById('p-precio').value),
-                imagen_url: document.getElementById('p-img').value
-            };
-
-            if(!pData.nombre_producto || isNaN(pData.precio)) return alert("⚠️ Completa nombre y precio.");
-            btn.disabled = true; btn.innerText = "Publicando...";
-
-            try {
-                let { data: local } = await _supabase.from('comercios').select('id').limit(1).maybeSingle();
-                if (!local) throw new Error("Primero guarda el perfil del local arriba.");
-
-                const { error } = await _supabase.from('productos').insert([{ ...pData, tienda_id: local.id }]);
-                if (error) throw error;
-
-                alert("✅ ¡Producto publicado!");
-                document.getElementById('p-nombre').value = "";
-                document.getElementById('p-precio').value = "";
-                cargar();
-            } catch (e) {
-                alert("❌ Error: " + e.message);
-            } finally {
-                btn.disabled = false; btn.innerText = "Publicar Ahora";
-            }
-        }
-
-        async function cargar() {
-            const { data } = await _supabase.from('productos').select('*, comercios(*)');
-            productos = data || [];
-            render();
-        }
-
-        function render(lista = productos) {
-            document.getElementById('lista-cliente').innerHTML = lista.map(p => `
-                <div class="bg-white rounded-[2rem] shadow-lg overflow-hidden flex flex-col hover:-translate-y-2 transition-all duration-300 border border-slate-100">
-                    <div class="relative">
-                        <img src="${p.imagen_url || 'https://via.placeholder.com/400'}" class="w-full h-52 object-cover bg-slate-100">
-                        ${p.comercios?.fuera_horario ? `
-                            <span class="absolute top-4 right-4 bg-red-500 text-white text-[9px] font-black px-2 py-1 rounded-lg shadow-lg animate-pulse uppercase">Urgencias 24h</span>
-                        ` : ''}
-                    </div>
-                    <div class="p-7 flex-grow">
-                        <span class="text-[9px] font-black bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full uppercase tracking-tighter">${p.comercios?.rubro || 'Tienda'}</span>
-                        <h3 class="font-black text-xl uppercase leading-tight mt-2 mb-2 text-slate-800">${p.nombre_producto}</h3>
-                        <p class="text-emerald-600 font-black text-3xl mb-4">$${p.precio}</p>
-                        <div class="pt-4 border-t border-slate-50">
-                            <div class="flex items-center gap-2 mb-1">
-                                <img src="${p.comercios?.logo_url || 'https://cdn-icons-png.flaticon.com/512/123/123403.png'}" class="w-5 h-5 rounded-full object-cover">
-                                <p class="text-xs font-black text-slate-800 uppercase italic">${p.comercios?.nombre_comercio}</p>
-                            </div>
-                            <p class="text-[10px] text-slate-400 font-bold uppercase">📍 ${p.comercios?.direccion || 'Rosario de la Frontera'}</p>
-                            <p class="text-[9px] text-indigo-500 font-bold uppercase mt-1">🕒 ${p.comercios?.horarios || 'Horario no definido'}</p>
-                        </div>
-                        <a href="https://wa.me/${p.comercios?.whatsapp}?text=Hola! Consulto por ${p.nombre_producto}" target="_blank" 
-                           class="block mt-6 text-center bg-emerald-500 text-white py-4 rounded-2xl font-black text-xs shadow-lg uppercase hover:bg-emerald-600 transition">
-                           Consultar por WhatsApp
-                        </a>
-                    </div>
-                </div>
-            `).join('');
-
-            document.getElementById('lista-admin').innerHTML = productos.map(p => `
-                <div class="bg-white p-4 rounded-2xl flex justify-between items-center shadow-sm border border-slate-100">
-                    <span class="font-black text-[11px] uppercase text-slate-700">${p.nombre_producto}</span>
-                    <button onclick="eliminar('${p.id}')" class="text-red-500 font-black text-[10px] hover:bg-red-50 px-4 py-2 rounded-xl transition">BORRAR</button>
-                </div>
-            `).join('');
-        }
-
-        function filtrar() {
-            const t = document.getElementById('buscador').value.toLowerCase();
-            render(productos.filter(p => p.nombre_producto.toLowerCase().includes(t) || p.comercios?.nombre_comercio?.toLowerCase().includes(t)));
-        }
-
-        async function eliminar(id) {
-            if(confirm("¿Eliminar este producto?")) { await _supabase.from('productos').delete().eq('id', id); cargar(); }
-        }
-
-        window.onload = () => verVista('cliente');
-    </script>
-</body>
-</html>
+    </div>
+</div>
