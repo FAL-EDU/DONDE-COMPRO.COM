@@ -12,7 +12,6 @@
         .vista { display: none; }
         .vista.activa { display: block; }
         #mapa-registro { height: 350px; width: 100%; border-radius: 1.5rem; z-index: 10; border: 2px solid #e2e8f0; }
-        /* Toggle Switch Style */
         .switch { position: relative; display: inline-block; width: 50px; height: 24px; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px; }
@@ -34,8 +33,6 @@
     </nav>
 
     <main class="container mx-auto p-4">
-        
-        <!-- VISTA CLIENTE -->
         <div id="vista-cliente" class="vista activa">
             <div class="max-w-2xl mx-auto mb-10 mt-6 text-center">
                 <h2 class="text-3xl font-black text-slate-800 mb-4 tracking-tight uppercase">Rosario de la Frontera</h2>
@@ -45,15 +42,11 @@
             <div id="lista-cliente" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8"></div>
         </div>
 
-        <!-- VISTA ADMIN -->
         <div id="vista-admin" class="vista max-w-2xl mx-auto">
-            
             <div class="bg-white p-8 rounded-[2.5rem] shadow-xl mb-8 border-t-8 border-emerald-500">
                 <h2 class="font-black text-2xl mb-2 text-emerald-700 uppercase">Configuración del Local</h2>
                 <p class="text-[10px] text-slate-400 mb-6 uppercase font-bold italic text-center">Ajusta el marcador en el mapa para tu ubicación exacta</p>
-                
                 <div id="mapa-registro" class="mb-6"></div>
-                
                 <div class="grid grid-cols-1 gap-4">
                     <div class="grid grid-cols-2 gap-2">
                         <input type="text" id="t-lat" placeholder="Latitud" readonly class="p-3 bg-slate-100 border rounded-xl text-xs font-mono text-center">
@@ -63,18 +56,15 @@
                     <input type="text" id="t-rubro" placeholder="Rubro (Ej: Farmacia, Panadería)" class="p-3 bg-slate-50 border rounded-xl focus:bg-white">
                     <input type="text" id="t-direccion" placeholder="Dirección (Ej: Calle Alvarado 123)" class="p-3 bg-slate-50 border rounded-xl focus:bg-white">
                     <input type="text" id="t-horarios" placeholder="Horarios (Ej: Lun a Sáb 08:00 - 22:00)" class="p-3 bg-slate-50 border rounded-xl focus:bg-white">
-                    
                     <div class="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border">
-                        <span class="font-bold text-slate-600 text-sm">¿ATIENDE FUERA DE HORARIO?</span>
+                        <span class="font-bold text-slate-600 text-sm uppercase">¿Atiende urgencias fuera de horario?</span>
                         <label class="switch">
                             <input type="checkbox" id="t-fuera">
                             <span class="slider"></span>
                         </label>
                     </div>
-
                     <input type="text" id="t-logo" placeholder="URL del Logo o Foto del Local" class="p-3 bg-slate-50 border rounded-xl focus:bg-white">
                     <input type="text" id="t-whatsapp" placeholder="WhatsApp (Ej: 5493876123456)" class="p-3 bg-slate-50 border rounded-xl font-bold text-emerald-600 focus:bg-white">
-                    
                     <button onclick="guardarPerfil()" class="bg-emerald-600 text-white py-5 rounded-2xl font-black text-xl hover:bg-emerald-700 transition shadow-lg mt-4 uppercase">Actualizar Datos Local</button>
                 </div>
             </div>
@@ -88,11 +78,10 @@
                     <button id="btn-p" onclick="publicar()" class="bg-indigo-600 text-white py-5 rounded-2xl font-black shadow-lg uppercase hover:bg-indigo-700 transition">Publicar Ahora</button>
                 </div>
             </div>
-
             <h3 class="font-bold text-slate-400 uppercase text-[10px] mb-4 px-4 tracking-widest">Productos Activos:</h3>
             <div id="lista-admin" class="grid gap-3 mb-20"></div>
         </div>
-    </nav>
+    </main>
 
     <script>
         const S_URL = 'https://mefeupfmvhfnnmttpfgq.supabase.co';
@@ -152,14 +141,23 @@
                 fuera_horario: document.getElementById('t-fuera').checked,
                 logo_url: document.getElementById('t-logo').value,
                 whatsapp: document.getElementById('t-whatsapp').value,
-                latitud: parseFloat(document.getElementById('t-lat').value),
-                longitud: parseFloat(document.getElementById('t-lng').value)
+                latitud: parseFloat(document.getElementById('t-lat').value) || 0,
+                longitud: parseFloat(document.getElementById('t-lng').value) || 0
             };
+
             const { data: ex } = await _supabase.from('comercios').select('id').limit(1).maybeSingle();
-            if (ex) await _supabase.from('comercios').update(info).eq('id', ex.id);
-            else await _supabase.from('comercios').insert([info]);
-            alert("✅ ¡Datos del comercio actualizados!");
-            cargar();
+            
+            let res;
+            if (ex) res = await _supabase.from('comercios').update(info).eq('id', ex.id);
+            else res = await _supabase.from('comercios').insert([info]);
+
+            if (res.error) {
+                console.error(res.error);
+                alert("❌ Error: " + res.error.message);
+            } else {
+                alert("✅ ¡Perfil del comercio actualizado en la base de datos!");
+                cargar();
+            }
         }
 
         async function publicar() {
@@ -171,7 +169,6 @@
             };
 
             if(!pData.nombre_producto || isNaN(pData.precio)) return alert("⚠️ Completa nombre y precio.");
-
             btn.disabled = true; btn.innerText = "Publicando...";
 
             try {
@@ -186,7 +183,7 @@
                 document.getElementById('p-precio').value = "";
                 cargar();
             } catch (e) {
-                alert("Error: " + e.message);
+                alert("❌ Error: " + e.message);
             } finally {
                 btn.disabled = false; btn.innerText = "Publicar Ahora";
             }
@@ -208,21 +205,17 @@
                         ` : ''}
                     </div>
                     <div class="p-7 flex-grow">
-                        <div class="flex justify-between items-start mb-2">
-                            <span class="text-[9px] font-black bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full uppercase tracking-tighter">${p.comercios?.rubro || 'Local'}</span>
-                        </div>
-                        <h3 class="font-black text-xl uppercase leading-tight mb-2 text-slate-800">${p.nombre_producto}</h3>
+                        <span class="text-[9px] font-black bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full uppercase tracking-tighter">${p.comercios?.rubro || 'Tienda'}</span>
+                        <h3 class="font-black text-xl uppercase leading-tight mt-2 mb-2 text-slate-800">${p.nombre_producto}</h3>
                         <p class="text-emerald-600 font-black text-3xl mb-4">$${p.precio}</p>
-                        
                         <div class="pt-4 border-t border-slate-50">
                             <div class="flex items-center gap-2 mb-1">
                                 <img src="${p.comercios?.logo_url || 'https://cdn-icons-png.flaticon.com/512/123/123403.png'}" class="w-5 h-5 rounded-full object-cover">
                                 <p class="text-xs font-black text-slate-800 uppercase italic">${p.comercios?.nombre_comercio}</p>
                             </div>
-                            <p class="text-[10px] text-slate-400 font-bold uppercase">📍 ${p.comercios?.direccion || 'Consulte dirección'}</p>
-                            <p class="text-[9px] text-indigo-500 font-bold uppercase mt-1">🕒 ${p.comercios?.horarios || 'Horario no especificado'}</p>
+                            <p class="text-[10px] text-slate-400 font-bold uppercase">📍 ${p.comercios?.direccion || 'Rosario de la Frontera'}</p>
+                            <p class="text-[9px] text-indigo-500 font-bold uppercase mt-1">🕒 ${p.comercios?.horarios || 'Horario no definido'}</p>
                         </div>
-
                         <a href="https://wa.me/${p.comercios?.whatsapp}?text=Hola! Consulto por ${p.nombre_producto}" target="_blank" 
                            class="block mt-6 text-center bg-emerald-500 text-white py-4 rounded-2xl font-black text-xs shadow-lg uppercase hover:bg-emerald-600 transition">
                            Consultar por WhatsApp
@@ -241,7 +234,7 @@
 
         function filtrar() {
             const t = document.getElementById('buscador').value.toLowerCase();
-            render(productos.filter(p => p.nombre_producto.toLowerCase().includes(t) || p.comercios?.nombre_comercio.toLowerCase().includes(t) || p.comercios?.rubro.toLowerCase().includes(t)));
+            render(productos.filter(p => p.nombre_producto.toLowerCase().includes(t) || p.comercios?.nombre_comercio?.toLowerCase().includes(t)));
         }
 
         async function eliminar(id) {
