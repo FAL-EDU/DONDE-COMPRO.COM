@@ -9,96 +9,109 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
-        .vista { display: none; }
-        .vista.activa { display: block; }
-        #mapa-registro { height: 350px; width: 100%; border-radius: 1.5rem; z-index: 10; border: 2px solid #e2e8f0; }
-        .switch { position: relative; display: inline-block; width: 50px; height: 24px; }
+        .vista { display: none !important; }
+        .vista.activa { display: block !important; }
+        #mapa-registro { height: 300px; width: 100%; border-radius: 1.5rem; z-index: 10; }
+        /* Toggle Switch */
+        .switch { position: relative; display: inline-block; width: 44px; height: 22px; }
         .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px; }
-        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 22px; }
+        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
         input:checked + .slider { background-color: #10b981; }
-        input:checked + .slider:before { transform: translateX(26px); }
+        input:checked + .slider:before { transform: translateX(22px); }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-900 font-sans">
 
-    <nav class="bg-indigo-700 text-white p-4 shadow-lg sticky top-0 z-[1001]">
+    <div id="vista-login" class="vista activa fixed inset-0 bg-indigo-900 z-[2000] flex items-center justify-center p-4">
+        <div class="bg-white p-8 rounded-[2.5rem] shadow-2xl w-full max-w-md text-center">
+            <h1 class="text-4xl mb-2">📍</h1>
+            <h2 class="font-black text-2xl mb-6 uppercase tracking-tighter">Acceso Privado</h2>
+            <div class="space-y-4">
+                <input type="text" id="user" placeholder="Usuario" class="w-full p-4 bg-slate-100 border-none rounded-2xl font-bold outline-none focus:ring-2 focus:ring-indigo-500">
+                <input type="password" id="pass" placeholder="Contraseña" class="w-full p-4 bg-slate-100 border-none rounded-2xl font-bold outline-none focus:ring-2 focus:ring-indigo-500">
+                <button onclick="intentarLogin()" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black shadow-lg hover:bg-indigo-700 transition uppercase">Entrar al Sistema</button>
+            </div>
+            <p id="login-error" class="text-red-500 text-xs mt-4 font-bold hidden">Credenciales incorrectas</p>
+        </div>
+    </div>
+
+    <nav id="navbar" class="hidden bg-indigo-700 text-white p-4 shadow-lg sticky top-0 z-[1001]">
         <div class="container mx-auto flex justify-between items-center">
-            <h1 class="font-black text-xl cursor-pointer tracking-tighter" onclick="verVista('cliente')">📍 DÓNDE COMPRO</h1>
+            <h1 class="font-black text-xl cursor-pointer tracking-tighter" onclick="verVista('cliente')">DÓNDE COMPRO</h1>
             <div class="flex gap-2">
-                <button onclick="verVista('cliente')" class="px-3 py-1 bg-indigo-800 rounded-full text-xs font-bold transition">Inicio</button>
-                <button onclick="verVista('admin')" class="px-3 py-1 border border-indigo-300 rounded-full text-xs font-bold hover:bg-white hover:text-indigo-700 transition">Mi Local</button>
-                <button onclick="verVista('superadmin')" class="px-3 py-1 bg-slate-900 rounded-full text-xs font-bold transition text-amber-400">ADMIN</button>
+                <button onclick="verVista('cliente')" class="px-3 py-1 bg-indigo-800 rounded-full text-[10px] font-bold">INICIO</button>
+                <button onclick="verVista('admin')" class="px-3 py-1 border border-indigo-300 rounded-full text-[10px] font-bold">MI LOCAL</button>
+                <button onclick="verVista('superadmin')" class="px-3 py-1 bg-slate-900 rounded-full text-[10px] font-bold text-amber-400">ADMIN</button>
+                <button onclick="logout()" class="px-3 py-1 bg-red-500 rounded-full text-[10px] font-bold">SALIR</button>
             </div>
         </div>
     </nav>
 
-    <main class="container mx-auto p-4">
+    <main id="contenido-principal" class="hidden container mx-auto p-4">
         
-        <div id="vista-cliente" class="vista activa">
+        <div id="vista-cliente" class="vista">
             <div class="max-w-2xl mx-auto mb-10 mt-6 text-center">
-                <h2 class="text-3xl font-black text-slate-800 mb-4 tracking-tight uppercase">Rosario de la Frontera</h2>
-                <input type="text" id="buscador" onkeyup="filtrar()" placeholder="Busca productos, farmacias o tiendas..." 
-                class="w-full px-8 py-5 rounded-[2rem] border-none shadow-2xl text-lg font-semibold focus:ring-4 focus:ring-indigo-200 outline-none">
+                <h2 class="text-2xl font-black text-slate-800 mb-4 tracking-tight uppercase">Buscador de Tiendas</h2>
+                <input type="text" id="buscador" onkeyup="filtrar()" placeholder="¿Qué estás buscando hoy?" 
+                class="w-full px-8 py-5 rounded-[2rem] border-none shadow-xl text-lg font-semibold outline-none focus:ring-4 focus:ring-indigo-200">
             </div>
-            <div id="lista-cliente" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8"></div>
+            <div id="lista-cliente" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"></div>
         </div>
 
         <div id="vista-admin" class="vista max-w-2xl mx-auto">
-            <div class="bg-white p-8 rounded-[2.5rem] shadow-xl mb-8 border-t-8 border-emerald-500">
-                <h2 class="font-black text-2xl mb-2 text-emerald-700 uppercase">Configuración del Local</h2>
-                <div id="mapa-registro" class="mb-6"></div>
-                <div class="grid grid-cols-1 gap-4">
-                    <input type="text" id="t-nombre" placeholder="Nombre de la Tienda" class="p-4 bg-slate-50 border rounded-2xl font-bold">
-                    <select id="t-rubro" class="p-4 bg-slate-50 border rounded-2xl font-bold">
-                        <option value="">Seleccionar Rubro...</option>
-                    </select>
-                    <input type="text" id="t-direccion" placeholder="Dirección" class="p-3 bg-slate-50 border rounded-xl">
-                    <input type="text" id="t-horarios" placeholder="Horarios (Ej: 08:00 - 12:00)" class="p-3 bg-slate-50 border rounded-xl">
-                    <div class="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border">
-                        <span class="font-bold text-slate-600 text-sm uppercase">¿Urgencias 24h?</span>
+            <div class="bg-white p-6 rounded-[2rem] shadow-xl mb-6 border-t-8 border-emerald-500">
+                <h2 class="font-black text-xl mb-4 text-emerald-700 uppercase">Perfil del Comercio</h2>
+                <div id="mapa-registro" class="mb-4"></div>
+                <div class="grid grid-cols-1 gap-3">
+                    <input type="text" id="t-nombre" placeholder="Nombre Fantasía" class="p-3 bg-slate-50 border rounded-xl font-bold">
+                    <select id="t-rubro" class="p-3 bg-slate-50 border rounded-xl font-bold"></select>
+                    <input type="text" id="t-direccion" placeholder="Dirección Exacta" class="p-3 bg-slate-50 border rounded-xl">
+                    <input type="text" id="t-whatsapp" placeholder="WhatsApp (Sin el +)" class="p-3 bg-slate-50 border rounded-xl font-bold text-emerald-600">
+                    <div class="flex items-center justify-between p-3 bg-slate-50 rounded-xl border">
+                        <span class="font-bold text-slate-600 text-xs uppercase">Atención 24hs / Urgencias</span>
                         <label class="switch"><input type="checkbox" id="t-fuera"><span class="slider"></span></label>
                     </div>
-                    <input type="text" id="t-logo" placeholder="URL del Logo" class="p-3 bg-slate-50 border rounded-xl">
-                    <input type="text" id="t-whatsapp" placeholder="WhatsApp (Ej: 5493876...)" class="p-3 bg-slate-50 border rounded-xl font-bold text-emerald-600">
                     <input type="hidden" id="t-lat"><input type="hidden" id="t-lng">
-                    <button onclick="guardarPerfil()" class="bg-emerald-600 text-white py-5 rounded-2xl font-black text-xl shadow-lg uppercase">Enviar Datos Local</button>
+                    <button onclick="guardarPerfil()" class="bg-emerald-600 text-white py-4 rounded-xl font-black shadow-lg uppercase">Actualizar Datos</button>
                 </div>
             </div>
             
             <div id="seccion-productos" class="hidden">
-                <div class="bg-white p-8 rounded-[2.5rem] shadow-xl mb-8 border-t-8 border-indigo-500">
-                    <h2 class="font-black text-2xl mb-6 text-indigo-700 uppercase">Publicar Producto</h2>
-                    <div class="grid gap-4">
-                        <input type="text" id="p-nombre" placeholder="Nombre del Producto" class="w-full p-4 bg-slate-50 border rounded-2xl font-bold">
-                        <input type="number" id="p-precio" placeholder="Precio $" class="w-full p-4 bg-slate-50 border rounded-2xl font-bold text-emerald-600">
-                        <input type="text" id="p-img" placeholder="URL Imagen" class="w-full p-4 bg-slate-50 border rounded-2xl">
-                        <button onclick="publicar()" class="bg-indigo-600 text-white py-5 rounded-2xl font-black shadow-lg uppercase">Publicar</button>
+                <div class="bg-white p-6 rounded-[2rem] shadow-xl mb-6 border-t-8 border-indigo-500">
+                    <h2 class="font-black text-xl mb-4 text-indigo-700 uppercase">Nuevo Producto</h2>
+                    <div class="grid gap-3">
+                        <input type="text" id="p-nombre" placeholder="Nombre" class="w-full p-3 bg-slate-50 border rounded-xl font-bold">
+                        <input type="number" id="p-precio" placeholder="Precio $" class="w-full p-3 bg-slate-50 border rounded-xl font-bold">
+                        <input type="text" id="p-img" placeholder="URL Imagen" class="w-full p-3 bg-slate-50 border rounded-xl text-xs">
+                        <button onclick="publicar()" class="bg-indigo-600 text-white py-4 rounded-xl font-black uppercase">Publicar</button>
                     </div>
                 </div>
-                <div id="lista-admin" class="grid gap-3 mb-20"></div>
+                <div id="lista-admin" class="grid gap-2 mb-10"></div>
             </div>
         </div>
 
         <div id="vista-superadmin" class="vista max-w-5xl mx-auto">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <div class="md:col-span-1 bg-white p-6 rounded-[2rem] shadow-xl border-l-8 border-indigo-500">
-                    <h2 class="font-black text-lg mb-4 uppercase text-indigo-700">📦 Rubros</h2>
-                    <div class="flex gap-2 mb-4">
-                        <input type="text" id="nuevo-rubro" placeholder="Nuevo..." class="flex-grow p-2 text-sm border rounded-xl">
-                        <button onclick="agregarRubro()" class="bg-indigo-600 text-white px-4 rounded-xl font-bold">Add</button>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-white p-6 rounded-[2rem] shadow-xl border-l-8 border-indigo-500">
+                    <h2 class="font-black text-sm mb-4 uppercase text-indigo-700">📦 Rubros</h2>
+                    <div class="flex gap-1 mb-4">
+                        <input type="text" id="nuevo-rubro" class="flex-grow p-2 text-xs border rounded-lg">
+                        <button onclick="agregarRubro()" class="bg-indigo-600 text-white px-3 rounded-lg font-bold">+</button>
                     </div>
-                    <div id="lista-rubros" class="flex flex-wrap gap-2"></div>
+                    <div id="lista-rubros" class="flex flex-wrap gap-1"></div>
                 </div>
 
                 <div class="md:col-span-2 bg-white p-6 rounded-[2rem] shadow-xl border-t-8 border-slate-800">
-                    <div class="flex justify-between items-center mb-6">
-                        <h2 class="font-black text-lg uppercase">🏪 Tiendas</h2>
-                        <button onclick="descargarRegistro()" class="bg-emerald-500 text-white px-3 py-1 rounded-lg text-[10px] font-black tracking-widest">EXCEL</button>
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="font-black text-sm uppercase">🏪 Tiendas Registradas</h2>
+                        <button onclick="descargarRegistro()" class="bg-emerald-500 text-white px-3 py-1 rounded text-[10px] font-bold">BAJAR CSV</button>
                     </div>
-                    <div class="overflow-x-auto text-[11px]">
-                        <table class="w-full text-left">
-                            <thead><tr class="border-b text-slate-400 uppercase"><th class="p-2">Tienda</th><th class="p-2">Estado</th><th class="p-2 text-right">Acción</th></tr></thead>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-[10px] text-left">
+                            <thead class="border-b text-slate-400 uppercase">
+                                <tr><th class="p-2">Comercio</th><th class="p-2">Estado</th><th class="p-2 text-right">Acción</th></tr>
+                            </thead>
                             <tbody id="tabla-tiendas-body"></tbody>
                         </table>
                     </div>
@@ -115,35 +128,37 @@
         let productos = [];
         let mapa, marcador;
 
-        // --- FUNCIONES DE CARGA INICIAL ---
-        async function cargarRubrosSelect() {
-            const { data } = await _supabase.from('rubros').select('*').order('nombre');
-            const select = document.getElementById('t-rubro');
-            if(select && data) {
-                select.innerHTML = '<option value="">Seleccionar Rubro...</option>' + 
-                    data.map(r => `<option value="${r.nombre}">${r.nombre}</option>`).join('');
+        // --- SISTEMA DE LOGIN ---
+        function intentarLogin() {
+            const u = document.getElementById('user').value;
+            const p = document.getElementById('pass').value;
+            const err = document.getElementById('login-error');
+
+            if(u === 'admin' && p === '123 admin') {
+                document.getElementById('vista-login').classList.remove('activa');
+                document.getElementById('navbar').classList.remove('hidden');
+                document.getElementById('contenido-principal').classList.remove('hidden');
+                verVista('cliente');
+            } else {
+                err.classList.remove('hidden');
             }
         }
 
-        async function cargarRubros() {
-            const { data } = await _supabase.from('rubros').select('*').order('nombre');
-            const lista = document.getElementById('lista-rubros');
-            if(lista && data) {
-                lista.innerHTML = data.map(r => `
-                    <span class="bg-slate-100 text-slate-700 px-3 py-1 rounded-full text-[10px] font-bold flex items-center gap-2">
-                        ${r.nombre} <button onclick="eliminarRubro('${r.id}')" class="text-red-400">✕</button>
-                    </span>
-                `).join('');
-            }
+        function logout() {
+            location.reload();
         }
 
         // --- NAVEGACIÓN ---
         function verVista(v) {
-            document.querySelectorAll('.vista').forEach(x => x.classList.remove('activa'));
-            document.getElementById('vista-' + v).classList.add('activa');
+            // Ocultar todas las vistas primero
+            document.querySelectorAll('.vista').forEach(el => el.classList.remove('activa'));
             
+            // Activar la seleccionada
+            const destino = document.getElementById('vista-' + v);
+            if(destino) destino.classList.add('activa');
+
             if(v === 'admin') {
-                setTimeout(initMapa, 200);
+                setTimeout(initMapa, 300);
                 cargarRubrosSelect();
                 cargarPerfilInputs();
             }
@@ -159,38 +174,60 @@
         // --- MAPA ---
         function initMapa() {
             if (mapa) return;
-            const centro = [-25.795, -64.966];
-            mapa = L.map('mapa-registro').setView(centro, 15);
+            mapa = L.map('mapa-registro').setView([-25.795, -64.966], 15);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapa);
-            marcador = L.marker(centro, {draggable: true}).addTo(mapa);
+            marcador = L.marker([-25.795, -64.966], {draggable: true}).addTo(mapa);
             marcador.on('dragend', () => {
-                const p = marcador.getLatLng();
-                document.getElementById('t-lat').value = p.lat;
-                document.getElementById('t-lng').value = p.lng;
+                const pos = marcador.getLatLng();
+                document.getElementById('t-lat').value = pos.lat;
+                document.getElementById('t-lng').value = pos.lng;
             });
         }
 
-        // --- SUPER-ADMIN LOGIC ---
-        async function agregarRubro() {
-            const n = document.getElementById('nuevo-rubro').value;
-            if(n) { 
-                await _supabase.from('rubros').insert([{ nombre: n }]); 
-                document.getElementById('nuevo-rubro').value = '';
-                cargarRubros(); 
+        // --- LÓGICA SUPER ADMIN ---
+        async function cargarRubros() {
+            const { data } = await _supabase.from('rubros').select('*').order('nombre');
+            const lista = document.getElementById('lista-rubros');
+            if(lista && data) {
+                lista.innerHTML = data.map(r => `
+                    <span class="bg-slate-100 text-slate-700 px-2 py-1 rounded-lg text-[9px] font-bold flex items-center gap-1">
+                        ${r.nombre} <button onclick="eliminarRubro('${r.id}')" class="text-red-400 font-bold">✕</button>
+                    </span>
+                `).join('');
             }
         }
 
+        async function cargarRubrosSelect() {
+            const { data } = await _supabase.from('rubros').select('*').order('nombre');
+            const select = document.getElementById('t-rubro');
+            if(select && data) {
+                select.innerHTML = '<option value="">Elegir Rubro...</option>' + 
+                    data.map(r => `<option value="${r.nombre}">${r.nombre}</option>`).join('');
+            }
+        }
+
+        async function agregarRubro() {
+            const n = document.getElementById('nuevo-rubro').value;
+            if(!n) return;
+            await _supabase.from('rubros').insert([{ nombre: n }]);
+            document.getElementById('nuevo-rubro').value = '';
+            cargarRubros();
+        }
+
         async function eliminarRubro(id) {
-            if(confirm("¿Eliminar rubro?")) { await _supabase.from('rubros').delete().eq('id', id); cargarRubros(); }
+            if(confirm("¿Eliminar rubro?")) {
+                await _supabase.from('rubros').delete().eq('id', id);
+                cargarRubros();
+            }
         }
 
         async function cargarTiendasAdmin() {
-            const { data } = await _supabase.from('comercios').select('*').order('creado_at', { ascending: false });
+            const { data } = await _supabase.from('comercios').select('*').order('creado_at', {ascending:false});
             const body = document.getElementById('tabla-tiendas-body');
             if(body && data) {
                 body.innerHTML = data.map(t => `
                     <tr class="border-b">
-                        <td class="p-2"><b>${t.nombre_comercio}</b><br><span class="text-slate-400">${new Date(t.creado_at).toLocaleDateString()}</span></td>
+                        <td class="p-2 font-bold">${t.nombre_comercio}</td>
                         <td class="p-2"><span class="px-2 py-0.5 rounded-full ${t.estado==='activo'?'bg-emerald-100 text-emerald-600':'bg-amber-100 text-amber-600'}">${t.estado || 'pendiente'}</span></td>
                         <td class="p-2 text-right flex justify-end gap-1">
                             <button onclick="cambiarEstado('${t.id}', 'activo')" class="bg-emerald-50 text-emerald-600 p-1 rounded">✅</button>
@@ -208,42 +245,39 @@
         }
 
         async function eliminarTienda(id) {
-            if(confirm("¿Eliminar tienda y sus productos permanentemente?")) { 
-                await _supabase.from('comercios').delete().eq('id', id); 
-                cargarTiendasAdmin(); 
+            if(confirm("¿Eliminar para siempre?")) {
+                await _supabase.from('comercios').delete().eq('id', id);
+                cargarTiendasAdmin();
             }
         }
 
         async function descargarRegistro() {
             const { data } = await _supabase.from('comercios').select('*');
-            let csv = "Nombre;Rubro;Estado;Fecha\n";
-            data.forEach(t => csv += `${t.nombre_comercio};${t.rubro};${t.estado};${t.creado_at}\n`);
+            let csv = "Nombre;Rubro;Estado\n";
+            data.forEach(t => csv += `${t.nombre_comercio};${t.rubro};${t.estado}\n`);
             const blob = new Blob([csv], { type: 'text/csv' });
             const a = document.createElement("a");
             a.href = URL.createObjectURL(blob);
-            a.download = "registro_comercios.csv";
+            a.download = "comercios_registrados.csv";
             a.click();
         }
 
-        // --- COMERCIANTE LOGIC ---
+        // --- LÓGICA COMERCIANTE ---
         async function guardarPerfil() {
             const info = {
                 nombre_comercio: document.getElementById('t-nombre').value,
                 rubro: document.getElementById('t-rubro').value,
                 direccion: document.getElementById('t-direccion').value,
-                horarios: document.getElementById('t-horarios').value,
-                fuera_horario: document.getElementById('t-fuera').checked,
-                logo_url: document.getElementById('t-logo').value,
                 whatsapp: document.getElementById('t-whatsapp').value,
+                fuera_horario: document.getElementById('t-fuera').checked,
                 latitud: parseFloat(document.getElementById('t-lat').value) || -25.795,
                 longitud: parseFloat(document.getElementById('t-lng').value) || -64.966
             };
             const { data: ex } = await _supabase.from('comercios').select('id').limit(1).maybeSingle();
-            let res;
-            if (ex) res = await _supabase.from('comercios').update(info).eq('id', ex.id);
-            else res = await _supabase.from('comercios').insert([info]);
+            if (ex) await _supabase.from('comercios').update(info).eq('id', ex.id);
+            else await _supabase.from('comercios').insert([info]);
             
-            if(!res.error) alert("¡Datos guardados! Espera aprobación.");
+            alert("Perfil actualizado correctamente.");
             cargarPerfilInputs();
         }
 
@@ -253,6 +287,7 @@
                 document.getElementById('t-nombre').value = data.nombre_comercio || '';
                 document.getElementById('t-direccion').value = data.direccion || '';
                 document.getElementById('t-whatsapp').value = data.whatsapp || '';
+                document.getElementById('t-fuera').checked = data.fuera_horario || false;
                 document.getElementById('seccion-productos').classList.remove('hidden');
                 cargarProductosAdmin(data.id);
             }
@@ -260,46 +295,42 @@
 
         async function publicar() {
             const { data: loc } = await _supabase.from('comercios').select('id').limit(1).maybeSingle();
-            if(!loc) return alert("Primero guarda el perfil.");
-            const p = {
+            if(!loc) return;
+            const prod = {
                 nombre_producto: document.getElementById('p-nombre').value,
                 precio: parseFloat(document.getElementById('p-precio').value),
-                imagen_url: document.getElementById('p-img').value,
+                imagen_url: document.getElementById('p-img').value || 'https://via.placeholder.com/400',
                 tienda_id: loc.id
             };
-            const { error } = await _supabase.from('productos').insert([p]);
-            if(!error) { 
-                alert("¡Producto publicado!"); 
-                document.getElementById('p-nombre').value = '';
-                document.getElementById('p-precio').value = '';
-                cargarProductosAdmin(loc.id); 
-            }
+            await _supabase.from('productos').insert([prod]);
+            document.getElementById('p-nombre').value = '';
+            document.getElementById('p-precio').value = '';
+            cargarProductosAdmin(loc.id);
         }
 
-        async function cargarProductosAdmin(tiendaId) {
-            const { data } = await _supabase.from('productos').select('*').eq('tienda_id', tiendaId);
+        async function cargarProductosAdmin(id) {
+            const { data } = await _supabase.from('productos').select('*').eq('tienda_id', id);
             const lista = document.getElementById('lista-admin');
             if(lista && data) {
                 lista.innerHTML = data.map(p => `
-                    <div class="bg-white p-3 rounded-xl flex justify-between items-center shadow-sm border">
-                        <span class="font-bold text-xs uppercase">${p.nombre_producto}</span>
-                        <button onclick="eliminarProd('${p.id}', '${tiendaId}')" class="text-red-500 font-black text-xs">BORRAR</button>
+                    <div class="bg-white p-3 rounded-xl flex justify-between items-center shadow-sm border border-slate-100">
+                        <span class="font-bold text-[10px] uppercase">${p.nombre_producto}</span>
+                        <button onclick="borrarProducto('${p.id}', '${id}')" class="text-red-500 font-bold text-[9px]">ELIMINAR</button>
                     </div>
                 `).join('');
             }
         }
 
-        async function eliminarProd(id, tiendaId) {
-            if(confirm("¿Eliminar producto?")) { 
-                await _supabase.from('productos').delete().eq('id', id); 
-                cargarProductosAdmin(tiendaId); 
+        async function borrarProducto(id, tId) {
+            if(confirm("¿Borrar producto?")) {
+                await _supabase.from('productos').delete().eq('id', id);
+                cargarProductosAdmin(tId);
             }
         }
 
-        // --- CLIENTE RENDER ---
+        // --- LÓGICA CLIENTE ---
         async function cargarProductosCliente() {
             const { data } = await _supabase.from('productos').select('*, comercios(*)');
-            // Filtramos solo los que tienen comercio ACTIVO
             productos = (data || []).filter(p => p.comercios && p.comercios.estado === 'activo');
             renderCliente();
         }
@@ -308,14 +339,18 @@
             const cont = document.getElementById('lista-cliente');
             if(!cont) return;
             cont.innerHTML = lista.map(p => `
-                <div class="bg-white rounded-[2rem] shadow-lg overflow-hidden border border-slate-100 flex flex-col">
-                    <img src="${p.imagen_url || 'https://via.placeholder.com/400'}" class="w-full h-48 object-cover">
-                    <div class="p-6 flex-grow">
-                        <span class="text-[9px] font-black bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full uppercase">${p.comercios.rubro}</span>
-                        <h3 class="font-black text-lg uppercase mt-2">${p.nombre_producto}</h3>
-                        <p class="text-emerald-600 font-black text-2xl mb-4">$${p.precio}</p>
-                        <p class="text-[10px] font-bold uppercase">🏪 ${p.comercios.nombre_comercio}</p>
-                        <a href="https://wa.me/${p.comercios.whatsapp}" target="_blank" class="block mt-4 text-center bg-emerald-500 text-white py-3 rounded-xl font-black text-xs uppercase">Consultar</a>
+                <div class="bg-white rounded-[2rem] shadow-lg overflow-hidden flex flex-col">
+                    <img src="${p.imagen_url}" class="w-full h-40 object-cover">
+                    <div class="p-4 flex-grow flex flex-col justify-between">
+                        <div>
+                            <span class="text-[8px] font-black bg-indigo-50 text-indigo-600 px-2 py-1 rounded-full uppercase">${p.comercios.rubro}</span>
+                            <h3 class="font-black text-sm uppercase mt-1 leading-tight">${p.nombre_producto}</h3>
+                            <p class="text-emerald-600 font-black text-lg">$${p.precio}</p>
+                        </div>
+                        <div class="mt-3 pt-3 border-t">
+                            <p class="text-[9px] font-bold text-slate-400 uppercase">🏪 ${p.comercios.nombre_comercio}</p>
+                            <a href="https://wa.me/${p.comercios.whatsapp}" target="_blank" class="block mt-2 text-center bg-emerald-500 text-white py-2 rounded-lg font-black text-[10px] uppercase">WhatsApp</a>
+                        </div>
                     </div>
                 </div>
             `).join('');
@@ -328,8 +363,6 @@
                 p.comercios.nombre_comercio.toLowerCase().includes(t)
             ));
         }
-
-        window.onload = () => verVista('cliente');
     </script>
 </body>
 </html>
