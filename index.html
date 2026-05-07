@@ -3,97 +3,259 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DONDE COMPRO.COM | Admin</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>DONDE COMPRO.COM</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap');
-        body { font-family: 'Poppins', sans-serif; background-color: #f8fafc; }
-        .card-admin { border-radius: 2rem; background: white; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); }
+        :root {
+            --primary: #009688;
+            --secondary: #673ab7;
+            --dark: #1a1a1a;
+            --light: #f4f7f6;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0;
+            background-color: var(--light);
+            color: var(--dark);
+        }
+
+        /* HEADER */
+        header {
+            background: var(--dark);
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo { font-weight: bold; font-size: 1.2rem; }
+
+        /* HERO SECTION */
+        .hero {
+            background: linear-gradient(135deg, var(--primary), #4db6ac);
+            padding: 40px 20px;
+            text-align: center;
+            color: white;
+        }
+
+        /* BUSCADOR */
+        .search-box {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            max-width: 600px;
+            margin: -30px auto 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .search-box input, .search-box select {
+            padding: 10px;
+            margin: 5px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        /* ADMIN PANEL */
+        .admin-container {
+            display: none;
+            padding: 20px;
+            max-width: 1000px;
+            margin: auto;
+        }
+
+        .grid-admin {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 20px;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        button {
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 20px;
+            transition: 0.3s;
+        }
+
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-secondary { background: var(--secondary); color: white; }
+        .btn-danger { background: #ff5252; color: white; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
+        
+        .status-pending { background: #fff3e0; color: #ef6c00; padding: 4px 8px; border-radius: 12px; font-size: 0.8rem; }
+
+        /* MODALES */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center; align-items: center;
+        }
     </style>
 </head>
 <body>
 
-    <nav class="bg-[#1a1a1a] text-white p-6 shadow-xl flex justify-between items-center">
-        <h1 class="font-black tracking-tighter text-xl">DONDE COMPRO.COM</h1>
-        <button onclick="location.reload()" class="bg-red-500 px-6 py-2 rounded-xl font-bold text-xs uppercase">Salir</button>
-    </nav>
+<header>
+    <div class="logo">DONDE COMPRO.COM</div>
+    <div id="auth-buttons">
+        <button class="btn-primary" onclick="showModal('modal-login')">Acceso</button>
+        <button class="btn-secondary" id="btn-salir" style="display:none;" onclick="logout()">SALIR</button>
+    </div>
+</header>
 
-    <div class="max-w-6xl mx-auto p-6 mt-10">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-            
-            <div class="card-admin p-8 text-center border-t-4 border-indigo-500">
-                <span class="text-4xl">📦</span>
-                <h3 class="font-bold text-slate-800 uppercase text-xs my-4 tracking-widest">Nuevo Rubro</h3>
-                <input type="text" id="in-rubro" placeholder="Ej: Veterinaria" class="w-full p-4 bg-slate-50 rounded-2xl mb-4 text-center font-bold outline-none border-2 border-transparent focus:border-indigo-400">
-                <button onclick="crearRubro()" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black uppercase text-[10px]">Agregar Rubro</button>
-            </div>
-
-            <div class="md:col-span-2 card-admin p-10">
-                <h3 class="font-black text-slate-800 uppercase italic mb-8">Control de Tiendas</h3>
-                <div class="overflow-x-auto">
-                    <table class="w-full">
-                        <tbody id="lista-comercios">
-                            </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
+<div id="section-public">
+    <div class="hero">
+        <h1>¿Qué necesitás comprar?</h1>
+        <p>Buscá productos en comercios cercanos a tu ubicación</p>
     </div>
 
-    <script>
-        // CONEXIÓN
-        const S_URL = "https://mefeupfmvhfnnmttpfgq.supabase.co";
-        const S_KEY = "sb_publishable_fMwMKzGhNbj9RyVhPv33sA_rqDg30C7";
-        const _supabase = supabase.createClient(S_URL, S_KEY);
+    <div class="search-box">
+        <input type="text" placeholder="Buscar producto..." style="width: 60%;">
+        <select id="filtro-rubros">
+            <option>Todos los rubros</option>
+        </select>
+        <button class="btn-primary"><i class="fas fa-search"></i> Buscar</button>
+    </div>
 
-        // CARGAR DATOS
-        async function cargar() {
-            const { data } = await _supabase.from('comercios').select('*').order('creado_at', {ascending: false});
-            const lista = document.getElementById('lista-comercios');
-            lista.innerHTML = data.map(c => `
-                <tr class="border-b border-slate-50">
-                    <td class="py-6">
-                        <div class="font-black text-slate-700 text-sm uppercase">${c.nombre_comercio}</div>
-                        <div class="text-[10px] text-slate-400 font-bold italic">${new Date(c.creado_at).toLocaleDateString()}</div>
+    <div style="text-align:center; padding: 50px;">
+        <img src="https://cdn-icons-png.flaticon.com/512/3081/3081840.png" width="100" alt="bolsas">
+        <h2>¡Bienvenido a Dónde Compro!</h2>
+        <button class="btn-secondary" onclick="showModal('modal-registro')">Registrar mi comercio</button>
+    </div>
+</div>
+
+<div id="section-admin" class="admin-container">
+    <div class="grid-admin">
+        <div class="card">
+            <h3>📦 NUEVO RUBRO</h3>
+            <input type="text" id="input-nuevo-rubro" placeholder="Ej: Tienda de Ropa" style="width:90%; padding:10px; margin-bottom:10px;">
+            <button class="btn-secondary" style="width:100%" onclick="crearRubro()">AGREGAR RUBRO</button>
+        </div>
+
+        <div class="card">
+            <div style="display:flex; justify-content:space-between;">
+                <h3>CONTROL DE TIENDAS</h3>
+                <button class="btn-primary" style="background:#00c853">EXCEL</button>
+            </div>
+            <table id="tabla-comercios">
+                <thead>
+                    <tr>
+                        <th>COMERCIO</th>
+                        <th>ESTADO</th>
+                        <th>ACCIONES</th>
+                    </tr>
+                </thead>
+                <tbody id="lista-comercios-admin">
+                    </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div id="modal-login" class="modal">
+    <div class="card" style="width:350px; text-align:center;">
+        <h3>ACCESO ADMIN</h3>
+        <input type="password" id="admin-code" placeholder="Código de Invitación" style="width:90%; padding:10px; margin-bottom:15px;">
+        <button class="btn-primary" style="width:100%" onclick="loginAdmin()">INGRESAR</button>
+        <button onclick="hideModals()" style="background:none; margin-top:10px;">CERRAR</button>
+    </div>
+</div>
+
+<script>
+    // CONFIGURACIÓN SUPABASE
+    const S_URL = "https://mefeupfmvhfnnmttpfgq.supabase.co";
+    const S_KEY = "sb_publishable_fMwMKzGhNbj9RyVhPv33sA_rqDg30C7";
+    const _supabase = supabase.createClient(S_URL, S_KEY);
+
+    // INICIO
+    document.addEventListener('DOMContentLoaded', () => {
+        cargarRubros();
+    });
+
+    // --- FUNCIONES DE NAVEGACIÓN ---
+    function showModal(id) { document.getElementById(id).style.display = 'flex'; }
+    function hideModals() { document.querySelectorAll('.modal').forEach(m => m.style.display = 'none'); }
+
+    function loginAdmin() {
+        const code = document.getElementById('admin-code').value;
+        if(code === "ADMIN123") { // Aquí puedes usar tu lógica de INV-XXXX
+            document.getElementById('section-public').style.display = 'none';
+            document.getElementById('section-admin').style.display = 'block';
+            document.getElementById('btn-salir').style.display = 'inline-block';
+            document.querySelector('.btn-primary').style.display = 'none';
+            hideModals();
+            cargarComerciosAdmin();
+        } else {
+            alert("Código incorrecto");
+        }
+    }
+
+    function logout() {
+        location.reload();
+    }
+
+    // --- FUNCIONES DE DATOS ---
+    async function cargarRubros() {
+        const { data } = await _supabase.from('rubros').select('*');
+        const select = document.getElementById('filtro-rubros');
+        data?.forEach(r => {
+            let opt = document.createElement('option');
+            opt.value = r.nombre;
+            opt.textContent = r.nombre;
+            select.appendChild(opt);
+        });
+    }
+
+    async function crearRubro() {
+        const nombre = document.getElementById('input-nuevo-rubro').value;
+        const { error } = await _supabase.from('rubros').insert([{ nombre }]);
+        if(error) alert("El rubro ya existe o hay error de red"); //
+        else location.reload();
+    }
+
+    async function cargarComerciosAdmin() {
+        const { data } = await _supabase.from('comercios').select('*').order('creado_at', { ascending: false });
+        const tbody = document.getElementById('lista-comercios-admin');
+        tbody.innerHTML = '';
+        
+        data?.forEach(c => {
+            tbody.innerHTML += `
+                <tr>
+                    <td>
+                        <strong>${c.nombre_comercio}</strong><br>
+                        <small style="color:gray">${new Date(c.creado_at).toLocaleDateString()}</small>
                     </td>
-                    <td class="text-center">
-                        <span class="px-4 py-1 rounded-full text-[9px] font-black uppercase ${c.estado === 'activo' ? 'bg-green-100 text-green-600' : 'bg-amber-100 text-amber-600'}">
-                            ${c.estado}
-                        </span>
-                    </td>
-                    <td class="text-right">
-                        <div class="flex justify-end gap-4 text-xl">
-                            <button onclick="activar('${c.id}')" class="text-emerald-500">✔</button>
-                            <button onclick="eliminar('${c.id}')" class="text-red-300 hover:text-red-600">🗑</button>
-                        </div>
+                    <td><span class="status-pending">${c.estado}</span></td>
+                    <td>
+                        <button onclick="validarComercio('${c.id}')" style="color:green; background:none;"><i class="fas fa-check"></i></button>
+                        <button onclick="eliminarComercio('${c.id}')" style="color:red; background:none;"><i class="fas fa-trash"></i></button>
                     </td>
                 </tr>
-            `).join('');
-        }
+            `;
+        });
+    }
 
-        async function eliminar(id) {
-            if(confirm("¿Eliminar este comercio permanentemente?")) {
-                const { error } = await _supabase.from('comercios').delete().eq('id', id);
-                if(error) alert("Error: " + error.message);
-                else cargar();
-            }
+    // ELIMINACIÓN CORREGIDA
+    async function eliminarComercio(id) {
+        if(confirm("¿Estás seguro de eliminar este comercio permanentemente?")) {
+            const { error } = await _supabase.from('comercios').delete().eq('id', id);
+            if(error) alert("Error al eliminar: " + error.message);
+            else cargarComerciosAdmin();
         }
-
-        async function crearRubro() {
-            const nombre = document.getElementById('in-rubro').value.trim();
-            if(!nombre) return;
-            const { error } = await _supabase.from('rubros').insert([{ nombre }]);
-            if(error) alert("El rubro ya existe o hay error de red");
-            else { alert("Rubro Creado"); cargar(); }
-        }
-
-        async function activar(id) {
-            await _supabase.from('comercios').update({ estado: 'activo' }).eq('id', id);
-            cargar();
-        }
-
-        cargar();
-    </script>
+    }
+</script>
 </body>
 </html>
