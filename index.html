@@ -3,194 +3,159 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DONDECOMPRO.COM | Rosario de la Frontera</title>
+    <title>Panel Administrativo | DONDECOMPRO.COM</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f1f5f9; }
+        .glass { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
         .vista { display: none; }
         .vista.active { display: block; }
-        .card-admin { border-radius: 1.5rem; background: white; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05); }
     </style>
 </head>
-<body>
+<body class="p-4 md:p-8">
 
-    <nav class="bg-[#111] text-white p-4 sticky top-0 z-50">
-        <div class="max-w-6xl mx-auto flex justify-between items-center">
-            <h1 class="font-black text-xl tracking-tighter cursor-pointer" onclick="mostrarVista('home')">DONDECOMPRO.COM</h1>
-            <div id="btn-header">
-                <button onclick="abrirModalAcceso()" class="bg-teal-600 px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest">Acceso / Registro</button>
-            </div>
+    <header class="max-w-7xl mx-auto flex justify-between items-center mb-10">
+        <div>
+            <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">DONDECOMPRO<span class="text-indigo-600">.COM</span></h1>
+            <p class="text-slate-500 text-sm font-semibold uppercase tracking-wider">Gestión de Rosario de la Frontera</p>
         </div>
-    </nav>
+        <button onclick="location.reload()" class="bg-rose-500 hover:bg-rose-600 text-white px-6 py-2 rounded-2xl font-bold shadow-lg shadow-rose-100 transition-all">SALIR</button>
+    </header>
 
-    <div id="vista-home" class="vista active">
-        <header class="bg-teal-700 py-16 text-center text-white">
-            <h2 class="text-3xl font-black mb-6 uppercase italic">¿Qué buscás hoy?</h2>
-            <div class="max-w-md mx-auto bg-white p-2 rounded-2xl flex shadow-2xl">
-                <input type="text" placeholder="Ej: Pan, herramientas..." class="flex-1 p-3 text-slate-800 outline-none font-bold">
-                <button class="bg-slate-900 px-6 py-3 rounded-xl font-black text-xs uppercase">Buscar</button>
-            </div>
-        </header>
-        <div id="lista-publica" class="max-w-6xl mx-auto p-10 grid grid-cols-1 md:grid-cols-3 gap-6">
-            </div>
-    </div>
-
-    <div id="vista-admin" class="vista max-w-6xl mx-auto p-6">
-        <div class="flex justify-between items-center my-8">
-            <h2 class="font-black text-2xl uppercase italic text-slate-800">Panel de Control</h2>
-            <button onclick="location.reload()" class="bg-red-500 text-white px-4 py-2 rounded-lg font-bold text-xs">SALIR</button>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div class="card-admin p-8">
-                <h3 class="font-black text-xs uppercase tracking-widest mb-4 text-slate-400">📦 Nuevo Rubro</h3>
-                <input type="text" id="in-rubro" placeholder="Nombre del rubro" class="w-full p-4 bg-slate-100 rounded-xl mb-4 font-bold outline-none border-2 border-transparent focus:border-teal-500">
-                <button onclick="crearRubro()" class="w-full bg-indigo-600 text-white py-4 rounded-xl font-black uppercase text-xs shadow-lg shadow-indigo-100">Agregar</button>
-            </div>
-
-            <div class="lg:col-span-2 card-admin p-8">
-                <div class="flex justify-between mb-6">
-                    <h3 class="font-black text-xs uppercase tracking-widest text-slate-400">Control de Tiendas</h3>
+    <main class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        <aside class="lg:col-span-4 space-y-6">
+            <div class="glass p-8 rounded-[2.5rem] shadow-xl border border-white">
+                <h3 class="text-xs font-black text-indigo-400 uppercase tracking-[0.2em] mb-6">📦 Nuevo Rubro</h3>
+                <div class="flex gap-2">
+                    <input type="text" id="nuevo-rubro" placeholder="Ej: Veterinaria" class="flex-1 bg-slate-50 p-4 rounded-2xl outline-none border-2 border-transparent focus:border-indigo-500 font-bold text-slate-700 transition-all">
+                    <button onclick="crearRubro()" class="bg-indigo-600 text-white p-4 rounded-2xl font-black text-xl hover:scale-105 transition-transform">+</button>
                 </div>
+                
+                <div class="mt-8">
+                    <h4 class="text-[10px] font-black text-slate-400 uppercase mb-4">Rubros Actuales</h4>
+                    <div id="lista-rubros" class="space-y-2 max-h-60 overflow-y-auto pr-2">
+                        </div>
+                </div>
+            </div>
+        </aside>
+
+        <section class="lg:col-span-8">
+            <div class="glass p-8 rounded-[2.5rem] shadow-xl border border-white min-h-[600px]">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+                    <h3 class="text-xs font-black text-emerald-500 uppercase tracking-[0.2em]">🏪 Gestión de Tiendas</h3>
+                    <div class="flex bg-slate-100 p-1 rounded-xl">
+                        <button onclick="filtrarComercios('todos')" class="px-4 py-2 text-[10px] font-black uppercase rounded-lg hover:bg-white transition-all">Todos</button>
+                        <button onclick="filtrarComercios('pendiente')" class="px-4 py-2 text-[10px] font-black uppercase rounded-lg hover:bg-white transition-all">Pendientes</button>
+                    </div>
+                </div>
+
                 <div class="overflow-x-auto">
-                    <table class="w-full text-left">
+                    <table class="w-full">
                         <thead>
-                            <tr class="text-[10px] uppercase text-slate-400 border-b">
-                                <th class="pb-4">Comercio</th>
-                                <th class="pb-4">Estado</th>
-                                <th class="pb-4 text-right">Acciones</th>
+                            <tr class="text-left text-[10px] font-black text-slate-400 uppercase tracking-widest border-b">
+                                <th class="pb-4 px-2">Información del Local</th>
+                                <th class="pb-4 px-2">Estado</th>
+                                <th class="pb-4 px-2 text-right">Acciones Administrativas</th>
                             </tr>
                         </thead>
-                        <tbody id="tabla-admin-body"></tbody>
+                        <tbody id="tabla-comercios" class="divide-y divide-slate-100">
+                            </tbody>
                     </table>
                 </div>
             </div>
-        </div>
-    </div>
-
-    <div id="modal-acceso" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-md rounded-[2rem] p-10 relative shadow-2xl">
-            <button onclick="cerrarModal()" class="absolute top-6 right-6 text-slate-300 text-2xl font-bold">&times;</button>
-            
-            <div class="flex border-b mb-8 text-[10px] font-black uppercase text-center">
-                <button onclick="switchTab('reg')" id="tab-reg" class="flex-1 pb-4 border-b-2 border-teal-500 text-teal-600">Registrar Local</button>
-                <button onclick="switchTab('adm')" id="tab-adm" class="flex-1 pb-4 border-b-2 border-transparent text-slate-400">Admin</button>
-            </div>
-
-            <div id="form-registro" class="space-y-4">
-                <input type="text" id="reg-nombre" placeholder="Nombre del Comercio" class="w-full p-4 bg-slate-50 rounded-xl font-bold outline-none border">
-                <select id="reg-rubro" class="w-full p-4 bg-slate-50 rounded-xl font-bold outline-none border"></select>
-                <input type="text" id="reg-whatsapp" placeholder="WhatsApp (Sin +)" class="w-full p-4 bg-slate-50 rounded-xl font-bold outline-none border">
-                <button onclick="enviarSolicitud()" class="w-full bg-teal-600 text-white py-4 rounded-xl font-black uppercase text-xs">Enviar Solicitud</button>
-            </div>
-
-            <div id="form-admin" class="hidden space-y-4">
-                <input type="password" id="admin-pass" placeholder="Código de Acceso" class="w-full p-4 bg-slate-50 rounded-xl font-bold text-center border">
-                <button onclick="accederAdmin()" class="w-full bg-slate-900 text-white py-4 rounded-xl font-black uppercase text-xs">Entrar al Panel</button>
-            </div>
-        </div>
-    </div>
+        </section>
+    </main>
 
     <script>
-        // CONFIGURACIÓN (REEMPLAZA CON TUS DATOS)
-        const URL_SB = "TU_URL_SUPABASE";
-        const KEY_SB = "TU_KEY_ANON";
-        const _sb = supabase.createClient(URL_SB, KEY_SB);
+        // CONFIGURACIÓN SUPABASE
+        const SUPABASE_URL = "TU_URL_AQUÍ";
+        const SUPABASE_KEY = "TU_ANON_KEY_AQUÍ";
+        const _client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // NAVEGACIÓN
-        function mostrarVista(vista) {
-            document.querySelectorAll('.vista').forEach(v => v.classList.remove('active'));
-            document.getElementById('vista-' + vista).classList.add('active');
+        // --- GESTIÓN DE RUBROS ---
+        async function cargarRubros() {
+            const { data, error } = await _client.from('rubros').select('*').order('nombre');
+            const contenedor = document.getElementById('lista-rubros');
+            contenedor.innerHTML = data.map(r => `
+                <div class="flex justify-between items-center bg-white p-3 rounded-xl shadow-sm group">
+                    <span class="font-bold text-slate-700 text-sm">${r.nombre}</span>
+                    <button onclick="eliminarRubro('${r.id}')" class="text-rose-300 hover:text-rose-500 font-bold opacity-0 group-hover:opacity-100 transition-all">&times;</button>
+                </div>
+            `).join('');
         }
 
-        function abrirModalAcceso() {
-            document.getElementById('modal-acceso').classList.remove('hidden');
-            cargarRubrosSelect();
+        async function crearRubro() {
+            const input = document.getElementById('nuevo-rubro');
+            if(!input.value) return;
+            const { error } = await _client.from('rubros').insert([{ nombre: input.value }]);
+            if(error) alert("Este rubro ya existe.");
+            input.value = "";
+            cargarRubros();
         }
 
-        function cerrarModal() { document.getElementById('modal-acceso').classList.add('hidden'); }
-
-        function switchTab(t) {
-            document.getElementById('form-registro').classList.toggle('hidden', t === 'adm');
-            document.getElementById('form-admin').classList.toggle('hidden', t === 'reg');
-            document.getElementById('tab-reg').className = t === 'reg' ? 'flex-1 pb-4 border-b-2 border-teal-500 text-teal-600' : 'flex-1 pb-4 border-b-2 border-transparent text-slate-400';
-            document.getElementById('tab-adm').className = t === 'adm' ? 'flex-1 pb-4 border-b-2 border-teal-500 text-teal-600' : 'flex-1 pb-4 border-b-2 border-transparent text-slate-400';
+        async function eliminarRubro(id) {
+            if(confirm("¿Eliminar rubro? Esto afectará a los comercios asociados.")) {
+                await _client.from('rubros').delete().eq('id', id);
+                cargarRubros();
+            }
         }
 
-        // FUNCIONES DE DATOS
-        async function cargarRubrosSelect() {
-            const { data } = await _sb.from('rubros').select('nombre');
-            const sel = document.getElementById('reg-rubro');
-            sel.innerHTML = '<option value="">Selecciona un rubro...</option>';
-            data?.forEach(r => sel.innerHTML += `<option value="${r.nombre}">${r.nombre}</option>`);
-        }
-
-        async function enviarSolicitud() {
-            const n = document.getElementById('reg-nombre').value;
-            const r = document.getElementById('reg-rubro').value;
-            const w = document.getElementById('reg-whatsapp').value;
-            if(!n || !r || !w) return alert("Faltan datos");
-
-            const { error } = await _sb.from('comercios').insert([{ nombre_comercio: n, rubro: r, whatsapp: w }]);
-            if(error) alert("Error: " + error.message);
-            else { alert("Solicitud enviada!"); cerrarModal(); }
-        }
-
-        function accederAdmin() {
-            if(document.getElementById('admin-pass').value === "DONDECOMPRO-ADMIN-2026") {
-                cerrarModal();
-                mostrarVista('admin');
-                cargarAdminTable();
-            } else { alert("Código incorrecto"); }
-        }
-
-        async function cargarAdminTable() {
-            const { data } = await _sb.from('comercios').select('*').order('creado_at', {ascending: false});
-            const body = document.getElementById('tabla-admin-body');
-            body.innerHTML = data.map(c => `
-                <tr class="border-b hover:bg-slate-50 transition-colors">
-                    <td class="py-4">
-                        <div class="font-black text-slate-800 text-xs uppercase">${c.nombre_comercio}</div>
-                        <div class="text-[9px] text-slate-400 font-bold italic">${c.rubro}</div>
+        // --- GESTIÓN DE COMERCIOS ---
+        async function cargarComercios(filtro = 'todos') {
+            let query = _client.from('comercios').select('*').order('creado_at', { ascending: false });
+            if(filtro === 'pendiente') query = query.eq('estado', 'pendiente');
+            
+            const { data } = await query;
+            const tabla = document.getElementById('tabla-comercios');
+            
+            tabla.innerHTML = data.map(c => `
+                <tr class="hover:bg-slate-50/50 transition-colors">
+                    <td class="py-6 px-2">
+                        <div class="font-extrabold text-slate-800 uppercase tracking-tight">${c.nombre_comercio}</div>
+                        <div class="text-[10px] font-bold text-indigo-400 italic">${c.rubro_nombre || 'Sin rubro'} • WA: ${c.whatsapp}</div>
                     </td>
-                    <td>
-                        <span class="px-3 py-1 rounded-full text-[8px] font-black uppercase ${c.estado === 'activo' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}">${c.estado}</span>
+                    <td class="py-6 px-2">
+                        <span class="px-3 py-1 rounded-full text-[9px] font-black uppercase shadow-sm
+                            ${c.estado === 'activo' ? 'bg-emerald-100 text-emerald-600' : 
+                              c.estado === 'suspendido' ? 'bg-rose-100 text-rose-600' : 'bg-amber-100 text-amber-600'}">
+                            ${c.estado}
+                        </span>
                     </td>
-                    <td class="text-right py-4">
+                    <td class="py-6 px-2 text-right">
                         <div class="flex justify-end gap-2">
-                            ${c.estado === 'pendiente' ? `<button onclick="cambiarEstado('${c.id}', 'activo')" class="bg-emerald-500 text-white p-2 rounded-lg text-xs">✓</button>` : ''}
-                            <button onclick="borrarComercio('${c.id}')" class="bg-red-100 text-red-500 p-2 rounded-lg text-xs">🗑</button>
+                            ${c.estado !== 'activo' ? `
+                                <button onclick="actualizarEstado('${c.id}', 'activo')" class="bg-emerald-500 text-white text-[10px] font-black px-3 py-2 rounded-xl hover:shadow-lg transition-all">ACTIVAR</button>
+                            ` : `
+                                <button onclick="actualizarEstado('${c.id}', 'suspendido')" class="bg-amber-500 text-white text-[10px] font-black px-3 py-2 rounded-xl hover:shadow-lg transition-all">SUSPENDER</button>
+                            `}
+                            <button onclick="eliminarComercio('${c.id}')" class="bg-slate-100 text-slate-400 text-[10px] font-black px-3 py-2 rounded-xl hover:bg-rose-50 hover:text-rose-500 transition-all">ELIMINAR</button>
                         </div>
                     </td>
                 </tr>
             `).join('');
         }
 
-        async function cambiarEstado(id, nuevoEstado) {
-            await _sb.from('comercios').update({ estado: nuevoEstado }).eq('id', id);
-            cargarAdminTable();
+        async function actualizarEstado(id, nuevoEstado) {
+            await _client.from('comercios').update({ estado: nuevoEstado }).eq('id', id);
+            cargarComercios();
         }
 
-        async function borrarComercio(id) {
-            if(confirm("¿Eliminar comercio?")) {
-                await _sb.from('comercios').delete().eq('id', id);
-                cargarAdminTable();
+        async function eliminarComercio(id) {
+            if(confirm("¿Eliminar permanentemente este comercio?")) {
+                await _client.from('comercios').delete().eq('id', id);
+                cargarComercios();
             }
         }
 
-        async function crearRubro() {
-            const n = document.getElementById('in-rubro').value;
-            if(!n) return;
-            const { error } = await _sb.from('rubros').insert([{ nombre: n }]);
-            if(error) alert("El rubro ya existe");
-            else { alert("Rubro creado"); document.getElementById('in-rubro').value = ""; }
-        }
+        function filtrarComercios(f) { cargarComercios(f); }
 
-        // Carga inicial
+        // INICIO
         window.onload = () => {
-            // Aquí cargarías la lista pública si quieres
+            cargarRubros();
+            cargarComercios();
         };
     </script>
 </body>
