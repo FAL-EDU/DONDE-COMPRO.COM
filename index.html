@@ -12,6 +12,7 @@
         body { font-family: 'Poppins', sans-serif; background-color: #f3f7f6; }
         .vista { display: none; }
         .vista.active { display: block; }
+        .tab-active { border-bottom: 3px solid #0d9488; color: #0d9488; }
         .card-custom { border-radius: 2.5rem; transition: all 0.3s ease; }
     </style>
 </head>
@@ -21,26 +22,40 @@
         <div class="max-w-6xl mx-auto flex justify-between items-center">
             <h1 class="font-black text-xl tracking-tighter cursor-pointer" onclick="location.reload()">DONDE COMPRO.COM</h1>
             <div id="nav-botones">
-                <button onclick="abrirModal()" class="bg-amber-500 text-white px-5 py-2 rounded-xl text-xs font-black uppercase">Acceso</button>
+                <button onclick="abrirModal()" class="bg-amber-500 text-white px-5 py-2 rounded-xl text-[10px] font-black uppercase">Acceso</button>
             </div>
         </div>
     </nav>
 
+    <div id="vista-home" class="vista active">
+        <header class="bg-[#0d9488] p-12 text-center text-white">
+            <div class="max-w-3xl mx-auto">
+                <h2 class="text-4xl font-extrabold mb-4 uppercase italic tracking-tight">¿Qué necesitás comprar?</h2>
+                <div class="bg-white p-2 rounded-[2rem] shadow-2xl flex flex-col md:flex-row gap-2">
+                    <input type="text" id="buscador" placeholder="Ej: Pan, Leche..." class="flex-1 p-4 text-slate-700 outline-none rounded-2xl font-bold">
+                    <button class="bg-[#1a1a1a] text-white px-10 py-4 rounded-2xl font-black uppercase text-sm">Buscar</button>
+                </div>
+            </div>
+        </header>
+        <main class="max-w-6xl mx-auto p-8">
+            <div id="contenedor-comercios" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-8"></div>
+        </main>
+    </div>
+
     <div id="vista-admin" class="vista max-w-6xl mx-auto p-6">
         <div class="flex flex-col md:flex-row gap-8 mt-10">
             <div class="md:w-1/3">
-                <div class="bg-white p-8 card-custom shadow-lg border-2 border-slate-50 text-center">
-                    <span class="text-2xl">📦</span>
-                    <h3 class="font-black text-slate-800 uppercase text-[10px] my-4 tracking-widest">Nuevo Rubro</h3>
-                    <input type="text" id="input-nuevo-rubro" placeholder="Ej: Ferretería" class="w-full p-4 bg-slate-50 rounded-2xl outline-none mb-4 font-bold text-center border-2 border-transparent focus:border-indigo-500">
-                    <button onclick="crearRubro()" class="w-full bg-[#5d58ff] text-white py-4 rounded-2xl font-black uppercase text-[10px] shadow-lg shadow-indigo-100">Agregar Rubro</button>
+                <div class="bg-white p-8 card-custom shadow-lg text-center">
+                    <h3 class="font-black text-slate-800 uppercase text-[10px] mb-4">📦 Nuevo Rubro</h3>
+                    <input type="text" id="input-nuevo-rubro" placeholder="Ej: Tienda de Ropa" class="w-full p-4 bg-slate-50 rounded-2xl outline-none mb-4 font-bold text-center border-2 border-transparent focus:border-indigo-500">
+                    <button onclick="crearRubro()" class="w-full bg-[#5d58ff] text-white py-4 rounded-2xl font-black uppercase text-[10px]">Agregar Rubro</button>
                 </div>
             </div>
 
-            <div class="md:w-2/3 bg-white p-10 card-custom shadow-2xl relative">
+            <div class="md:w-2/3 bg-white p-10 card-custom shadow-2xl">
                 <div class="flex justify-between items-center mb-8">
-                    <h3 class="font-black text-slate-800 uppercase italic tracking-tighter">Control de Tiendas</h3>
-                    <button onclick="exportarExcel()" class="bg-[#10b981] text-white px-6 py-2 rounded-xl font-bold text-[10px] uppercase shadow-lg shadow-emerald-100">Excel</button>
+                    <h3 class="font-black text-slate-800 uppercase italic">Control de Tiendas</h3>
+                    <button onclick="exportarExcel()" class="bg-[#10b981] text-white px-6 py-2 rounded-xl font-bold text-[10px] uppercase">Excel</button>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left">
@@ -51,8 +66,7 @@
                                 <th class="pb-4 text-right">Acciones</th>
                             </tr>
                         </thead>
-                        <tbody id="tabla-admin-comercios">
-                            </tbody>
+                        <tbody id="tabla-admin-comercios"></tbody>
                     </table>
                 </div>
             </div>
@@ -60,27 +74,57 @@
     </div>
 
     <div id="modal-acceso" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-[2000] hidden flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-md rounded-[3rem] p-10 shadow-2xl text-center">
-            <h3 class="font-black text-slate-800 uppercase mb-6">Acceso Admin</h3>
-            <input type="text" id="codigo-inv" placeholder="Código de Invitación" class="w-full p-5 bg-slate-50 rounded-2xl mb-4 font-mono text-center border-2 border-dashed border-slate-200 outline-none">
-            <button onclick="validarAdmin()" class="w-full bg-[#1a1a1a] text-white py-5 rounded-2xl font-black uppercase tracking-widest shadow-xl">Ingresar</button>
-            <button onclick="cerrarModal()" class="mt-4 text-slate-400 font-bold text-xs uppercase">Cerrar</button>
+        <div class="bg-white w-full max-w-lg rounded-[3rem] overflow-hidden shadow-2xl relative">
+            <button onclick="cerrarModal()" class="absolute top-8 right-8 text-slate-300 text-3xl">&times;</button>
+            <div class="p-10">
+                <div class="flex border-b border-slate-100 mb-8 text-[10px] font-black uppercase tracking-tighter">
+                    <button id="tab-login" onclick="cambiarTab('login')" class="flex-1 pb-4 tab-active">Iniciar Sesión</button>
+                    <button id="tab-registro" onclick="cambiarTab('registro')" class="flex-1 pb-4">Registrar Comercio</button>
+                    <button id="tab-admin" onclick="cambiarTab('admin')" class="flex-1 pb-4">Admin</button>
+                </div>
+
+                <div id="form-login" class="space-y-4">
+                    <input type="text" placeholder="Email" class="w-full p-5 bg-slate-50 rounded-2xl outline-none font-bold">
+                    <input type="password" placeholder="Contraseña" class="w-full p-5 bg-slate-50 rounded-2xl outline-none font-bold">
+                    <button class="w-full bg-[#0d9488] text-white py-5 rounded-2xl font-black uppercase">Ingresar</button>
+                </div>
+
+                <div id="form-registro" class="hidden space-y-3">
+                    <input type="text" id="reg-nombre" placeholder="Nombre del comercio" class="w-full p-4 bg-slate-50 rounded-2xl outline-none font-bold">
+                    <input type="text" id="reg-whatsapp" placeholder="WhatsApp" class="w-full p-4 bg-slate-50 rounded-2xl outline-none font-bold">
+                    <button onclick="solicitarRegistro()" class="w-full bg-[#0d9488] text-white py-5 rounded-2xl font-black uppercase">Solicitar Acceso</button>
+                </div>
+
+                <div id="form-admin" class="hidden space-y-4">
+                    <p class="text-[10px] font-bold text-slate-400 text-center uppercase">Código de Invitación</p>
+                    <input type="text" id="codigo-inv" placeholder="DONDECOMPRO-XXXX" class="w-full p-5 bg-slate-50 rounded-2xl outline-none font-mono text-center font-bold border-2 border-dashed border-slate-200">
+                    <button onclick="validarAdmin()" class="w-full bg-indigo-600 text-white py-5 rounded-2xl font-black uppercase">Acceder</button>
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
-        // CREDENCIALES
         const S_URL = "https://mefeupfmvhfnnmttpfgq.supabase.co"; 
         const S_KEY = "sb_publishable_fMwMKzGhNbj9RyVhPv33sA_rqDg30C7"; 
         const _supabase = supabase.createClient(S_URL, S_KEY);
 
         function abrirModal() { document.getElementById('modal-acceso').classList.remove('hidden'); }
         function cerrarModal() { document.getElementById('modal-acceso').classList.add('hidden'); }
+        
+        function cambiarTab(tipo) {
+            ['login', 'registro', 'admin'].forEach(t => {
+                document.getElementById('tab-' + t).classList.remove('tab-active');
+                document.getElementById('form-' + t).classList.add('hidden');
+            });
+            document.getElementById('tab-' + tipo).classList.add('tab-active');
+            document.getElementById('form-' + tipo).classList.remove('hidden');
+        }
 
         function validarAdmin() {
             if(document.getElementById('codigo-inv').value === "DONDECOMPRO-ADMIN-2026") {
                 cerrarModal();
-                document.getElementById('nav-botones').innerHTML = `<button onclick="location.reload()" class="bg-red-500 text-white px-5 py-2 rounded-xl text-xs font-black uppercase">Salir</button>`;
+                document.getElementById('nav-botones').innerHTML = `<button onclick="location.reload()" class="bg-red-500 text-white px-5 py-2 rounded-xl text-[10px] font-black uppercase">Salir</button>`;
                 verVista('admin');
             } else { alert("Código incorrecto"); }
         }
@@ -91,45 +135,45 @@
             if(id === 'admin') cargarAdmin();
         }
 
-        // --- FUNCIONALIDADES DE BOTONES ---
-
-        // 1. Agregar Rubro
-        async function crearRubro() {
-            const nombre = document.getElementById('input-nuevo-rubro').value.trim();
-            if(!nombre) return alert("Escribe un nombre");
-            
-            const { error } = await _supabase.from('rubros').insert([{ nombre }]);
-            if(error) {
-                alert("El rubro ya existe o hay un error de conexión");
-            } else {
-                alert("Rubro '" + nombre + "' agregado con éxito");
-                document.getElementById('input-nuevo-rubro').value = "";
-            }
-        }
-
-        // 2. Cargar y Borrar Tiendas
         async function cargarAdmin() {
             const { data } = await _supabase.from('comercios').select('*').order('creado_at', { ascending: false });
             const tabla = document.getElementById('tabla-admin-comercios');
             tabla.innerHTML = data.map(t => `
-                <tr class="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
+                <tr class="border-b border-slate-50">
                     <td class="py-6">
-                        <div class="font-black text-slate-700 uppercase text-[11px] tracking-tight">${t.nombre_comercio}</div>
+                        <div class="font-black text-slate-700 uppercase text-[11px]">${t.nombre_comercio}</div>
                         <div class="text-[9px] text-slate-400 font-bold italic">${new Date(t.creado_at).toLocaleDateString()}</div>
                     </td>
                     <td class="text-center">
-                        <span class="px-3 py-1 rounded-full text-[8px] font-black uppercase ${t.estado === 'activo' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-600'}">
-                            ${t.estado}
-                        </span>
+                        <span class="px-3 py-1 rounded-full text-[8px] font-black uppercase ${t.estado === 'activo' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-600'}">${t.estado}</span>
                     </td>
                     <td class="text-right">
-                        <div class="flex justify-end gap-3">
-                            <button onclick="aprobar('${t.id}')" class="text-emerald-500 hover:scale-125 transition-transform">✔</button>
-                            <button onclick="borrar('${t.id}')" class="text-red-300 hover:text-red-600 transition-colors text-lg">🗑</button>
+                        <div class="flex justify-end gap-3 font-bold text-lg">
+                            <button onclick="aprobar('${t.id}')" class="text-emerald-500 hover:scale-110 transition-transform">✔</button>
+                            <button onclick="borrarComercio('${t.id}')" class="text-red-300 hover:text-red-600 transition-colors">🗑</button>
                         </div>
                     </td>
                 </tr>
             `).join('');
+        }
+
+        async function borrarComercio(id) {
+            if(confirm("¿Estás seguro de eliminar este comercio permanentemente?")) {
+                const { error } = await _supabase.from('comercios').delete().eq('id', id);
+                if(error) {
+                    alert("Error al eliminar: " + error.message);
+                } else {
+                    cargarAdmin();
+                }
+            }
+        }
+
+        async function crearRubro() {
+            const nombre = document.getElementById('input-nuevo-rubro').value.trim();
+            if(!nombre) return;
+            const { error } = await _supabase.from('rubros').insert([{ nombre }]);
+            if(error) alert("El rubro ya existe o hay un error de conexión");
+            else { alert("Rubro agregado"); cargarAdmin(); }
         }
 
         async function aprobar(id) {
@@ -137,21 +181,7 @@
             cargarAdmin();
         }
 
-        async function borrar(id) {
-            if(confirm("¿Estás seguro de eliminar este comercio permanentemente?")) {
-                await _supabase.from('comercios').delete().eq('id', id);
-                cargarAdmin();
-            }
-        }
-
-        // 3. Exportar Excel
-        async function exportarExcel() {
-            const { data } = await _supabase.from('comercios').select('nombre_comercio, rubro, whatsapp, estado, creado_at');
-            const ws = XLSX.utils.json_to_sheet(data);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Comercios");
-            XLSX.writeFile(wb, "Reporte_DondeCompro_2026.xlsx");
-        }
+        window.onload = () => { if(window.location.hash !== '#admin') verVista('home'); };
     </script>
 </body>
 </html>
